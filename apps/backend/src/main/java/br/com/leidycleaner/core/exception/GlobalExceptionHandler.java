@@ -18,7 +18,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(BusinessException.class)
     ResponseEntity<ApiErrorResponse> handleBusinessException(BusinessException exception) {
-        return ResponseEntity.status(HttpStatus.CONFLICT)
+        return ResponseEntity.status(exception.getStatus())
                 .body(ApiErrorResponse.of(exception.getCode(), exception.getMessage(), List.of()));
     }
 

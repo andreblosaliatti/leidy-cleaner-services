@@ -105,6 +105,30 @@ public class PerfilProfissional {
         atualizadoEm = OffsetDateTime.now();
     }
 
+    public void atualizarPerfil(
+            String nomeExibicao,
+            String descricao,
+            String fotoPerfilUrl,
+            Integer experienciaAnos,
+            Boolean ativoParaReceberChamados
+    ) {
+        if (nomeExibicao != null && !nomeExibicao.isBlank()) {
+            this.nomeExibicao = nomeExibicao.trim();
+        }
+        this.descricao = descricao;
+        this.fotoPerfilUrl = fotoPerfilUrl;
+        if (experienciaAnos != null) {
+            this.experienciaAnos = experienciaAnos;
+        }
+        if (ativoParaReceberChamados != null) {
+            this.ativoParaReceberChamados = ativoParaReceberChamados;
+        }
+    }
+
+    public void alterarStatusAprovacao(StatusAprovacaoProfissional statusAprovacao) {
+        this.statusAprovacao = statusAprovacao;
+    }
+
     public Long getId() {
         return id;
     }

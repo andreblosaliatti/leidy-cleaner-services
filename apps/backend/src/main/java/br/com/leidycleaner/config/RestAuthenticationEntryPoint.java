@@ -1,6 +1,7 @@
 package br.com.leidycleaner.config;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -30,7 +31,9 @@ public class RestAuthenticationEntryPoint implements AuthenticationEntryPoint {
             AuthenticationException authException
     ) throws IOException, ServletException {
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+
         objectMapper.writeValue(
                 response.getWriter(),
                 ApiErrorResponse.of("UNAUTHORIZED", "Autenticacao obrigatoria", List.of())
