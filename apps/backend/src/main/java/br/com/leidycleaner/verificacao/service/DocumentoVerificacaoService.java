@@ -47,7 +47,7 @@ public class DocumentoVerificacaoService {
 
     @Transactional(readOnly = true)
     public DocumentoVerificacaoDto minhaVerificacao(Long usuarioId) {
-        return documentoVerificacaoRepository.findFirstByUsuarioIdOrderByCriadoEmDesc(usuarioId)
+        return documentoVerificacaoRepository.findVerificacaoEfetivaPorUsuarioId(usuarioId)
                 .map(DocumentoVerificacaoMapper::paraDto)
                 .orElseThrow(() -> new BusinessException("VERIFICACAO_NOT_FOUND", "Verificacao nao encontrada", HttpStatus.NOT_FOUND));
     }

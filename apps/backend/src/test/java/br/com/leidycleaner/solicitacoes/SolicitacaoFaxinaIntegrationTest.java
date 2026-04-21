@@ -1,12 +1,16 @@
 package br.com.leidycleaner.solicitacoes;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +34,9 @@ class SolicitacaoFaxinaIntegrationTest {
     private final MockMvc mockMvc;
     private final ObjectMapper objectMapper;
     private final RegiaoAtendimentoRepository regiaoAtendimentoRepository;
+
+    private record ProfissionalConfigurada(Long perfilId, String tokenProfissional) {
+    }
 
     @Autowired
     SolicitacaoFaxinaIntegrationTest(
@@ -185,6 +192,247 @@ class SolicitacaoFaxinaIntegrationTest {
                 .andExpect(jsonPath("$.errors").isArray());
     }
 
+    @Test
+    void clienteDonaListaSomenteProfissionaisElegiveisParaSolicitacao() throws Exception {
+        String tokenCliente = criarClienteELogar("m3b.dona@example.com");
+        Long regiaoSolicitacaoId = primeiraRegiaoId();
+        Long outraRegiaoId = segundaRegiaoId();
+        Long solicitacaoId = criarSolicitacao(tokenCliente, criarEndereco(tokenCliente), regiaoSolicitacaoId, "FAXINA_RESIDENCIAL");
+
+        Long elegivelId = criarProfissionalConfigurada(
+                "m3b.elegivel@example.com",
+                "70122233344",
+                "Profissional Elegivel",
+                "ATIVA",
+                "APROVADO",
+                true,
+                "APROVADO",
+                List.of(regiaoSolicitacaoId),
+                "QUINTA",
+                "08:00",
+                "12:00"
+        );
+        criarProfissionalConfigurada(
+                "m3b.conta-inativa@example.com",
+                "70222233344",
+                "Profissional Conta Inativa",
+                "INATIVA",
+                "APROVADO",
+                true,
+                "APROVADO",
+                List.of(regiaoSolicitacaoId),
+                "QUINTA",
+                "08:00",
+                "12:00"
+        );
+        criarProfissionalConfigurada(
+                "m3b.perfil-pendente@example.com",
+                "70322233344",
+                "Profissional Perfil Pendente",
+                "ATIVA",
+                "PENDENTE",
+                true,
+                "APROVADO",
+                List.of(regiaoSolicitacaoId),
+                "QUINTA",
+                "08:00",
+                "12:00"
+        );
+        criarProfissionalConfigurada(
+                "m3b.verificacao-pendente@example.com",
+                "70422233344",
+                "Profissional Verificacao Pendente",
+                "ATIVA",
+                "APROVADO",
+                true,
+                "PENDENTE",
+                List.of(regiaoSolicitacaoId),
+                "QUINTA",
+                "08:00",
+                "12:00"
+        );
+        criarProfissionalConfigurada(
+                "m3b.fora-regiao@example.com",
+                "70522233344",
+                "Profissional Fora Regiao",
+                "ATIVA",
+                "APROVADO",
+                true,
+                "APROVADO",
+                List.of(outraRegiaoId),
+                "QUINTA",
+                "08:00",
+                "12:00"
+        );
+        criarProfissionalConfigurada(
+                "m3b.inativa-chamados@example.com",
+                "70622233344",
+                "Profissional Chamados Inativos",
+                "ATIVA",
+                "APROVADO",
+                false,
+                "APROVADO",
+                List.of(regiaoSolicitacaoId),
+                "QUINTA",
+                "08:00",
+                "12:00"
+        );
+        criarProfissionalConfigurada(
+                "m3b.sem-disponibilidade@example.com",
+                "70722233344",
+                "Profissional Sem Disponibilidade",
+                "ATIVA",
+                "APROVADO",
+                true,
+                "APROVADO",
+                List.of(regiaoSolicitacaoId),
+                "QUINTA",
+                "12:30",
+                "16:00"
+        );
+
+        mockMvc.perform(get("/api/v1/solicitacoes/{id}/profissionais-disponiveis", solicitacaoId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenCliente))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.length()").value(1))
+                .andExpect(jsonPath("$.data[0].profissionalId").value(elegivelId))
+                .andExpect(jsonPath("$.data[0].nomeExibicao").value("Profissional Elegivel"))
+                .andExpect(jsonPath("$.data[0].fotoPerfilUrl").doesNotExist())
+                .andExpect(jsonPath("$.data[0].experienciaAnos").value(3))
+                .andExpect(jsonPath("$.data[0].notaMedia").value(0))
+                .andExpect(jsonPath("$.data[0].totalAvaliacoes").value(0));
+    }
+
+    @Test
+    void clienteDonaListaProfissionaisConsiderandoVerificacaoEfetivaMaisRecente() throws Exception {
+        String tokenCliente = criarClienteELogar("m3b.verificacao-efetiva-cliente@example.com");
+        String tokenAdmin = login("admin@leidycleaner.local", "Admin123!local");
+        Long regiaoSolicitacaoId = segundaRegiaoId();
+        Long solicitacaoId = criarSolicitacao(tokenCliente, criarEndereco(tokenCliente), regiaoSolicitacaoId, "FAXINA_RESIDENCIAL");
+
+        ProfissionalConfigurada aprovadaAtual = criarProfissionalConfiguradaComToken(
+                "m3b.verificacao-atual-aprovada@example.com",
+                "71322233344",
+                "Profissional Aprovada Atual",
+                "ATIVA",
+                "APROVADO",
+                true,
+                "APROVADO",
+                List.of(regiaoSolicitacaoId),
+                "QUINTA",
+                "08:00",
+                "12:00"
+        );
+        ProfissionalConfigurada aprovadaDepoisRejeitada = criarProfissionalConfiguradaComToken(
+                "m3b.verificacao-rejeitada@example.com",
+                "71422233344",
+                "Profissional Rejeitada Atual",
+                "ATIVA",
+                "APROVADO",
+                true,
+                "APROVADO",
+                List.of(regiaoSolicitacaoId),
+                "QUINTA",
+                "08:00",
+                "12:00"
+        );
+        adicionarDocumentoVerificacaoAnalisado(aprovadaDepoisRejeitada.tokenProfissional(), tokenAdmin, "REJEITADO");
+
+        ProfissionalConfigurada aprovadaDepoisEmAnalise = criarProfissionalConfiguradaComToken(
+                "m3b.verificacao-em-analise@example.com",
+                "71522233344",
+                "Profissional Em Analise Atual",
+                "ATIVA",
+                "APROVADO",
+                true,
+                "APROVADO",
+                List.of(regiaoSolicitacaoId),
+                "QUINTA",
+                "08:00",
+                "12:00"
+        );
+        adicionarDocumentoVerificacaoAnalisado(aprovadaDepoisEmAnalise.tokenProfissional(), tokenAdmin, "EM_ANALISE");
+
+        ProfissionalConfigurada semAprovacaoEfetiva = criarProfissionalConfiguradaComToken(
+                "m3b.verificacao-sem-aprovacao@example.com",
+                "71622233344",
+                "Profissional Sem Aprovacao Efetiva",
+                "ATIVA",
+                "APROVADO",
+                true,
+                "PENDENTE",
+                List.of(regiaoSolicitacaoId),
+                "QUINTA",
+                "08:00",
+                "12:00"
+        );
+
+        String response = mockMvc.perform(get("/api/v1/solicitacoes/{id}/profissionais-disponiveis", solicitacaoId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenCliente))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        List<Long> idsRetornados = objectMapper.readTree(response)
+                .path("data")
+                .findValues("profissionalId")
+                .stream()
+                .map(JsonNode::asLong)
+                .toList();
+
+        assertThat(idsRetornados)
+                .contains(aprovadaAtual.perfilId())
+                .doesNotContain(
+                        aprovadaDepoisRejeitada.perfilId(),
+                        aprovadaDepoisEmAnalise.perfilId(),
+                        semAprovacaoEfetiva.perfilId()
+                );
+    }
+
+    @Test
+    void clienteNaoListaProfissionaisDisponiveisDeSolicitacaoDeOutraCliente() throws Exception {
+        String tokenDona = criarClienteELogar("m3b.dona-listagem@example.com");
+        String tokenOutra = criarClienteELogar("m3b.outra-listagem@example.com");
+        Long solicitacaoId = criarSolicitacao(tokenDona, criarEndereco(tokenDona), primeiraRegiaoId(), "FAXINA_RESIDENCIAL");
+
+        mockMvc.perform(get("/api/v1/solicitacoes/{id}/profissionais-disponiveis", solicitacaoId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenOutra))
+                .andExpect(status().isNotFound())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("SOLICITACAO_NOT_FOUND"))
+                .andExpect(jsonPath("$.errors").isArray());
+    }
+
+    @Test
+    void profissionalNaoUsaFluxoClienteParaListarElegiveis() throws Exception {
+        String tokenCliente = criarClienteELogar("m3b.cliente-fluxo@example.com");
+        Long solicitacaoId = criarSolicitacao(tokenCliente, criarEndereco(tokenCliente), primeiraRegiaoId(), "FAXINA_RESIDENCIAL");
+        String tokenProfissional = criarProfissionalELogar("m3b.profissional-fluxo@example.com", "70822233344");
+
+        mockMvc.perform(get("/api/v1/solicitacoes/{id}/profissionais-disponiveis", solicitacaoId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenProfissional))
+                .andExpect(status().isForbidden())
+                .andExpect(header().doesNotExist("WWW-Authenticate"))
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("FORBIDDEN"))
+                .andExpect(jsonPath("$.errors").isArray());
+    }
+
+    @Test
+    void endpointDeProfissionaisDisponiveisExigeJwt() throws Exception {
+        mockMvc.perform(get("/api/v1/solicitacoes/1/profissionais-disponiveis"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(header().doesNotExist("WWW-Authenticate"))
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
+    }
+
     private Long criarSolicitacao(String token, Long enderecoId, Long regiaoId, String tipoServico) throws Exception {
         String response = mockMvc.perform(post("/api/v1/solicitacoes")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
@@ -257,6 +505,196 @@ class SolicitacaoFaxinaIntegrationTest {
         return login(email, "senha-segura-123");
     }
 
+    private Long criarProfissionalConfigurada(
+            String email,
+            String cpf,
+            String nomeExibicao,
+            String statusConta,
+            String statusAprovacao,
+            boolean ativoParaReceberChamados,
+            String statusVerificacao,
+            List<Long> regiaoIds,
+            String diaSemana,
+            String horaInicio,
+            String horaFim
+    ) throws Exception {
+        return criarProfissionalConfiguradaComToken(
+                email,
+                cpf,
+                nomeExibicao,
+                statusConta,
+                statusAprovacao,
+                ativoParaReceberChamados,
+                statusVerificacao,
+                regiaoIds,
+                diaSemana,
+                horaInicio,
+                horaFim
+        ).perfilId();
+    }
+
+    private ProfissionalConfigurada criarProfissionalConfiguradaComToken(
+            String email,
+            String cpf,
+            String nomeExibicao,
+            String statusConta,
+            String statusAprovacao,
+            boolean ativoParaReceberChamados,
+            String statusVerificacao,
+            List<Long> regiaoIds,
+            String diaSemana,
+            String horaInicio,
+            String horaFim
+    ) throws Exception {
+        String tokenProfissional = cadastrarProfissional(email, cpf, nomeExibicao);
+        Long perfilId = buscarMeuPerfilProfissionalId(tokenProfissional);
+        String tokenAdmin = login("admin@leidycleaner.local", "Admin123!local");
+
+        mockMvc.perform(patch("/api/v1/profissionais/{id}/aprovacao", perfilId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenAdmin)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "statusAprovacao": "%s"
+                                }
+                                """.formatted(statusAprovacao)))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(put("/api/v1/profissionais/me")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenProfissional)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "nomeExibicao": "%s",
+                                  "descricao": "Profissional preparada para seleção",
+                                  "experienciaAnos": 3,
+                                  "ativoParaReceberChamados": %s
+                                }
+                                """.formatted(nomeExibicao, ativoParaReceberChamados)))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/v1/profissionais/me/regioes")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenProfissional)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "regiaoIds": %s
+                                }
+                                """.formatted(objectMapper.writeValueAsString(regiaoIds))))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/v1/profissionais/me/disponibilidades")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenProfissional)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "diaSemana": "%s",
+                                  "horaInicio": "%s",
+                                  "horaFim": "%s",
+                                  "ativo": true
+                                }
+                                """.formatted(diaSemana, horaInicio, horaFim)))
+                .andExpect(status().isCreated());
+
+        Long documentoId = submeterDocumentoVerificacao(tokenProfissional);
+        mockMvc.perform(patch("/api/v1/verificacoes/{id}/analisar", documentoId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenAdmin)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "statusVerificacao": "%s",
+                                  "observacaoAnalise": "Ajuste para teste de elegibilidade"
+                                }
+                                """.formatted(statusVerificacao)))
+                .andExpect(status().isOk());
+
+        Long usuarioId = buscarUsuarioAutenticadoId(tokenProfissional);
+        mockMvc.perform(patch("/api/v1/usuarios/{id}/status", usuarioId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenAdmin)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "statusConta": "%s"
+                        }
+                        """.formatted(statusConta)))
+                .andExpect(status().isOk());
+
+        return new ProfissionalConfigurada(perfilId, tokenProfissional);
+    }
+
+    private String cadastrarProfissional(String email, String cpf, String nomeExibicao) throws Exception {
+        mockMvc.perform(post("/api/v1/usuarios/profissionais")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "nomeCompleto": "%s",
+                                  "email": "%s",
+                                  "telefone": "+5551988889999",
+                                  "senha": "senha-segura-123",
+                                  "nomeExibicao": "%s",
+                                  "cpf": "%s",
+                                  "dataNascimento": "1990-03-20"
+                                }
+                                """.formatted(nomeExibicao, email, nomeExibicao, cpf)))
+                .andExpect(status().isCreated());
+        return login(email, "senha-segura-123");
+    }
+
+    private Long buscarMeuPerfilProfissionalId(String tokenProfissional) throws Exception {
+        String response = mockMvc.perform(get("/api/v1/profissionais/me")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenProfissional))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        return objectMapper.readTree(response).path("data").path("id").asLong();
+    }
+
+    private Long buscarUsuarioAutenticadoId(String token) throws Exception {
+        String response = mockMvc.perform(get("/api/v1/auth/me")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        return objectMapper.readTree(response).path("data").path("id").asLong();
+    }
+
+    private Long submeterDocumentoVerificacao(String tokenProfissional) throws Exception {
+        String response = mockMvc.perform(post("/api/v1/verificacoes/documentos")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenProfissional)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "tipoDocumento": "CPF",
+                                  "numeroDocumento": "12345678901",
+                                  "documentoFrenteUrl": "local/documentos/frente.png",
+                                  "documentoVersoUrl": "local/documentos/verso.png",
+                                  "selfieUrl": "local/documentos/selfie.png",
+                                  "comprovanteResidenciaUrl": "local/documentos/comprovante.png"
+                                }
+                                """))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        return objectMapper.readTree(response).path("data").path("id").asLong();
+    }
+
+    private void adicionarDocumentoVerificacaoAnalisado(String tokenProfissional, String tokenAdmin, String statusVerificacao) throws Exception {
+        Long documentoId = submeterDocumentoVerificacao(tokenProfissional);
+        mockMvc.perform(patch("/api/v1/verificacoes/{id}/analisar", documentoId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenAdmin)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "statusVerificacao": "%s",
+                                  "observacaoAnalise": "Documento posterior para teste de verificacao efetiva"
+                                }
+                                """.formatted(statusVerificacao)))
+                .andExpect(status().isOk());
+    }
+
     private String login(String email, String senha) throws Exception {
         String response = mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -276,6 +714,10 @@ class SolicitacaoFaxinaIntegrationTest {
 
     private Long primeiraRegiaoId() {
         return regiaoAtendimentoRepository.findByAtivoTrueOrderByNomeAsc().get(0).getId();
+    }
+
+    private Long segundaRegiaoId() {
+        return regiaoAtendimentoRepository.findByAtivoTrueOrderByNomeAsc().get(1).getId();
     }
 
     private String solicitacaoJson(Long enderecoId, Long regiaoId, String tipoServico) {

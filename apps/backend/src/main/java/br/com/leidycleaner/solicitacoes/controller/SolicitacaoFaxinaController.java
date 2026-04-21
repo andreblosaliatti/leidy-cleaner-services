@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import br.com.leidycleaner.auth.security.UsuarioPrincipal;
 import br.com.leidycleaner.core.ApiPaths;
 import br.com.leidycleaner.core.dto.ApiResponse;
+import br.com.leidycleaner.solicitacoes.dto.ProfissionalDisponivelDto;
 import br.com.leidycleaner.solicitacoes.dto.SolicitacaoFaxinaDto;
 import br.com.leidycleaner.solicitacoes.dto.SolicitacaoFaxinaRequest;
 import br.com.leidycleaner.solicitacoes.service.SolicitacaoFaxinaService;
@@ -51,6 +52,14 @@ public class SolicitacaoFaxinaController {
             @PathVariable Long id
     ) {
         return ApiResponse.success(solicitacaoFaxinaService.buscarMinha(principal.getId(), id));
+    }
+
+    @GetMapping("/{id}/profissionais-disponiveis")
+    public ApiResponse<List<ProfissionalDisponivelDto>> listarProfissionaisDisponiveis(
+            @AuthenticationPrincipal UsuarioPrincipal principal,
+            @PathVariable Long id
+    ) {
+        return ApiResponse.success(solicitacaoFaxinaService.listarProfissionaisDisponiveis(principal.getId(), id));
     }
 
     @PatchMapping("/{id}/cancelar")
