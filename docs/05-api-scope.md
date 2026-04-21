@@ -1,0 +1,272 @@
+# Escopo de API REST
+
+## 1. Convenções
+
+### Base
+`/api/v1`
+
+### Resposta padrão de sucesso
+```json
+{
+  "success": true,
+  "data": {}
+}
+```
+
+### Resposta padrão de erro
+```json
+{
+  "success": false,
+  "code": "ERROR_CODE",
+  "message": "Mensagem legível",
+  "errors": []
+}
+```
+
+### Paginação
+- `page`
+- `size`
+- `sort`
+
+---
+
+## 2. Auth
+
+### POST `/auth/login`
+Realiza login.
+
+### GET `/auth/me`
+Retorna dados do usuário autenticado.
+
+---
+
+## 3. Usuários
+
+### POST `/usuarios/clientes`
+Cria conta de cliente.
+
+### POST `/usuarios/profissionais`
+Cria conta de profissional.
+
+### PATCH `/usuarios/{id}/status`
+Admin altera status da conta.
+
+---
+
+## 4. Endereços
+
+### POST `/enderecos`
+Cria endereço do usuário autenticado.
+
+### GET `/enderecos/meus`
+Lista endereços do usuário autenticado.
+
+### PUT `/enderecos/{id}`
+Atualiza endereço.
+
+### DELETE `/enderecos/{id}`
+Remove endereço.
+
+---
+
+## 5. Regiões
+
+### GET `/regioes`
+Lista regiões ativas.
+
+### POST `/regioes`
+Admin cria região.
+
+### PUT `/regioes/{id}`
+Admin atualiza região.
+
+### PATCH `/regioes/{id}/ativacao`
+Admin ativa/inativa região.
+
+---
+
+## 6. Profissional
+
+### GET `/profissionais/me`
+Retorna o perfil da profissional logada.
+
+### PUT `/profissionais/me`
+Atualiza perfil da profissional.
+
+### POST `/profissionais/me/regioes`
+Define regiões atendidas.
+
+### GET `/profissionais/me/regioes`
+Lista regiões da profissional.
+
+### POST `/profissionais/me/disponibilidades`
+Cria disponibilidade semanal.
+
+### GET `/profissionais/me/disponibilidades`
+Lista disponibilidades.
+
+### PUT `/profissionais/me/disponibilidades/{id}`
+Atualiza disponibilidade.
+
+### DELETE `/profissionais/me/disponibilidades/{id}`
+Remove disponibilidade.
+
+### GET `/profissionais`
+Admin lista profissionais.
+
+### PATCH `/profissionais/{id}/aprovacao`
+Admin aprova/rejeita profissional.
+
+---
+
+## 7. Verificação documental
+
+### POST `/verificacoes/documentos`
+Faz upload/registro dos arquivos de verificação.
+
+### GET `/verificacoes/minha`
+Usuário vê o status da própria verificação.
+
+### GET `/verificacoes`
+Admin lista verificações.
+
+### GET `/verificacoes/{id}`
+Admin vê detalhes.
+
+### PATCH `/verificacoes/{id}/analisar`
+Admin aprova/rejeita análise.
+
+---
+
+## 8. Solicitações
+
+### POST `/solicitacoes`
+Cliente cria solicitação de faxina.
+
+### GET `/solicitacoes/minhas`
+Cliente lista suas solicitações.
+
+### GET `/solicitacoes/{id}`
+Detalhe da solicitação.
+
+### PATCH `/solicitacoes/{id}/cancelar`
+Cancela solicitação.
+
+### GET `/solicitacoes/{id}/profissionais-disponiveis`
+Lista profissionais elegíveis.
+
+### POST `/solicitacoes/{id}/selecionados`
+Cliente seleciona até 3 profissionais.
+
+---
+
+## 9. Convites
+
+### GET `/convites/meus`
+Profissional lista convites.
+
+### GET `/convites/{id}`
+Detalhe do convite.
+
+### POST `/convites/{id}/aceitar`
+Profissional aceita convite.
+
+### POST `/convites/{id}/recusar`
+Profissional recusa convite.
+
+---
+
+## 10. Atendimentos
+
+### GET `/atendimentos/meus`
+Lista atendimentos do usuário autenticado.
+
+### GET `/atendimentos/{id}`
+Detalha atendimento.
+
+### GET `/atendimentos`
+Admin lista atendimentos.
+
+### POST `/atendimentos/{id}/iniciar`
+Profissional inicia o serviço.
+
+### POST `/atendimentos/{id}/finalizar`
+Profissional finaliza o serviço.
+
+### GET `/atendimentos/{id}/checkpoints`
+Lista checkpoints do atendimento.
+
+---
+
+## 11. Pagamentos
+
+### POST `/pagamentos`
+Cria cobrança do atendimento.
+
+### GET `/pagamentos/{id}`
+Consulta pagamento.
+
+### GET `/pagamentos/atendimento/{atendimentoId}`
+Consulta pagamento pelo atendimento.
+
+### POST `/pagamentos/{id}/consultar-status`
+Reconsulta o gateway.
+
+### POST `/pagamentos/webhooks/asaas`
+Recebe webhook do Asaas.
+
+---
+
+## 12. Avaliações
+
+### POST `/avaliacoes`
+Cliente cria avaliação da profissional.
+
+### GET `/profissionais/{id}/avaliacoes`
+Lista avaliações da profissional.
+
+---
+
+## 13. Ocorrências
+
+### POST `/ocorrencias`
+Abre ocorrência.
+
+### GET `/ocorrencias/meus`
+Usuário lista suas ocorrências.
+
+### GET `/ocorrencias/{id}`
+Detalha ocorrência.
+
+### GET `/ocorrencias`
+Admin lista ocorrências.
+
+### PATCH `/ocorrencias/{id}/status`
+Admin altera status.
+
+---
+
+## 14. Regras críticas de API
+
+### 14.1 Aceite de convite
+A rota de aceite deve:
+- validar que a solicitação ainda está aberta
+- validar que o convite ainda está ativo
+- criar o atendimento
+- cancelar os demais convites
+- rodar em transação
+
+### 14.2 Webhook de pagamento
+A rota de webhook deve:
+- validar a autenticidade/origem do evento
+- localizar o pagamento correto
+- ser idempotente
+- atualizar o pagamento
+- atualizar o atendimento quando o pagamento estiver confirmado
+
+### 14.3 Avaliação
+A rota de avaliação deve validar:
+- se o usuário é o cliente daquele atendimento
+- se o atendimento está finalizado
+- se a avaliação ainda não existe
+- se a nota está entre 1 e 5
