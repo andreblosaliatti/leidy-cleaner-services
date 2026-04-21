@@ -1,0 +1,32 @@
+# OS/editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+logs/
+
+# Frontend
+apps/frontend/node_modules/
+apps/frontend/dist/
+apps/frontend/.vite/
+
+# Backend
+apps/backend/target/
+apps/backend/.mvn/wrapper/maven-wrapper.jar
+
+# Java
+*.class
+
+# Local data
+postgres-data/
+infra/postgres-data/

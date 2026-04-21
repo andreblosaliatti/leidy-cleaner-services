@@ -1,30 +1,120 @@
-# Leidy Cleaner Services — Planning Pack
+# Leidy Cleaner Services
 
-Este pacote consolida a versão revisada do planejamento do produto, arquitetura, domínio, backlog e instruções para agentes de código.
+Monorepo da plataforma operacional de intermediacao de servicos de limpeza residencial **Leidy Cleaner Services**.
 
-## Arquivos
+O produto segue as decisoes do `AGENTS.md` e de `docs/spec.md`: frontend React, backend Spring Boot, PostgreSQL, pagamento futuro via Asaas vinculado ao atendimento e confirmacao por webhook.
 
-- `00-executive-summary.md` — resumo executivo e decisões centrais
-- `01-decisions-and-options.md` — opções avaliadas e decisões finais
-- `02-prd.md` — PRD consolidado
-- `03-architecture.md` — arquitetura técnica recomendada
-- `04-domain-model.md` — modelo de domínio e regras principais
-- `05-api-scope.md` — escopo da API REST e fluxos críticos
-- `06-roadmap-and-backlog.md` — roadmap, milestones e backlog por fases
-- `AGENTS.md` — instruções operacionais para Codex/agent coding
+## Estrutura
 
-## Posição final recomendada
+```text
+.
+├── apps/
+│   ├── backend/
+│   └── frontend/
+├── docs/
+├── infra/
+├── docker-compose.yml
+└── .env.example
+```
 
-- Monorepo
-- Frontend React + TypeScript + Vite
-- Backend Java 21 + Spring Boot 3.x
-- PostgreSQL + Flyway
-- Pagamentos com Asaas
-- Cobrança vinculada ao atendimento
-- Webhook do gateway como fonte de verdade para confirmação de pagamento
-- Repasse fora da plataforma
-- Avaliação unilateral: apenas o cliente avalia a profissional
+## Requisitos locais
 
-## Princípio de construção
+- Java 21
+- Maven 3.9+
+- Node.js 20+
+- npm 10+
+- Docker e Docker Compose
 
-O sistema deve ser tratado como uma plataforma operacional de intermediação de serviços, não como um site institucional com agendamento.
+## Configuracao inicial
+
+Crie seu arquivo local de ambiente a partir do exemplo:
+
+```bash
+cp .env.example .env
+```
+
+## Banco de dados
+
+Suba o PostgreSQL local:
+
+```bash
+docker compose up -d postgres
+```
+
+Confira o status:
+
+```bash
+docker compose ps
+```
+
+Para parar:
+
+```bash
+docker compose down
+```
+
+## Backend
+
+Execute a API Spring Boot:
+
+```bash
+cd apps/backend
+mvn spring-boot:run
+```
+
+Por padrao, a API sobe em:
+
+```text
+http://localhost:8080
+```
+
+O prefixo previsto para os endpoints de negocio e:
+
+```text
+/api/v1
+```
+
+## Frontend
+
+Instale dependencias e suba o Vite:
+
+```bash
+cd apps/frontend
+npm install
+npm run dev
+```
+
+Por padrao, o frontend sobe em:
+
+```text
+http://localhost:5173
+```
+
+## Scripts uteis
+
+Backend:
+
+```bash
+cd apps/backend
+mvn test
+```
+
+Frontend:
+
+```bash
+cd apps/frontend
+npm run build
+```
+
+## Estado atual
+
+Este repositorio esta na fundacao tecnica do MVP:
+
+- monorepo preservado
+- backend Spring Boot minimo para boot
+- frontend React + Vite minimo
+- Tailwind CSS configurado
+- PostgreSQL local via Docker Compose
+- ambiente local documentado
+
+Ainda nao ha implementacao de entidades de negocio, autenticacao real, pagamentos, convites, solicitacoes ou fluxos operacionais. Esses itens pertencem aos proximos milestones.

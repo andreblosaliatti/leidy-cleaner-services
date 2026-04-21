@@ -1,0 +1,23 @@
+server:
+  port: ${BACKEND_PORT:8080}
+
+spring:
+  application:
+    name: leidy-cleaner-services
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/leidy_cleaner}
+    username: ${SPRING_DATASOURCE_USERNAME:leidy}
+    password: ${SPRING_DATASOURCE_PASSWORD:leidy_dev_password}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+  flyway:
+    enabled: true
+
+logging:
+  level:
+    org.springframework.security: INFO
