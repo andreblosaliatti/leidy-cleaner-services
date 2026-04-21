@@ -1,6 +1,7 @@
 package br.com.leidycleaner.profissionais.repository;
 
 import java.time.LocalTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -21,6 +22,8 @@ public interface PerfilProfissionalRepository extends JpaRepository<PerfilProfis
     Optional<PerfilProfissional> findByCpf(String cpf);
 
     boolean existsByCpf(String cpf);
+
+    List<PerfilProfissional> findByIdIn(Collection<Long> ids);
 
     // Effective/current verification means no newer document exists by analisadoEm,
     // otherwise criadoEm, with id desc as deterministic tie-breaker.

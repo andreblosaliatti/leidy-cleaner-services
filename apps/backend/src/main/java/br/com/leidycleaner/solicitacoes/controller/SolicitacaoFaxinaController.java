@@ -17,6 +17,8 @@ import br.com.leidycleaner.auth.security.UsuarioPrincipal;
 import br.com.leidycleaner.core.ApiPaths;
 import br.com.leidycleaner.core.dto.ApiResponse;
 import br.com.leidycleaner.solicitacoes.dto.ProfissionalDisponivelDto;
+import br.com.leidycleaner.solicitacoes.dto.SelecaoProfissionaisDto;
+import br.com.leidycleaner.solicitacoes.dto.SelecionarProfissionaisRequest;
 import br.com.leidycleaner.solicitacoes.dto.SolicitacaoFaxinaDto;
 import br.com.leidycleaner.solicitacoes.dto.SolicitacaoFaxinaRequest;
 import br.com.leidycleaner.solicitacoes.service.SolicitacaoFaxinaService;
@@ -60,6 +62,15 @@ public class SolicitacaoFaxinaController {
             @PathVariable Long id
     ) {
         return ApiResponse.success(solicitacaoFaxinaService.listarProfissionaisDisponiveis(principal.getId(), id));
+    }
+
+    @PostMapping("/{id}/selecionados")
+    public ApiResponse<SelecaoProfissionaisDto> selecionarProfissionais(
+            @AuthenticationPrincipal UsuarioPrincipal principal,
+            @PathVariable Long id,
+            @Valid @RequestBody SelecionarProfissionaisRequest request
+    ) {
+        return ApiResponse.success(solicitacaoFaxinaService.selecionarProfissionais(principal.getId(), id, request));
     }
 
     @PatchMapping("/{id}/cancelar")

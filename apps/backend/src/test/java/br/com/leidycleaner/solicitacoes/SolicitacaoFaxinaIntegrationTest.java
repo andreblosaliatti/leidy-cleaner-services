@@ -25,6 +25,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import br.com.leidycleaner.regioes.repository.RegiaoAtendimentoRepository;
+import br.com.leidycleaner.solicitacoes.repository.SolicitacaoProfissionalSelecionadoRepository;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -34,6 +35,7 @@ class SolicitacaoFaxinaIntegrationTest {
     private final MockMvc mockMvc;
     private final ObjectMapper objectMapper;
     private final RegiaoAtendimentoRepository regiaoAtendimentoRepository;
+    private final SolicitacaoProfissionalSelecionadoRepository solicitacaoProfissionalSelecionadoRepository;
 
     private record ProfissionalConfigurada(Long perfilId, String tokenProfissional) {
     }
@@ -42,11 +44,13 @@ class SolicitacaoFaxinaIntegrationTest {
     SolicitacaoFaxinaIntegrationTest(
             MockMvc mockMvc,
             ObjectMapper objectMapper,
-            RegiaoAtendimentoRepository regiaoAtendimentoRepository
+            RegiaoAtendimentoRepository regiaoAtendimentoRepository,
+            SolicitacaoProfissionalSelecionadoRepository solicitacaoProfissionalSelecionadoRepository
     ) {
         this.mockMvc = mockMvc;
         this.objectMapper = objectMapper;
         this.regiaoAtendimentoRepository = regiaoAtendimentoRepository;
+        this.solicitacaoProfissionalSelecionadoRepository = solicitacaoProfissionalSelecionadoRepository;
     }
 
     @Test
@@ -433,6 +437,190 @@ class SolicitacaoFaxinaIntegrationTest {
                 .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
     }
 
+    @Test
+    void clienteDonaPersisteSelecaoValidaDeUmaProfissional() throws Exception {
+        String tokenCliente = criarClienteELogar("m3c.selecao-uma-cliente@example.com");
+        Long regiaoId = primeiraRegiaoId();
+        Long solicitacaoId = criarSolicitacao(tokenCliente, criarEndereco(tokenCliente), regiaoId, "FAXINA_RESIDENCIAL");
+        Long profissionalId = criarProfissionalConfigurada(
+                "m3c.selecao-uma-profissional@example.com",
+                "72122233344",
+                "Profissional Selecao Uma",
+                "ATIVA",
+                "APROVADO",
+                true,
+                "APROVADO",
+                List.of(regiaoId),
+                "QUINTA",
+                "08:00",
+                "12:00"
+        );
+
+        mockMvc.perform(post("/api/v1/solicitacoes/{id}/selecionados", solicitacaoId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenCliente)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(selecaoJson(List.of(profissionalId))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.solicitacaoId").value(solicitacaoId))
+                .andExpect(jsonPath("$.data.selecionados.length()").value(1))
+                .andExpect(jsonPath("$.data.selecionados[0].profissionalId").value(profissionalId))
+                .andExpect(jsonPath("$.data.selecionados[0].ordemEscolha").value(1));
+    }
+
+    @Test
+    void clienteDonaPersisteSelecaoValidaDeTresProfissionaisNaOrdemInformada() throws Exception {
+        String tokenCliente = criarClienteELogar("m3c.selecao-tres-cliente@example.com");
+        Long regiaoId = segundaRegiaoId();
+        Long solicitacaoId = criarSolicitacao(tokenCliente, criarEndereco(tokenCliente), regiaoId, "FAXINA_RESIDENCIAL");
+        Long primeira = criarProfissionalConfigurada("m3c.ordem-primeira@example.com", "72222233344", "Profissional Ordem Primeira", "ATIVA", "APROVADO", true, "APROVADO", List.of(regiaoId), "QUINTA", "08:00", "12:00");
+        Long segunda = criarProfissionalConfigurada("m3c.ordem-segunda@example.com", "72322233344", "Profissional Ordem Segunda", "ATIVA", "APROVADO", true, "APROVADO", List.of(regiaoId), "QUINTA", "08:00", "12:00");
+        Long terceira = criarProfissionalConfigurada("m3c.ordem-terceira@example.com", "72422233344", "Profissional Ordem Terceira", "ATIVA", "APROVADO", true, "APROVADO", List.of(regiaoId), "QUINTA", "08:00", "12:00");
+
+        mockMvc.perform(post("/api/v1/solicitacoes/{id}/selecionados", solicitacaoId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenCliente)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(selecaoJson(List.of(segunda, terceira, primeira))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.selecionados.length()").value(3))
+                .andExpect(jsonPath("$.data.selecionados[0].profissionalId").value(segunda))
+                .andExpect(jsonPath("$.data.selecionados[0].ordemEscolha").value(1))
+                .andExpect(jsonPath("$.data.selecionados[1].profissionalId").value(terceira))
+                .andExpect(jsonPath("$.data.selecionados[1].ordemEscolha").value(2))
+                .andExpect(jsonPath("$.data.selecionados[2].profissionalId").value(primeira))
+                .andExpect(jsonPath("$.data.selecionados[2].ordemEscolha").value(3));
+
+        var persistidos = solicitacaoProfissionalSelecionadoRepository.findBySolicitacaoIdOrderByOrdemEscolhaAsc(solicitacaoId);
+        assertThat(persistidos)
+                .extracting(selecionado -> selecionado.getProfissional().getId())
+                .containsExactly(segunda, terceira, primeira);
+        assertThat(persistidos)
+                .extracting("ordemEscolha")
+                .containsExactly(1, 2, 3);
+    }
+
+    @Test
+    void clienteDonaSubstituiSelecaoAnteriorAoEnviarNovaSelecao() throws Exception {
+        String tokenCliente = criarClienteELogar("m3c.substitui-cliente@example.com");
+        Long regiaoId = primeiraRegiaoId();
+        Long solicitacaoId = criarSolicitacao(tokenCliente, criarEndereco(tokenCliente), regiaoId, "FAXINA_RESIDENCIAL");
+        Long primeira = criarProfissionalConfigurada("m3c.substitui-primeira@example.com", "72522233344", "Profissional Substitui Primeira", "ATIVA", "APROVADO", true, "APROVADO", List.of(regiaoId), "QUINTA", "08:00", "12:00");
+        Long segunda = criarProfissionalConfigurada("m3c.substitui-segunda@example.com", "72622233344", "Profissional Substitui Segunda", "ATIVA", "APROVADO", true, "APROVADO", List.of(regiaoId), "QUINTA", "08:00", "12:00");
+        Long terceira = criarProfissionalConfigurada("m3c.substitui-terceira@example.com", "72722233344", "Profissional Substitui Terceira", "ATIVA", "APROVADO", true, "APROVADO", List.of(regiaoId), "QUINTA", "08:00", "12:00");
+
+        selecionarProfissionais(tokenCliente, solicitacaoId, List.of(primeira, segunda));
+        selecionarProfissionais(tokenCliente, solicitacaoId, List.of(terceira));
+
+        var persistidos = solicitacaoProfissionalSelecionadoRepository.findBySolicitacaoIdOrderByOrdemEscolhaAsc(solicitacaoId);
+        assertThat(persistidos).hasSize(1);
+        assertThat(persistidos.getFirst().getProfissional().getId()).isEqualTo(terceira);
+        assertThat(persistidos.getFirst().getOrdemEscolha()).isEqualTo(1);
+    }
+
+    @Test
+    void selecaoSemProfissionaisOuComMaisDeTresMantemContratoDeErroJson() throws Exception {
+        String tokenCliente = criarClienteELogar("m3c.validacao-cliente@example.com");
+        Long solicitacaoId = criarSolicitacao(tokenCliente, criarEndereco(tokenCliente), primeiraRegiaoId(), "FAXINA_RESIDENCIAL");
+
+        mockMvc.perform(post("/api/v1/solicitacoes/{id}/selecionados", solicitacaoId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenCliente)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(selecaoJson(List.of())))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.errors").isArray());
+
+        mockMvc.perform(post("/api/v1/solicitacoes/{id}/selecionados", solicitacaoId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenCliente)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(selecaoJson(List.of(1L, 2L, 3L, 4L))))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.errors").isArray());
+    }
+
+    @Test
+    void selecaoComProfissionaisDuplicadosERejeitada() throws Exception {
+        String tokenCliente = criarClienteELogar("m3c.duplicada-cliente@example.com");
+        Long regiaoId = primeiraRegiaoId();
+        Long solicitacaoId = criarSolicitacao(tokenCliente, criarEndereco(tokenCliente), regiaoId, "FAXINA_RESIDENCIAL");
+        Long profissionalId = criarProfissionalConfigurada("m3c.duplicada-profissional@example.com", "72822233344", "Profissional Duplicada", "ATIVA", "APROVADO", true, "APROVADO", List.of(regiaoId), "QUINTA", "08:00", "12:00");
+
+        mockMvc.perform(post("/api/v1/solicitacoes/{id}/selecionados", solicitacaoId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenCliente)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(selecaoJson(List.of(profissionalId, profissionalId))))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("SELECAO_DUPLICADA"))
+                .andExpect(jsonPath("$.errors").isArray());
+    }
+
+    @Test
+    void selecaoComProfissionalNaoElegivelOuNaoEncontradaERejeitada() throws Exception {
+        String tokenCliente = criarClienteELogar("m3c.nao-elegivel-cliente@example.com");
+        Long regiaoId = primeiraRegiaoId();
+        Long solicitacaoId = criarSolicitacao(tokenCliente, criarEndereco(tokenCliente), regiaoId, "FAXINA_RESIDENCIAL");
+        Long naoElegivelId = criarProfissionalConfigurada("m3c.nao-elegivel-profissional@example.com", "72922233344", "Profissional Nao Elegivel", "ATIVA", "APROVADO", true, "PENDENTE", List.of(regiaoId), "QUINTA", "08:00", "12:00");
+
+        mockMvc.perform(post("/api/v1/solicitacoes/{id}/selecionados", solicitacaoId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenCliente)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(selecaoJson(List.of(naoElegivelId))))
+                .andExpect(status().isConflict())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("PROFISSIONAL_NAO_ELEGIVEL"))
+                .andExpect(jsonPath("$.errors").isArray());
+
+        mockMvc.perform(post("/api/v1/solicitacoes/{id}/selecionados", solicitacaoId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenCliente)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(selecaoJson(List.of(999999999L))))
+                .andExpect(status().isNotFound())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("PROFISSIONAL_NOT_FOUND"))
+                .andExpect(jsonPath("$.errors").isArray());
+    }
+
+    @Test
+    void clienteNaoSelecionaProfissionaisParaSolicitacaoDeOutraCliente() throws Exception {
+        String tokenDona = criarClienteELogar("m3c.dona-selecao@example.com");
+        String tokenOutra = criarClienteELogar("m3c.outra-selecao@example.com");
+        Long regiaoId = segundaRegiaoId();
+        Long solicitacaoId = criarSolicitacao(tokenDona, criarEndereco(tokenDona), regiaoId, "FAXINA_RESIDENCIAL");
+        Long profissionalId = criarProfissionalConfigurada("m3c.nao-dona-profissional@example.com", "73022233344", "Profissional Nao Dona", "ATIVA", "APROVADO", true, "APROVADO", List.of(regiaoId), "QUINTA", "08:00", "12:00");
+
+        mockMvc.perform(post("/api/v1/solicitacoes/{id}/selecionados", solicitacaoId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenOutra)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(selecaoJson(List.of(profissionalId))))
+                .andExpect(status().isNotFound())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("SOLICITACAO_NOT_FOUND"))
+                .andExpect(jsonPath("$.errors").isArray());
+    }
+
+    @Test
+    void endpointDeSelecaoExigeJwt() throws Exception {
+        mockMvc.perform(post("/api/v1/solicitacoes/1/selecionados")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(selecaoJson(List.of(1L))))
+                .andExpect(status().isUnauthorized())
+                .andExpect(header().doesNotExist("WWW-Authenticate"))
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
+    }
+
     private Long criarSolicitacao(String token, Long enderecoId, Long regiaoId, String tipoServico) throws Exception {
         String response = mockMvc.perform(post("/api/v1/solicitacoes")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
@@ -693,6 +881,23 @@ class SolicitacaoFaxinaIntegrationTest {
                                 }
                                 """.formatted(statusVerificacao)))
                 .andExpect(status().isOk());
+    }
+
+    private void selecionarProfissionais(String tokenCliente, Long solicitacaoId, List<Long> profissionalIds) throws Exception {
+        mockMvc.perform(post("/api/v1/solicitacoes/{id}/selecionados", solicitacaoId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenCliente)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(selecaoJson(profissionalIds)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+    }
+
+    private String selecaoJson(List<Long> profissionalIds) throws Exception {
+        return """
+                {
+                  "profissionalIds": %s
+                }
+                """.formatted(objectMapper.writeValueAsString(profissionalIds));
     }
 
     private String login(String email, String senha) throws Exception {
