@@ -76,12 +76,20 @@ public class PerfilProfissional {
             String nomeExibicao,
             String cpf,
             LocalDate dataNascimento,
+            String descricao,
+            String fotoPerfilUrl,
+            int experienciaAnos,
+            boolean ativoParaReceberChamados,
             StatusAprovacaoProfissional statusAprovacao
     ) {
         this.usuario = usuario;
         this.nomeExibicao = nomeExibicao;
         this.cpf = cpf;
         this.dataNascimento = dataNascimento;
+        this.descricao = descricao;
+        this.fotoPerfilUrl = fotoPerfilUrl;
+        this.experienciaAnos = experienciaAnos;
+        this.ativoParaReceberChamados = ativoParaReceberChamados;
         this.statusAprovacao = statusAprovacao;
     }
 

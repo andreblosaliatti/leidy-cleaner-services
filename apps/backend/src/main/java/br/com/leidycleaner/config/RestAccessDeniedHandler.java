@@ -1,18 +1,27 @@
 package br.com.leidycleaner.config;
 
 import java.io.IOException;
+import java.util.List;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.stereotype.Component;
 
+import br.com.leidycleaner.core.dto.ApiErrorResponse;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 @Component
 public class RestAccessDeniedHandler implements AccessDeniedHandler {
+
+    private final ObjectMapper objectMapper;
+
+    public RestAccessDeniedHandler(ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
+    }
 
     @Override
     public void handle(
@@ -22,8 +31,9 @@ public class RestAccessDeniedHandler implements AccessDeniedHandler {
     ) throws IOException, ServletException {
         response.setStatus(HttpServletResponse.SC_FORBIDDEN);
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        response.getWriter().write("""
-                {"success":false,"code":"FORBIDDEN","message":"Acesso negado","errors":[]}
-                """);
+        objectMapper.writeValue(
+                response.getWriter(),
+                ApiErrorResponse.of("FORBIDDEN", "Acesso negado", List.of())
+        );
     }
 }

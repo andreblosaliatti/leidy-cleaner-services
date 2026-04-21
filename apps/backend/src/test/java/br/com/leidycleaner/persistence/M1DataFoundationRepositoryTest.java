@@ -100,6 +100,10 @@ class M1DataFoundationRepositoryTest {
                 "Profissional Teste",
                 "12345678901",
                 LocalDate.of(1990, 1, 15),
+                null,
+                null,
+                0,
+                false,
                 StatusAprovacaoProfissional.PENDENTE
         ));
 

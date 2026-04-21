@@ -157,4 +157,12 @@ public class Usuario {
     public void adicionarRole(Role role) {
         roles.add(role);
     }
+
+    public void registrarLogin(OffsetDateTime momento) {
+        ultimoLoginEm = momento;
+    }
+
+    public void alterarStatusConta(StatusConta statusConta) {
+        this.statusConta = statusConta;
+    }
 }

@@ -1,6 +1,7 @@
 package br.com.leidycleaner.config;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -52,7 +53,13 @@ class SecurityConfigTest {
     @Test
     @WithMockUser(roles = "CLIENTE")
     void endpointSemPermissaoRetornaContratoJson403() throws Exception {
-        mockMvc.perform(get("/api/v1/admin/operacional"))
+        mockMvc.perform(patch("/api/v1/usuarios/1/status")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "statusConta": "BLOQUEADA"
+                                }
+                                """))
                 .andExpect(status().isForbidden())
                 .andExpect(header().doesNotExist("WWW-Authenticate"))
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))

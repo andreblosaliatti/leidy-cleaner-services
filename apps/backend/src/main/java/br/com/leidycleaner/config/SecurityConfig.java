@@ -1,20 +1,24 @@
 package br.com.leidycleaner.config;
 
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import br.com.leidycleaner.auth.security.JwtAuthenticationFilter;
+import br.com.leidycleaner.auth.security.JwtProperties;
 
 @Configuration
 @EnableWebSecurity
-@EnableConfigurationProperties(SecurityProperties.class)
+@EnableMethodSecurity
+@EnableConfigurationProperties({SecurityProperties.class, JwtProperties.class})
 public class SecurityConfig {
 
     @Bean
@@ -22,7 +26,8 @@ public class SecurityConfig {
             HttpSecurity http,
             SecurityProperties securityProperties,
             RestAuthenticationEntryPoint authenticationEntryPoint,
-            RestAccessDeniedHandler accessDeniedHandler
+            RestAccessDeniedHandler accessDeniedHandler,
+            JwtAuthenticationFilter jwtAuthenticationFilter
     ) throws Exception {
         return http
                 .csrf(csrf -> csrf.disable())
@@ -37,14 +42,9 @@ public class SecurityConfig {
                         .accessDeniedHandler(accessDeniedHandler))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(securityProperties.publicEndpoints()).permitAll()
-                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
-    }
-
-    @Bean
-    UserDetailsService userDetailsService() {
-        return new InMemoryUserDetailsManager();
     }
 
     @Bean
