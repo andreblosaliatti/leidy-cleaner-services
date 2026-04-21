@@ -466,6 +466,11 @@ class SolicitacaoFaxinaIntegrationTest {
                 .andExpect(jsonPath("$.data.selecionados.length()").value(1))
                 .andExpect(jsonPath("$.data.selecionados[0].profissionalId").value(profissionalId))
                 .andExpect(jsonPath("$.data.selecionados[0].ordemEscolha").value(1));
+
+        mockMvc.perform(get("/api/v1/solicitacoes/{id}", solicitacaoId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenCliente))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status").value("CONVITES_ENVIADOS"));
     }
 
     @Test
@@ -516,6 +521,98 @@ class SolicitacaoFaxinaIntegrationTest {
         assertThat(persistidos).hasSize(1);
         assertThat(persistidos.getFirst().getProfissional().getId()).isEqualTo(terceira);
         assertThat(persistidos.getFirst().getOrdemEscolha()).isEqualTo(1);
+    }
+
+    @Test
+    void selecaoValidaGeraConvitesEnviadosSemDuplicarAoRegerar() throws Exception {
+        String tokenCliente = criarClienteELogar("m4a.gera-convite-cliente@example.com");
+        Long regiaoId = primeiraRegiaoId();
+        Long solicitacaoId = criarSolicitacao(tokenCliente, criarEndereco(tokenCliente), regiaoId, "FAXINA_RESIDENCIAL");
+        ProfissionalConfigurada profissional = criarProfissionalConfiguradaComToken(
+                "m4a.gera-convite-profissional@example.com",
+                "73122233344",
+                "Profissional Convite Gerado",
+                "ATIVA",
+                "APROVADO",
+                true,
+                "APROVADO",
+                List.of(regiaoId),
+                "QUINTA",
+                "08:00",
+                "12:00"
+        );
+
+        selecionarProfissionais(tokenCliente, solicitacaoId, List.of(profissional.perfilId()));
+        selecionarProfissionais(tokenCliente, solicitacaoId, List.of(profissional.perfilId()));
+
+        mockMvc.perform(get("/api/v1/convites/meus")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + profissional.tokenProfissional()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.length()").value(1))
+                .andExpect(jsonPath("$.data[0].solicitacaoId").value(solicitacaoId))
+                .andExpect(jsonPath("$.data[0].status").value("ENVIADO"))
+                .andExpect(jsonPath("$.data[0].tipoServico").value("FAXINA_RESIDENCIAL"))
+                .andExpect(jsonPath("$.data[0].bairro").value("Centro Histórico"))
+                .andExpect(jsonPath("$.data[0].expiraEm").exists());
+
+        mockMvc.perform(get("/api/v1/solicitacoes/{id}", solicitacaoId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenCliente))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status").value("CONVITES_ENVIADOS"));
+    }
+
+    @Test
+    void profissionalConvidadaListaEConsultaApenasSeuConvite() throws Exception {
+        String tokenCliente = criarClienteELogar("m4a.detalhe-convite-cliente@example.com");
+        Long regiaoId = segundaRegiaoId();
+        Long solicitacaoId = criarSolicitacao(tokenCliente, criarEndereco(tokenCliente), regiaoId, "FAXINA_RESIDENCIAL");
+        ProfissionalConfigurada convidada = criarProfissionalConfiguradaComToken(
+                "m4a.convidada@example.com",
+                "73222233344",
+                "Profissional Convidada",
+                "ATIVA",
+                "APROVADO",
+                true,
+                "APROVADO",
+                List.of(regiaoId),
+                "QUINTA",
+                "08:00",
+                "12:00"
+        );
+        ProfissionalConfigurada outra = criarProfissionalConfiguradaComToken(
+                "m4a.outra-profissional@example.com",
+                "73322233344",
+                "Profissional Outra",
+                "ATIVA",
+                "APROVADO",
+                true,
+                "APROVADO",
+                List.of(regiaoId),
+                "QUINTA",
+                "08:00",
+                "12:00"
+        );
+        selecionarProfissionais(tokenCliente, solicitacaoId, List.of(convidada.perfilId()));
+
+        Long conviteId = primeiroConviteId(convidada.tokenProfissional());
+
+        mockMvc.perform(get("/api/v1/convites/{id}", conviteId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + convidada.tokenProfissional()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.conviteId").value(conviteId))
+                .andExpect(jsonPath("$.data.solicitacaoId").value(solicitacaoId))
+                .andExpect(jsonPath("$.data.status").value("ENVIADO"))
+                .andExpect(jsonPath("$.data.dataHoraDesejada").exists());
+
+        mockMvc.perform(get("/api/v1/convites/{id}", conviteId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + outra.tokenProfissional()))
+                .andExpect(status().isNotFound())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("CONVITE_NOT_FOUND"))
+                .andExpect(jsonPath("$.errors").isArray());
     }
 
     @Test
@@ -596,17 +693,23 @@ class SolicitacaoFaxinaIntegrationTest {
         String tokenOutra = criarClienteELogar("m3c.outra-selecao@example.com");
         Long regiaoId = segundaRegiaoId();
         Long solicitacaoId = criarSolicitacao(tokenDona, criarEndereco(tokenDona), regiaoId, "FAXINA_RESIDENCIAL");
-        Long profissionalId = criarProfissionalConfigurada("m3c.nao-dona-profissional@example.com", "73022233344", "Profissional Nao Dona", "ATIVA", "APROVADO", true, "APROVADO", List.of(regiaoId), "QUINTA", "08:00", "12:00");
+        ProfissionalConfigurada profissional = criarProfissionalConfiguradaComToken("m3c.nao-dona-profissional@example.com", "73022233344", "Profissional Nao Dona", "ATIVA", "APROVADO", true, "APROVADO", List.of(regiaoId), "QUINTA", "08:00", "12:00");
 
         mockMvc.perform(post("/api/v1/solicitacoes/{id}/selecionados", solicitacaoId)
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenOutra)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(selecaoJson(List.of(profissionalId))))
+                        .content(selecaoJson(List.of(profissional.perfilId()))))
                 .andExpect(status().isNotFound())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.code").value("SOLICITACAO_NOT_FOUND"))
                 .andExpect(jsonPath("$.errors").isArray());
+
+        mockMvc.perform(get("/api/v1/convites/meus")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + profissional.tokenProfissional()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.length()").value(0));
     }
 
     @Test
@@ -614,6 +717,23 @@ class SolicitacaoFaxinaIntegrationTest {
         mockMvc.perform(post("/api/v1/solicitacoes/1/selecionados")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(selecaoJson(List.of(1L))))
+                .andExpect(status().isUnauthorized())
+                .andExpect(header().doesNotExist("WWW-Authenticate"))
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
+    }
+
+    @Test
+    void endpointsDeConvitesExigemJwt() throws Exception {
+        mockMvc.perform(get("/api/v1/convites/meus"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(header().doesNotExist("WWW-Authenticate"))
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
+
+        mockMvc.perform(get("/api/v1/convites/1"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(header().doesNotExist("WWW-Authenticate"))
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
@@ -890,6 +1010,18 @@ class SolicitacaoFaxinaIntegrationTest {
                         .content(selecaoJson(profissionalIds)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
+    }
+
+    private Long primeiroConviteId(String tokenProfissional) throws Exception {
+        String response = mockMvc.perform(get("/api/v1/convites/meus")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenProfissional))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.length()").value(1))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        return objectMapper.readTree(response).path("data").get(0).path("conviteId").asLong();
     }
 
     private String selecaoJson(List<Long> profissionalIds) throws Exception {

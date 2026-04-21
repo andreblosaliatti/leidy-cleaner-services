@@ -120,6 +120,10 @@ public class SolicitacaoFaxina {
         status = StatusSolicitacao.CANCELADA;
     }
 
+    public void marcarConvitesEnviados() {
+        status = StatusSolicitacao.CONVITES_ENVIADOS;
+    }
+
     public Long getId() {
         return id;
     }

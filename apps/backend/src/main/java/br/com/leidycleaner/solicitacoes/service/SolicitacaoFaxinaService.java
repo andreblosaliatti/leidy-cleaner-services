@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import br.com.leidycleaner.clientes.entity.PerfilCliente;
 import br.com.leidycleaner.clientes.repository.PerfilClienteRepository;
+import br.com.leidycleaner.convites.service.ConviteProfissionalService;
 import br.com.leidycleaner.core.exception.BusinessException;
 import br.com.leidycleaner.enderecos.entity.Endereco;
 import br.com.leidycleaner.enderecos.repository.EnderecoRepository;
@@ -51,6 +52,7 @@ public class SolicitacaoFaxinaService {
     private final RegiaoAtendimentoRepository regiaoAtendimentoRepository;
     private final PerfilProfissionalRepository perfilProfissionalRepository;
     private final SolicitacaoProfissionalSelecionadoRepository solicitacaoProfissionalSelecionadoRepository;
+    private final ConviteProfissionalService conviteProfissionalService;
 
     public SolicitacaoFaxinaService(
             SolicitacaoFaxinaRepository solicitacaoFaxinaRepository,
@@ -58,7 +60,8 @@ public class SolicitacaoFaxinaService {
             EnderecoRepository enderecoRepository,
             RegiaoAtendimentoRepository regiaoAtendimentoRepository,
             PerfilProfissionalRepository perfilProfissionalRepository,
-            SolicitacaoProfissionalSelecionadoRepository solicitacaoProfissionalSelecionadoRepository
+            SolicitacaoProfissionalSelecionadoRepository solicitacaoProfissionalSelecionadoRepository,
+            ConviteProfissionalService conviteProfissionalService
     ) {
         this.solicitacaoFaxinaRepository = solicitacaoFaxinaRepository;
         this.perfilClienteRepository = perfilClienteRepository;
@@ -66,6 +69,7 @@ public class SolicitacaoFaxinaService {
         this.regiaoAtendimentoRepository = regiaoAtendimentoRepository;
         this.perfilProfissionalRepository = perfilProfissionalRepository;
         this.solicitacaoProfissionalSelecionadoRepository = solicitacaoProfissionalSelecionadoRepository;
+        this.conviteProfissionalService = conviteProfissionalService;
     }
 
     @Transactional
@@ -138,7 +142,7 @@ public class SolicitacaoFaxinaService {
     public SelecaoProfissionaisDto selecionarProfissionais(Long usuarioId, Long solicitacaoId, SelecionarProfissionaisRequest request) {
         buscarPerfilCliente(usuarioId);
         SolicitacaoFaxina solicitacao = buscarSolicitacaoDoCliente(usuarioId, solicitacaoId);
-        validarStatusParaElegibilidade(solicitacao);
+        validarStatusParaSelecao(solicitacao);
         List<Long> profissionalIds = request.profissionalIds();
         validarQuantidadeEDuplicidade(profissionalIds);
 
@@ -170,6 +174,8 @@ public class SolicitacaoFaxinaService {
         solicitacaoProfissionalSelecionadoRepository.deleteBySolicitacaoId(solicitacao.getId());
         solicitacaoProfissionalSelecionadoRepository.flush();
         List<SolicitacaoProfissionalSelecionado> selecionados = salvarSelecaoOrdenada(solicitacao, profissionalIds, profissionaisEncontrados);
+        conviteProfissionalService.substituirConvitesDaSolicitacao(solicitacao, selecionados);
+        solicitacao.marcarConvitesEnviados();
 
         return new SelecaoProfissionaisDto(
                 solicitacao.getId(),
@@ -194,6 +200,18 @@ public class SolicitacaoFaxinaService {
             throw new BusinessException(
                     "SOLICITACAO_STATUS_INCOMPATIVEL",
                     "Solicitacao nao permite listagem de profissionais neste status",
+                    HttpStatus.CONFLICT
+            );
+        }
+    }
+
+    private void validarStatusParaSelecao(SolicitacaoFaxina solicitacao) {
+        if (solicitacao.getStatus() != StatusSolicitacao.CRIADA
+                && solicitacao.getStatus() != StatusSolicitacao.AGUARDANDO_SELECAO
+                && solicitacao.getStatus() != StatusSolicitacao.CONVITES_ENVIADOS) {
+            throw new BusinessException(
+                    "SOLICITACAO_STATUS_INCOMPATIVEL",
+                    "Solicitacao nao permite selecao de profissionais neste status",
                     HttpStatus.CONFLICT
             );
         }
