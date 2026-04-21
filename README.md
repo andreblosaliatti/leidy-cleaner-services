@@ -20,7 +20,6 @@ O produto segue as decisoes do `AGENTS.md` e de `docs/spec.md`: frontend React, 
 ## Requisitos locais
 
 - Java 21
-- Maven 3.9+
 - Node.js 20+
 - npm 10+
 - Docker e Docker Compose
@@ -59,7 +58,7 @@ Execute a API Spring Boot:
 
 ```bash
 cd apps/backend
-mvn spring-boot:run
+./mvnw spring-boot:run
 ```
 
 Por padrao, a API sobe em:
@@ -96,7 +95,7 @@ Backend:
 
 ```bash
 cd apps/backend
-mvn test
+./mvnw test
 ```
 
 Frontend:
