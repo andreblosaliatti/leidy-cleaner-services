@@ -124,6 +124,10 @@ public class SolicitacaoFaxina {
         status = StatusSolicitacao.CONVITES_ENVIADOS;
     }
 
+    public void marcarAceita() {
+        status = StatusSolicitacao.ACEITA;
+    }
+
     public Long getId() {
         return id;
     }

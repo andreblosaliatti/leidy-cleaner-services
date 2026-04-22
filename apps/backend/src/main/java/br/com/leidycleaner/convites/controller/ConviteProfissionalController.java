@@ -5,11 +5,13 @@ import java.util.List;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import br.com.leidycleaner.auth.security.UsuarioPrincipal;
 import br.com.leidycleaner.convites.dto.ConviteProfissionalDto;
+import br.com.leidycleaner.convites.dto.ConviteRespostaDto;
 import br.com.leidycleaner.convites.service.ConviteProfissionalService;
 import br.com.leidycleaner.core.ApiPaths;
 import br.com.leidycleaner.core.dto.ApiResponse;
@@ -35,5 +37,21 @@ public class ConviteProfissionalController {
             @PathVariable Long id
     ) {
         return ApiResponse.success(conviteProfissionalService.buscarMeu(principal.getId(), id));
+    }
+
+    @PostMapping("/{id}/aceitar")
+    public ApiResponse<ConviteRespostaDto> aceitar(
+            @AuthenticationPrincipal UsuarioPrincipal principal,
+            @PathVariable Long id
+    ) {
+        return ApiResponse.success(conviteProfissionalService.aceitar(principal.getId(), id));
+    }
+
+    @PostMapping("/{id}/recusar")
+    public ApiResponse<ConviteRespostaDto> recusar(
+            @AuthenticationPrincipal UsuarioPrincipal principal,
+            @PathVariable Long id
+    ) {
+        return ApiResponse.success(conviteProfissionalService.recusar(principal.getId(), id));
     }
 }

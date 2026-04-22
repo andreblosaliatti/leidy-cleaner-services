@@ -102,4 +102,36 @@ public class ConviteProfissional {
     public OffsetDateTime getExpiraEm() {
         return expiraEm;
     }
+
+    public boolean podeResponder() {
+        return status == StatusConvite.ENVIADO || status == StatusConvite.VISUALIZADO;
+    }
+
+    public boolean expiradoEm(OffsetDateTime agora) {
+        return !expiraEm.isAfter(agora);
+    }
+
+    public void aceitar(OffsetDateTime respondidoEm) {
+        status = StatusConvite.ACEITO;
+        this.respondidoEm = respondidoEm;
+    }
+
+    public void recusar(OffsetDateTime respondidoEm) {
+        status = StatusConvite.RECUSADO;
+        this.respondidoEm = respondidoEm;
+    }
+
+    public void cancelar(OffsetDateTime respondidoEm) {
+        if (podeResponder()) {
+            status = StatusConvite.CANCELADO;
+            this.respondidoEm = respondidoEm;
+        }
+    }
+
+    public void expirar(OffsetDateTime respondidoEm) {
+        if (podeResponder()) {
+            status = StatusConvite.EXPIRADO;
+            this.respondidoEm = respondidoEm;
+        }
+    }
 }
