@@ -2,7 +2,7 @@
 
 ## 1. Visão do produto
 
-Leidy Cleaner Services é uma plataforma web para intermediação de serviços de limpeza residencial.
+Leidy Cleaner Services é uma plataforma web para intermediação de serviços de limpeza.
 
 A plataforma terá três perfis principais:
 - Cliente
@@ -10,6 +10,12 @@ A plataforma terá três perfis principais:
 - Administrador
 
 O objetivo é permitir que clientes contratem profissionais verificadas de forma mais segura, organizada e operacionalmente controlada.
+
+As categorias de serviço suportadas no MVP são:
+- `FAXINA_RESIDENCIAL`
+- `FAXINA_COMERCIAL`
+- `FAXINA_CONDOMINIO`
+- `FAXINA_EVENTO`
 
 ---
 
@@ -49,7 +55,7 @@ Construir um MVP que permita validar a operação da agência com:
 Pode:
 - criar conta
 - cadastrar endereços
-- solicitar faxina
+- solicitar faxina residencial, comercial, condominial ou para eventos
 - visualizar profissionais elegíveis
 - selecionar até 3 profissionais
 - pagar pela plataforma

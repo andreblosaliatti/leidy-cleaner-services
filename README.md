@@ -1,8 +1,10 @@
 # Leidy Cleaner Services
 
-Monorepo da plataforma operacional de intermediacao de servicos de limpeza residencial **Leidy Cleaner Services**.
+Monorepo da plataforma operacional de intermediacao de servicos de limpeza **Leidy Cleaner Services**.
 
-O produto segue as decisoes do `AGENTS.md` e de `docs/spec.md`: frontend React, backend Spring Boot, PostgreSQL, pagamento futuro via Asaas vinculado ao atendimento e confirmacao por webhook.
+O escopo de servicos contempla as categorias `FAXINA_RESIDENCIAL`, `FAXINA_COMERCIAL`, `FAXINA_CONDOMINIO` e `FAXINA_EVENTO`.
+
+O produto segue as decisoes do `AGENTS.md` e de `docs/spec.md`: frontend React, backend Spring Boot, PostgreSQL, pagamento via Asaas Checkout vinculado ao atendimento e confirmacao por webhook.
 
 ## Estrutura
 
@@ -89,6 +91,32 @@ Por padrao, o frontend sobe em:
 http://localhost:5173
 ```
 
+## Pagamento Asaas
+
+O caminho principal de pagamento e:
+
+```text
+POST /api/v1/pagamentos/checkout
+```
+
+Esse endpoint cria um checkout Asaas sempre vinculado a um `AtendimentoFaxina` e persiste o `Pagamento` como `PENDENTE`. O frontend redireciona a cliente para `checkoutUrl`, mas o retorno do checkout nao confirma pagamento. A confirmacao definitiva continua sendo feita apenas pelo webhook:
+
+```text
+POST /api/v1/webhooks/asaas
+```
+
+Variaveis usadas pela integracao:
+
+```text
+ASAAS_BASE_URL
+ASAAS_API_KEY
+ASAAS_CHECKOUT_SUCCESS_URL
+ASAAS_CHECKOUT_CANCEL_URL
+ASAAS_CHECKOUT_EXPIRED_URL
+```
+
+`ASAAS_DEFAULT_CUSTOMER_ID` existe somente para o endpoint legado `POST /api/v1/pagamentos`, que cria cobranca direta e nao e o caminho principal do checkout.
+
 ## Scripts uteis
 
 Backend:
@@ -110,10 +138,8 @@ npm run build
 Este repositorio esta na fundacao tecnica do MVP:
 
 - monorepo preservado
-- backend Spring Boot minimo para boot
-- frontend React + Vite minimo
+- backend Spring Boot com fluxos operacionais iniciais
+- frontend React + Vite com inicio de checkout e telas de retorno
 - Tailwind CSS configurado
 - PostgreSQL local via Docker Compose
 - ambiente local documentado
-
-Ainda nao ha implementacao de entidades de negocio, autenticacao real, pagamentos, convites, solicitacoes ou fluxos operacionais. Esses itens pertencem aos proximos milestones.

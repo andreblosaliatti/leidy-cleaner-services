@@ -2,10 +2,10 @@
 
 ## O produto
 
-Leidy Cleaner Services é uma plataforma web para intermediação de serviços de limpeza residencial.
+Leidy Cleaner Services é uma plataforma web para intermediação de serviços de limpeza.
 
 Ela conecta:
-- clientes que precisam contratar faxina
+- clientes que precisam contratar faxina residencial, comercial, condominial ou para eventos
 - profissionais de limpeza previamente verificadas
 - equipe administrativa da empresa
 

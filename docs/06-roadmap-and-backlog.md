@@ -72,6 +72,7 @@
 - modelar `enderecos`
 - criar CRUD de endereços
 - modelar `solicitacoes_faxina`
+- suportar tipos de serviço `FAXINA_RESIDENCIAL`, `FAXINA_COMERCIAL`, `FAXINA_CONDOMINIO` e `FAXINA_EVENTO`
 - criar endpoint de criação de solicitação
 - criar listagem de solicitações do cliente
 - criar listagem de profissionais elegíveis
@@ -112,11 +113,11 @@ Essa fase não pode ser tratada como detalhe.
 
 ### P0
 - modelar `pagamentos`
-- criar integração base com Asaas
-- criar endpoint de criação da cobrança
+- criar integracao base com Asaas Checkout
+- criar endpoint principal `POST /api/v1/pagamentos/checkout`
 - salvar identificador externo
 - criar endpoint de consulta de pagamento
-- criar endpoint de webhook do Asaas
+- criar endpoint de webhook do Asaas em `POST /api/v1/webhooks/asaas`
 - atualizar status do pagamento via webhook
 - atualizar atendimento para `CONFIRMADO` via webhook
 - implementar idempotência mínima do webhook

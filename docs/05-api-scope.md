@@ -143,6 +143,12 @@ Admin aprova/rejeita análise.
 ### POST `/solicitacoes`
 Cliente cria solicitação de faxina.
 
+`tipoServico` deve usar um destes valores:
+- `FAXINA_RESIDENCIAL`
+- `FAXINA_COMERCIAL`
+- `FAXINA_CONDOMINIO`
+- `FAXINA_EVENTO`
+
 ### GET `/solicitacoes/minhas`
 Cliente lista suas solicitações.
 
@@ -200,8 +206,11 @@ Lista checkpoints do atendimento.
 
 ## 11. Pagamentos
 
+### POST `/pagamentos/checkout`
+Cria checkout Asaas para um atendimento da cliente autenticada. Esse e o caminho principal do MVP. O pagamento nasce vinculado ao `AtendimentoFaxina`, fica pendente e retorna `checkoutUrl` para redirecionamento.
+
 ### POST `/pagamentos`
-Cria cobrança do atendimento.
+Cria cobranca direta do atendimento. Endpoint legado/deprecado; depende de `ASAAS_DEFAULT_CUSTOMER_ID` e nao e o caminho principal do checkout.
 
 ### GET `/pagamentos/{id}`
 Consulta pagamento.
@@ -210,9 +219,9 @@ Consulta pagamento.
 Consulta pagamento pelo atendimento.
 
 ### POST `/pagamentos/{id}/consultar-status`
-Reconsulta o gateway.
+Reconsulta o gateway, mas nao confirma pagamento de forma definitiva. Estados recebidos do gateway podem ir para `AGUARDANDO_CONFIRMACAO`; `PAGO` so vem do webhook.
 
-### POST `/pagamentos/webhooks/asaas`
+### POST `/webhooks/asaas`
 Recebe webhook do Asaas.
 
 ---
@@ -261,8 +270,10 @@ A rota de webhook deve:
 - validar a autenticidade/origem do evento
 - localizar o pagamento correto
 - ser idempotente
-- atualizar o pagamento
-- atualizar o atendimento quando o pagamento estiver confirmado
+- processar `CHECKOUT_PAID`
+- atualizar `Pagamento` para `PAGO`
+- atualizar `AtendimentoFaxina` para `CONFIRMADO`
+- nao tratar `PAYMENT_OVERDUE` como confirmacao de pagamento
 
 ### 14.3 Avaliação
 A rota de avaliação deve validar:

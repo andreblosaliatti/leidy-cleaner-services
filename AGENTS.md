@@ -2,7 +2,7 @@
 
 ## Project overview
 
-This repository contains the product code and planning docs for **Leidy Cleaner Services**, a web platform for intermediation of residential cleaning services.
+This repository contains the product code and planning docs for **Leidy Cleaner Services**, a web platform for intermediation of cleaning services.
 
 This is not a generic booking site.
 This is an operational platform with:
@@ -51,6 +51,7 @@ Do not silently reintroduce excluded features.
 - Porto Alegre service regions
 - weekly availability
 - service request creation
+- service categories: residential, commercial, condominium, and event cleaning
 - eligible professional listing
 - selection of up to 3 professionals
 - invitation creation and response

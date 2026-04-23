@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -32,6 +33,12 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.badRequest()
                 .body(ApiErrorResponse.of("VALIDATION_ERROR", "Dados invalidos", errors));
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    ResponseEntity<ApiErrorResponse> handleUnreadableRequest(HttpMessageNotReadableException exception) {
+        return ResponseEntity.badRequest()
+                .body(ApiErrorResponse.of("INVALID_REQUEST", "Corpo da requisicao invalido", List.of()));
     }
 
     @ExceptionHandler(AuthenticationException.class)

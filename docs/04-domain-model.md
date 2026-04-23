@@ -147,6 +147,12 @@ Pedido criado pelo cliente.
 - criadoEm
 - atualizadoEm
 
+### TipoServico
+- FAXINA_RESIDENCIAL
+- FAXINA_COMERCIAL
+- FAXINA_CONDOMINIO
+- FAXINA_EVENTO
+
 ---
 
 ## 1.10 SolicitacaoProfissionalSelecionado
@@ -308,6 +314,7 @@ A aceitação precisa ser transacional.
 
 ### 3.4 Pagamento
 O pagamento sempre nasce de um atendimento.
+O caminho principal do MVP inicia um checkout Asaas vinculado ao atendimento.
 
 ### 3.5 Confirmação
 Somente o webhook altera o pagamento para confirmado de forma definitiva.

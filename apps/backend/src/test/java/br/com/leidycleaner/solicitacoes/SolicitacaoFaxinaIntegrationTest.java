@@ -1,6 +1,8 @@
 package br.com.leidycleaner.solicitacoes;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -10,6 +12,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
 
@@ -17,6 +20,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
@@ -28,6 +32,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import br.com.leidycleaner.atendimentos.repository.AtendimentoFaxinaRepository;
 import br.com.leidycleaner.convites.repository.ConviteProfissionalRepository;
+import br.com.leidycleaner.pagamentos.gateway.AsaasCheckoutGatewayResponse;
+import br.com.leidycleaner.pagamentos.gateway.AsaasGatewayClient;
+import br.com.leidycleaner.pagamentos.gateway.AsaasPagamentoGatewayResponse;
+import br.com.leidycleaner.pagamentos.repository.PagamentoRepository;
 import br.com.leidycleaner.regioes.repository.RegiaoAtendimentoRepository;
 import br.com.leidycleaner.solicitacoes.repository.SolicitacaoProfissionalSelecionadoRepository;
 
@@ -42,8 +50,15 @@ class SolicitacaoFaxinaIntegrationTest {
     private final SolicitacaoProfissionalSelecionadoRepository solicitacaoProfissionalSelecionadoRepository;
     private final ConviteProfissionalRepository conviteProfissionalRepository;
     private final AtendimentoFaxinaRepository atendimentoFaxinaRepository;
+    private final PagamentoRepository pagamentoRepository;
+
+    @MockBean
+    private AsaasGatewayClient asaasGatewayClient;
 
     private record ProfissionalConfigurada(Long perfilId, String tokenProfissional) {
+    }
+
+    private record AtendimentoCriado(String tokenCliente, String tokenProfissional, Long solicitacaoId, Long atendimentoId) {
     }
 
     @Autowired
@@ -53,7 +68,8 @@ class SolicitacaoFaxinaIntegrationTest {
             RegiaoAtendimentoRepository regiaoAtendimentoRepository,
             SolicitacaoProfissionalSelecionadoRepository solicitacaoProfissionalSelecionadoRepository,
             ConviteProfissionalRepository conviteProfissionalRepository,
-            AtendimentoFaxinaRepository atendimentoFaxinaRepository
+            AtendimentoFaxinaRepository atendimentoFaxinaRepository,
+            PagamentoRepository pagamentoRepository
     ) {
         this.mockMvc = mockMvc;
         this.objectMapper = objectMapper;
@@ -61,6 +77,7 @@ class SolicitacaoFaxinaIntegrationTest {
         this.solicitacaoProfissionalSelecionadoRepository = solicitacaoProfissionalSelecionadoRepository;
         this.conviteProfissionalRepository = conviteProfissionalRepository;
         this.atendimentoFaxinaRepository = atendimentoFaxinaRepository;
+        this.pagamentoRepository = pagamentoRepository;
     }
 
     @Test
@@ -788,6 +805,323 @@ class SolicitacaoFaxinaIntegrationTest {
     }
 
     @Test
+    void clienteCriaPagamentoParaProprioAtendimentoAguardandoPagamento() throws Exception {
+        AtendimentoCriado atendimento = criarAtendimentoAguardandoPagamento("m5a.cria-pagamento", "75122233344");
+        mockarCriacaoAsaas("pay_m5a_cria", "PENDING", "https://asaas.local/pay_m5a_cria", null);
+
+        String response = mockMvc.perform(post("/api/v1/pagamentos")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + atendimento.tokenCliente())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(pagamentoJson(atendimento.atendimentoId(), "PIX")))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.atendimentoId").value(atendimento.atendimentoId()))
+                .andExpect(jsonPath("$.data.gateway").value("ASAAS"))
+                .andExpect(jsonPath("$.data.gatewayPaymentId").value("pay_m5a_cria"))
+                .andExpect(jsonPath("$.data.metodoPagamento").value("PIX"))
+                .andExpect(jsonPath("$.data.status").value("PENDENTE"))
+                .andExpect(jsonPath("$.data.valorBruto").value(180.00))
+                .andExpect(jsonPath("$.data.urlPagamento").value("https://asaas.local/pay_m5a_cria"))
+                .andExpect(jsonPath("$.data.webhookProcessado").value(false))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        Long pagamentoId = objectMapper.readTree(response).path("data").path("id").asLong();
+        assertThat(pagamentoRepository.findByAtendimentoId(atendimento.atendimentoId()))
+                .isPresent()
+                .get()
+                .satisfies(pagamento -> {
+                    assertThat(pagamento.getId()).isEqualTo(pagamentoId);
+                    assertThat(pagamento.getGatewayPaymentId()).isEqualTo("pay_m5a_cria");
+                    assertThat(pagamento.getStatus().name()).isEqualTo("PENDENTE");
+                });
+    }
+
+    @Test
+    void clienteCriaCheckoutParaProprioAtendimentoAguardandoPagamento() throws Exception {
+        AtendimentoCriado atendimento = criarAtendimentoAguardandoPagamento("m5a.cria-checkout", "75132233344");
+        mockarCheckoutAsaas("chk_m5a_cria", "https://asaas.local/checkout/chk_m5a_cria");
+
+        mockMvc.perform(post("/api/v1/pagamentos/checkout")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + atendimento.tokenCliente())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(checkoutJson(atendimento.atendimentoId())))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.atendimentoId").value(atendimento.atendimentoId()))
+                .andExpect(jsonPath("$.data.checkoutUrl").value("https://asaas.local/checkout/chk_m5a_cria"))
+                .andExpect(jsonPath("$.data.valor").value(180.00))
+                .andExpect(jsonPath("$.data.descricao").value("Leidy Cleaner Services - atendimento #" + atendimento.atendimentoId()));
+
+        assertThat(pagamentoRepository.findByAtendimentoId(atendimento.atendimentoId()))
+                .isPresent()
+                .get()
+                .satisfies(pagamento -> {
+                    assertThat(pagamento.getGatewayPaymentId()).isEqualTo("chk_m5a_cria");
+                    assertThat(pagamento.getMetodoPagamento().name()).isEqualTo("CARTAO_CREDITO");
+                    assertThat(pagamento.getStatus().name()).isEqualTo("PENDENTE");
+                    assertThat(pagamento.getUrlPagamento()).isEqualTo("https://asaas.local/checkout/chk_m5a_cria");
+                    assertThat(pagamento.isWebhookProcessado()).isFalse();
+                });
+    }
+
+    @Test
+    void clienteNaoCriaCheckoutParaAtendimentoDeOutraCliente() throws Exception {
+        AtendimentoCriado atendimento = criarAtendimentoAguardandoPagamento("m5a.checkout-nao-dona", "75142233344");
+        String tokenOutraCliente = criarClienteELogar("m5a.checkout-outra-cliente@example.com");
+
+        mockMvc.perform(post("/api/v1/pagamentos/checkout")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenOutraCliente)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(checkoutJson(atendimento.atendimentoId())))
+                .andExpect(status().isNotFound())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("ATENDIMENTO_NOT_FOUND"))
+                .andExpect(jsonPath("$.errors").isArray());
+    }
+
+    @Test
+    void webhookCheckoutPagoConfirmaPagamentoEAtendimentoComIdempotencia() throws Exception {
+        AtendimentoCriado atendimento = criarAtendimentoAguardandoPagamento("m5a.webhook-checkout", "75152233344");
+        mockarCheckoutAsaas("chk_m5a_webhook", "https://asaas.local/checkout/chk_m5a_webhook");
+        criarCheckout(atendimento.tokenCliente(), atendimento.atendimentoId());
+
+        String payload = """
+                {
+                  "event": "CHECKOUT_PAID",
+                  "checkout": {
+                    "id": "chk_m5a_webhook"
+                  }
+                }
+                """;
+
+        mockMvc.perform(post("/api/v1/webhooks/asaas")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(payload))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+
+        mockMvc.perform(post("/api/v1/webhooks/asaas")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(payload))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+
+        assertThat(pagamentoRepository.findByAtendimentoId(atendimento.atendimentoId()))
+                .isPresent()
+                .get()
+                .satisfies(pagamento -> {
+                    assertThat(pagamento.getGatewayPaymentId()).isEqualTo("chk_m5a_webhook");
+                    assertThat(pagamento.getStatus().name()).isEqualTo("PAGO");
+                    assertThat(pagamento.getRecebidoEm()).isNotNull();
+                    assertThat(pagamento.isWebhookProcessado()).isTrue();
+                });
+        assertThat(atendimentoFaxinaRepository.findById(atendimento.atendimentoId()))
+                .isPresent()
+                .get()
+                .extracting(atendimentoPersistido -> atendimentoPersistido.getStatus().name())
+                .isEqualTo("CONFIRMADO");
+    }
+
+    @Test
+    void webhookPaymentOverdueNaoConfirmaPagamentoNemAtendimento() throws Exception {
+        AtendimentoCriado atendimento = criarAtendimentoAguardandoPagamento("m5a.webhook-overdue", "75162233344");
+        mockarCriacaoAsaas("pay_m5a_overdue", "PENDING", "https://asaas.local/pay_m5a_overdue", null);
+        Long pagamentoId = criarPagamento(atendimento.tokenCliente(), atendimento.atendimentoId(), "PIX");
+
+        mockMvc.perform(post("/api/v1/webhooks/asaas")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "event": "PAYMENT_OVERDUE",
+                                  "payment": {
+                                    "id": "pay_m5a_overdue"
+                                  }
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+
+        assertThat(pagamentoRepository.findById(pagamentoId))
+                .isPresent()
+                .get()
+                .satisfies(pagamento -> {
+                    assertThat(pagamento.getStatus().name()).isEqualTo("PENDENTE");
+                    assertThat(pagamento.getRecebidoEm()).isNull();
+                    assertThat(pagamento.isWebhookProcessado()).isFalse();
+                });
+        assertThat(atendimentoFaxinaRepository.findById(atendimento.atendimentoId()))
+                .isPresent()
+                .get()
+                .extracting(atendimentoPersistido -> atendimentoPersistido.getStatus().name())
+                .isEqualTo("AGUARDANDO_PAGAMENTO");
+    }
+
+    @Test
+    void criacaoDuplicadaDePagamentoParaMesmoAtendimentoERejeitada() throws Exception {
+        AtendimentoCriado atendimento = criarAtendimentoAguardandoPagamento("m5a.duplicado", "75222233344");
+        mockarCriacaoAsaas("pay_m5a_duplicado", "PENDING", "https://asaas.local/pay_m5a_duplicado", null);
+        criarPagamento(atendimento.tokenCliente(), atendimento.atendimentoId(), "PIX");
+
+        mockMvc.perform(post("/api/v1/pagamentos")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + atendimento.tokenCliente())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(pagamentoJson(atendimento.atendimentoId(), "PIX")))
+                .andExpect(status().isConflict())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("PAGAMENTO_JA_EXISTE"))
+                .andExpect(jsonPath("$.errors").isArray());
+    }
+
+    @Test
+    void clienteNaoCriaPagamentoParaAtendimentoDeOutraCliente() throws Exception {
+        AtendimentoCriado atendimento = criarAtendimentoAguardandoPagamento("m5a.nao-dona", "75322233344");
+        String tokenOutraCliente = criarClienteELogar("m5a.outra-cliente@example.com");
+
+        mockMvc.perform(post("/api/v1/pagamentos")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenOutraCliente)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(pagamentoJson(atendimento.atendimentoId(), "PIX")))
+                .andExpect(status().isNotFound())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("ATENDIMENTO_NOT_FOUND"))
+                .andExpect(jsonPath("$.errors").isArray());
+    }
+
+    @Test
+    void clienteConsultaPagamentoPorIdEPeloAtendimento() throws Exception {
+        AtendimentoCriado atendimento = criarAtendimentoAguardandoPagamento("m5a.consulta", "75422233344");
+        mockarCriacaoAsaas("pay_m5a_consulta", "PENDING", "https://asaas.local/pay_m5a_consulta", null);
+        Long pagamentoId = criarPagamento(atendimento.tokenCliente(), atendimento.atendimentoId(), "BOLETO");
+
+        mockMvc.perform(get("/api/v1/pagamentos/{id}", pagamentoId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + atendimento.tokenCliente()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.id").value(pagamentoId))
+                .andExpect(jsonPath("$.data.atendimentoId").value(atendimento.atendimentoId()))
+                .andExpect(jsonPath("$.data.metodoPagamento").value("BOLETO"));
+
+        mockMvc.perform(get("/api/v1/pagamentos/atendimento/{atendimentoId}", atendimento.atendimentoId())
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + atendimento.tokenCliente()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.id").value(pagamentoId))
+                .andExpect(jsonPath("$.data.gatewayPaymentId").value("pay_m5a_consulta"));
+    }
+
+    @Test
+    void clienteNaoConsultaPagamentoDeOutroCliente() throws Exception {
+        AtendimentoCriado atendimento = criarAtendimentoAguardandoPagamento("m5a.consulta-outra", "75522233344");
+        String tokenOutraCliente = criarClienteELogar("m5a.consulta-outra-nao-dona@example.com");
+        mockarCriacaoAsaas("pay_m5a_consulta_outra", "PENDING", "https://asaas.local/pay_m5a_consulta_outra", null);
+        Long pagamentoId = criarPagamento(atendimento.tokenCliente(), atendimento.atendimentoId(), "PIX");
+
+        mockMvc.perform(get("/api/v1/pagamentos/{id}", pagamentoId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenOutraCliente))
+                .andExpect(status().isForbidden())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("FORBIDDEN"))
+                .andExpect(jsonPath("$.errors").isArray());
+    }
+
+    @Test
+    void consultarStatusReconsultaGatewaySemConfirmarPagamentoDefinitivamente() throws Exception {
+        AtendimentoCriado atendimento = criarAtendimentoAguardandoPagamento("m5a.reconsulta", "75622233344");
+        mockarCriacaoAsaas("pay_m5a_reconsulta", "PENDING", "https://asaas.local/pay_m5a_reconsulta", null);
+        Long pagamentoId = criarPagamento(atendimento.tokenCliente(), atendimento.atendimentoId(), "PIX");
+        given(asaasGatewayClient.consultarPagamento("pay_m5a_reconsulta"))
+                .willReturn(new AsaasPagamentoGatewayResponse(
+                        "pay_m5a_reconsulta",
+                        "RECEIVED",
+                        new BigDecimal("4.50"),
+                        new BigDecimal("175.50"),
+                        "https://asaas.local/pay_m5a_reconsulta",
+                        "pix-copia-e-cola",
+                        "{\"id\":\"pay_m5a_reconsulta\",\"status\":\"RECEIVED\"}"
+                ));
+
+        mockMvc.perform(post("/api/v1/pagamentos/{id}/consultar-status", pagamentoId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + atendimento.tokenCliente()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.status").value("AGUARDANDO_CONFIRMACAO"))
+                .andExpect(jsonPath("$.data.valorTaxaGateway").value(4.50))
+                .andExpect(jsonPath("$.data.valorLiquidoRecebido").value(175.50))
+                .andExpect(jsonPath("$.data.pixCopiaECola").value("pix-copia-e-cola"))
+                .andExpect(jsonPath("$.data.webhookProcessado").value(false));
+
+        assertThat(atendimentoFaxinaRepository.findById(atendimento.atendimentoId()))
+                .isPresent()
+                .get()
+                .extracting(atendimentoPersistido -> atendimentoPersistido.getStatus().name())
+                .isEqualTo("AGUARDANDO_PAGAMENTO");
+        assertThat(pagamentoRepository.findById(pagamentoId))
+                .isPresent()
+                .get()
+                .satisfies(pagamento -> {
+                    assertThat(pagamento.getStatus().name()).isEqualTo("AGUARDANDO_CONFIRMACAO");
+                    assertThat(pagamento.getRecebidoEm()).isNull();
+                    assertThat(pagamento.isWebhookProcessado()).isFalse();
+                });
+    }
+
+    @Test
+    void endpointsDePagamentoExigemJwtEContratoJson() throws Exception {
+        mockMvc.perform(post("/api/v1/pagamentos")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(pagamentoJson(1L, "PIX")))
+                .andExpect(status().isUnauthorized())
+                .andExpect(header().doesNotExist("WWW-Authenticate"))
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
+
+        mockMvc.perform(post("/api/v1/pagamentos/checkout")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(checkoutJson(1L)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(header().doesNotExist("WWW-Authenticate"))
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
+
+        mockMvc.perform(get("/api/v1/pagamentos/1"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(header().doesNotExist("WWW-Authenticate"))
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
+
+        mockMvc.perform(post("/api/v1/pagamentos/1/consultar-status"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(header().doesNotExist("WWW-Authenticate"))
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
+    }
+
+    @Test
+    void metodoPagamentoInvalidoMantemContratoDeErroJson() throws Exception {
+        String token = criarClienteELogar("m5a.metodo-invalido@example.com");
+
+        mockMvc.perform(post("/api/v1/pagamentos")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(pagamentoJson(1L, "DINHEIRO")))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("INVALID_REQUEST"))
+                .andExpect(jsonPath("$.errors").isArray());
+    }
+
+    @Test
     void selecaoSemProfissionaisOuComMaisDeTresMantemContratoDeErroJson() throws Exception {
         String tokenCliente = criarClienteELogar("m3c.validacao-cliente@example.com");
         Long solicitacaoId = criarSolicitacao(tokenCliente, criarEndereco(tokenCliente), primeiraRegiaoId(), "FAXINA_RESIDENCIAL");
@@ -1184,6 +1518,80 @@ class SolicitacaoFaxinaIntegrationTest {
                 .andExpect(jsonPath("$.success").value(true));
     }
 
+    private AtendimentoCriado criarAtendimentoAguardandoPagamento(String prefixoEmail, String cpf) throws Exception {
+        String tokenCliente = criarClienteELogar(prefixoEmail + "-cliente@example.com");
+        Long regiaoId = ultimaRegiaoId();
+        Long solicitacaoId = criarSolicitacao(tokenCliente, criarEndereco(tokenCliente), regiaoId, "FAXINA_RESIDENCIAL");
+        ProfissionalConfigurada profissional = criarProfissionalConfiguradaComToken(
+                prefixoEmail + "-profissional@example.com",
+                cpf,
+                "Profissional " + prefixoEmail,
+                "ATIVA",
+                "APROVADO",
+                true,
+                "APROVADO",
+                List.of(regiaoId),
+                "QUINTA",
+                "08:00",
+                "12:00"
+        );
+        selecionarProfissionais(tokenCliente, solicitacaoId, List.of(profissional.perfilId()));
+        Long conviteId = primeiroConviteId(profissional.tokenProfissional());
+        String response = mockMvc.perform(post("/api/v1/convites/{id}/aceitar", conviteId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + profissional.tokenProfissional()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.atendimentoStatus").value("AGUARDANDO_PAGAMENTO"))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        Long atendimentoId = objectMapper.readTree(response).path("data").path("atendimentoId").asLong();
+        return new AtendimentoCriado(tokenCliente, profissional.tokenProfissional(), solicitacaoId, atendimentoId);
+    }
+
+    private void mockarCriacaoAsaas(String gatewayPaymentId, String status, String urlPagamento, String pixCopiaECola) {
+        given(asaasGatewayClient.criarCobranca(any()))
+                .willReturn(new AsaasPagamentoGatewayResponse(
+                        gatewayPaymentId,
+                        status,
+                        null,
+                        null,
+                        urlPagamento,
+                        pixCopiaECola,
+                        "{\"id\":\"%s\",\"status\":\"%s\"}".formatted(gatewayPaymentId, status)
+                ));
+    }
+
+    private void mockarCheckoutAsaas(String checkoutId, String checkoutUrl) {
+        given(asaasGatewayClient.criarCheckout(any()))
+                .willReturn(new AsaasCheckoutGatewayResponse(
+                        checkoutId,
+                        checkoutUrl,
+                        "{\"id\":\"%s\"}".formatted(checkoutId)
+                ));
+    }
+
+    private Long criarPagamento(String tokenCliente, Long atendimentoId, String metodoPagamento) throws Exception {
+        String response = mockMvc.perform(post("/api/v1/pagamentos")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenCliente)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(pagamentoJson(atendimentoId, metodoPagamento)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.success").value(true))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        return objectMapper.readTree(response).path("data").path("id").asLong();
+    }
+
+    private void criarCheckout(String tokenCliente, Long atendimentoId) throws Exception {
+        mockMvc.perform(post("/api/v1/pagamentos/checkout")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenCliente)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(checkoutJson(atendimentoId)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.success").value(true));
+    }
+
     private Long primeiroConviteId(String tokenProfissional) throws Exception {
         String response = mockMvc.perform(get("/api/v1/convites/meus")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenProfissional))
@@ -1202,6 +1610,23 @@ class SolicitacaoFaxinaIntegrationTest {
                   "profissionalIds": %s
                 }
                 """.formatted(objectMapper.writeValueAsString(profissionalIds));
+    }
+
+    private String pagamentoJson(Long atendimentoId, String metodoPagamento) {
+        return """
+                {
+                  "atendimentoId": %d,
+                  "metodoPagamento": "%s"
+                }
+                """.formatted(atendimentoId, metodoPagamento);
+    }
+
+    private String checkoutJson(Long atendimentoId) {
+        return """
+                {
+                  "atendimentoId": %d
+                }
+                """.formatted(atendimentoId);
     }
 
     private String login(String email, String senha) throws Exception {
@@ -1227,6 +1652,11 @@ class SolicitacaoFaxinaIntegrationTest {
 
     private Long segundaRegiaoId() {
         return regiaoAtendimentoRepository.findByAtivoTrueOrderByNomeAsc().get(1).getId();
+    }
+
+    private Long ultimaRegiaoId() {
+        var regioes = regiaoAtendimentoRepository.findByAtivoTrueOrderByNomeAsc();
+        return regioes.get(regioes.size() - 1).getId();
     }
 
     private String solicitacaoJson(Long enderecoId, Long regiaoId, String tipoServico) {

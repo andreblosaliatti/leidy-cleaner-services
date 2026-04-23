@@ -146,4 +146,10 @@ public class AtendimentoFaxina {
     public OffsetDateTime getAtualizadoEm() {
         return atualizadoEm;
     }
+
+    public void confirmarPagamento() {
+        if (status == StatusAtendimento.AGUARDANDO_PAGAMENTO) {
+            status = StatusAtendimento.CONFIRMADO;
+        }
+    }
 }

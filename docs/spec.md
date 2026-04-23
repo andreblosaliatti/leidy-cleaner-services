@@ -14,7 +14,13 @@ Ele serve para:
 
 ## 2. Resumo do produto
 
-Leidy Cleaner Services é uma plataforma web para intermediação de serviços de limpeza residencial.
+Leidy Cleaner Services é uma plataforma web para intermediação de serviços de limpeza.
+
+As categorias de serviço suportadas são:
+- `FAXINA_RESIDENCIAL`
+- `FAXINA_COMERCIAL`
+- `FAXINA_CONDOMINIO`
+- `FAXINA_EVENTO`
 
 Fluxo central:
 1. cliente cria conta
@@ -154,6 +160,8 @@ Um profissional só pode aparecer como elegível se:
 
 ### 6.4 Pagamento
 - pagamento sempre vinculado ao atendimento
+- caminho principal: `POST /api/v1/pagamentos/checkout`
+- `POST /api/v1/pagamentos` fica como legado/deprecado para cobranca direta
 - frontend nunca confirma pagamento por conta própria
 - webhook do Asaas atualiza `Pagamento`
 - após webhook válido:
@@ -346,9 +354,12 @@ apps/frontend/src/
 - `POST /api/v1/atendimentos/{id}/finalizar`
 
 ### Pagamentos
-- `POST /api/v1/pagamentos`
+- `POST /api/v1/pagamentos/checkout`
+- `POST /api/v1/pagamentos` (legado/deprecado para cobranca direta)
 - `GET /api/v1/pagamentos/{id}`
-- `POST /api/v1/pagamentos/webhooks/asaas`
+- `GET /api/v1/pagamentos/atendimento/{atendimentoId}`
+- `POST /api/v1/pagamentos/{id}/consultar-status`
+- `POST /api/v1/webhooks/asaas`
 
 ### Avaliações
 - `POST /api/v1/avaliacoes`
@@ -485,14 +496,14 @@ Use esta seção como checklist viva de execução.
 - [ ] Persistir checkpoints de início e fim
 
 ## M7 — Pagamentos
-- [ ] Criar migration de `pagamentos`
-- [ ] Implementar integração Asaas para gerar cobrança
-- [ ] Persistir `gateway_payment_id`
-- [ ] Criar tela frontend de pagamento
-- [ ] Implementar webhook do Asaas
-- [ ] Garantir idempotência básica do webhook
-- [ ] Atualizar pagamento para `PAGO`
-- [ ] Atualizar atendimento para `CONFIRMADO` apenas via webhook
+- [x] Criar migration de `pagamentos`
+- [x] Implementar integracao Asaas Checkout para iniciar pagamento
+- [x] Persistir identificador externo do checkout/pagamento
+- [x] Criar tela frontend de pagamento e retorno
+- [x] Implementar webhook do Asaas em `POST /api/v1/webhooks/asaas`
+- [x] Garantir idempotencia basica do webhook
+- [x] Atualizar pagamento para `PAGO` via webhook
+- [x] Atualizar atendimento para `CONFIRMADO` apenas via webhook
 
 ## M8 — Avaliações
 - [ ] Criar migration de `avaliacoes_profissional`
@@ -558,4 +569,3 @@ Os dois pontos mais críticos do projeto são:
 2. **confirmação de pagamento via webhook**
 
 Se esses dois blocos estiverem mal feitos, o produto quebra mesmo que o resto esteja bonito.
-
