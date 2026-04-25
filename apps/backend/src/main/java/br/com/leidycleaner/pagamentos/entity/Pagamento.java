@@ -129,10 +129,41 @@ public class Pagamento {
         this.payloadResumo = limparOpcional(payloadResumo);
     }
 
-    public void confirmarViaWebhook() {
+    public boolean aplicarStatusWebhook(StatusPagamento novoStatus, String payloadResumo) {
+        if (novoStatus == null) {
+            return false;
+        }
+        if (novoStatus == StatusPagamento.PAGO) {
+            return confirmarViaWebhook(payloadResumo);
+        }
+        if (status == novoStatus) {
+            return false;
+        }
+        if (status == StatusPagamento.ESTORNADO) {
+            return false;
+        }
+        if (status == StatusPagamento.PAGO && novoStatus != StatusPagamento.ESTORNADO) {
+            return false;
+        }
+        this.status = novoStatus;
+        this.payloadResumo = limparOpcional(payloadResumo);
+        return true;
+    }
+
+    private boolean confirmarViaWebhook(String payloadResumo) {
+        if (status == StatusPagamento.PAGO && webhookProcessado) {
+            return false;
+        }
+        if (status == StatusPagamento.ESTORNADO) {
+            return false;
+        }
         this.status = StatusPagamento.PAGO;
         this.webhookProcessado = true;
-        this.recebidoEm = OffsetDateTime.now();
+        if (recebidoEm == null) {
+            this.recebidoEm = OffsetDateTime.now();
+        }
+        this.payloadResumo = limparOpcional(payloadResumo);
+        return true;
     }
 
     public Long getId() {
