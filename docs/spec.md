@@ -527,9 +527,9 @@ Use esta seção como checklist viva de execução.
 - [x] Exibir avaliações da profissional
 
 ## M9 — Ocorrências e admin
-- [ ] Criar migration de `ocorrencias_atendimento`
-- [ ] Implementar abertura de ocorrência
-- [ ] Implementar listagem/admin de ocorrências
+- [x] Criar migration de `ocorrencias_atendimento`
+- [x] Implementar abertura de ocorrência
+- [x] Implementar listagem/admin de ocorrências
 - [ ] Implementar dashboard admin básico
 - [ ] Implementar listagem de profissionais pendentes
 - [ ] Implementar fluxo de aprovação/rejeição

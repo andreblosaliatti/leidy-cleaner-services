@@ -38,6 +38,7 @@ import br.com.leidycleaner.pagamentos.gateway.AsaasCheckoutGatewayResponse;
 import br.com.leidycleaner.pagamentos.gateway.AsaasGatewayClient;
 import br.com.leidycleaner.pagamentos.gateway.AsaasPagamentoGatewayResponse;
 import br.com.leidycleaner.pagamentos.repository.PagamentoRepository;
+import br.com.leidycleaner.ocorrencias.repository.OcorrenciaAtendimentoRepository;
 import br.com.leidycleaner.regioes.repository.RegiaoAtendimentoRepository;
 import br.com.leidycleaner.solicitacoes.repository.SolicitacaoProfissionalSelecionadoRepository;
 
@@ -56,6 +57,7 @@ class SolicitacaoFaxinaIntegrationTest {
     private final AtendimentoFaxinaRepository atendimentoFaxinaRepository;
     private final CheckpointServicoRepository checkpointServicoRepository;
     private final AvaliacaoProfissionalRepository avaliacaoProfissionalRepository;
+    private final OcorrenciaAtendimentoRepository ocorrenciaAtendimentoRepository;
     private final PagamentoRepository pagamentoRepository;
 
     @MockBean
@@ -77,6 +79,7 @@ class SolicitacaoFaxinaIntegrationTest {
             AtendimentoFaxinaRepository atendimentoFaxinaRepository,
             CheckpointServicoRepository checkpointServicoRepository,
             AvaliacaoProfissionalRepository avaliacaoProfissionalRepository,
+            OcorrenciaAtendimentoRepository ocorrenciaAtendimentoRepository,
             PagamentoRepository pagamentoRepository
     ) {
         this.mockMvc = mockMvc;
@@ -87,6 +90,7 @@ class SolicitacaoFaxinaIntegrationTest {
         this.atendimentoFaxinaRepository = atendimentoFaxinaRepository;
         this.checkpointServicoRepository = checkpointServicoRepository;
         this.avaliacaoProfissionalRepository = avaliacaoProfissionalRepository;
+        this.ocorrenciaAtendimentoRepository = ocorrenciaAtendimentoRepository;
         this.pagamentoRepository = pagamentoRepository;
     }
 
@@ -1644,6 +1648,283 @@ class SolicitacaoFaxinaIntegrationTest {
     }
 
     @Test
+    void clienteRelacionadaAbreOcorrenciaParaProprioAtendimento() throws Exception {
+        AtendimentoCriado atendimento = criarAtendimentoConfirmado("m9.ocorrencia-cliente", "78152233344", "chk_m9_ocorrencia_cliente");
+        Long usuarioClienteId = buscarUsuarioAutenticadoId(atendimento.tokenCliente());
+
+        String response = mockMvc.perform(post("/api/v1/ocorrencias")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + atendimento.tokenCliente())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(ocorrenciaJson(atendimento.atendimentoId(), "ATRASO", "Profissional atrasou para o atendimento")))
+                .andExpect(status().isCreated())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.atendimentoId").value(atendimento.atendimentoId()))
+                .andExpect(jsonPath("$.data.abertoPorUsuarioId").value(usuarioClienteId))
+                .andExpect(jsonPath("$.data.tipo").value("ATRASO"))
+                .andExpect(jsonPath("$.data.status").value("ABERTA"))
+                .andExpect(jsonPath("$.data.resolvidoEm").doesNotExist())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        Long ocorrenciaId = objectMapper.readTree(response).path("data").path("id").asLong();
+        assertThat(ocorrenciaAtendimentoRepository.findById(ocorrenciaId))
+                .isPresent()
+                .get()
+                .satisfies(ocorrencia -> {
+                    assertThat(ocorrencia.getAtendimento().getId()).isEqualTo(atendimento.atendimentoId());
+                    assertThat(ocorrencia.getAbertoPor().getId()).isEqualTo(usuarioClienteId);
+                    assertThat(ocorrencia.getStatus().name()).isEqualTo("ABERTA");
+                });
+    }
+
+    @Test
+    void profissionalRelacionadaAbreOcorrenciaParaAtendimentoAtribuido() throws Exception {
+        AtendimentoCriado atendimento = criarAtendimentoConfirmado("m9.ocorrencia-profissional", "78153233344", "chk_m9_ocorrencia_profissional");
+        Long usuarioProfissionalId = buscarUsuarioAutenticadoId(atendimento.tokenProfissional());
+
+        mockMvc.perform(post("/api/v1/ocorrencias")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + atendimento.tokenProfissional())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(ocorrenciaJson(atendimento.atendimentoId(), "CONDUTA", "Cliente nao permitiu acesso ao local")))
+                .andExpect(status().isCreated())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.atendimentoId").value(atendimento.atendimentoId()))
+                .andExpect(jsonPath("$.data.abertoPorUsuarioId").value(usuarioProfissionalId))
+                .andExpect(jsonPath("$.data.tipo").value("CONDUTA"))
+                .andExpect(jsonPath("$.data.status").value("ABERTA"));
+    }
+
+    @Test
+    void usuarioNaoRelacionadoNaoAbreOcorrencia() throws Exception {
+        AtendimentoCriado atendimento = criarAtendimentoConfirmado("m9.ocorrencia-nao-relacionada", "78154233344", "chk_m9_ocorrencia_nao_relacionada");
+        String tokenOutraCliente = criarClienteELogar("m9.ocorrencia-outra-cliente@example.com");
+
+        mockMvc.perform(post("/api/v1/ocorrencias")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenOutraCliente)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(ocorrenciaJson(atendimento.atendimentoId(), "OUTRO", "Tentativa sem relacao")))
+                .andExpect(status().isNotFound())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("ATENDIMENTO_NOT_FOUND"))
+                .andExpect(jsonPath("$.errors").isArray());
+    }
+
+    @Test
+    void usuarioListaSomenteOcorrenciasAbertasPorEle() throws Exception {
+        AtendimentoCriado atendimento = criarAtendimentoConfirmado("m9.ocorrencia-meus", "78155233344", "chk_m9_ocorrencia_meus");
+        Long ocorrenciaClienteId = criarOcorrencia(
+                atendimento.tokenCliente(),
+                atendimento.atendimentoId(),
+                "QUALIDADE_SERVICO",
+                "Cliente abriu ocorrencia de qualidade"
+        );
+        Long ocorrenciaProfissionalId = criarOcorrencia(
+                atendimento.tokenProfissional(),
+                atendimento.atendimentoId(),
+                "OUTRO",
+                "Profissional abriu outra ocorrencia"
+        );
+
+        mockMvc.perform(get("/api/v1/ocorrencias/meus")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + atendimento.tokenCliente()))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.length()").value(1))
+                .andExpect(jsonPath("$.data[0].id").value(ocorrenciaClienteId))
+                .andExpect(jsonPath("$.data[0].id").value(org.hamcrest.Matchers.not(ocorrenciaProfissionalId)));
+    }
+
+    @Test
+    void usuarioRelacionadoVisualizaDetalheDaOcorrencia() throws Exception {
+        AtendimentoCriado atendimento = criarAtendimentoConfirmado("m9.ocorrencia-detalhe", "78156233344", "chk_m9_ocorrencia_detalhe");
+        Long ocorrenciaId = criarOcorrencia(
+                atendimento.tokenCliente(),
+                atendimento.atendimentoId(),
+                "PAGAMENTO",
+                "Cliente abriu ocorrencia de pagamento"
+        );
+
+        mockMvc.perform(get("/api/v1/ocorrencias/{id}", ocorrenciaId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + atendimento.tokenProfissional()))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.id").value(ocorrenciaId))
+                .andExpect(jsonPath("$.data.atendimentoId").value(atendimento.atendimentoId()))
+                .andExpect(jsonPath("$.data.tipo").value("PAGAMENTO"));
+    }
+
+    @Test
+    void usuarioNaoRelacionadoNaoVisualizaDetalheDaOcorrencia() throws Exception {
+        AtendimentoCriado atendimento = criarAtendimentoConfirmado("m9.ocorrencia-detalhe-negado", "78157233344", "chk_m9_ocorrencia_detalhe_negado");
+        Long ocorrenciaId = criarOcorrencia(
+                atendimento.tokenCliente(),
+                atendimento.atendimentoId(),
+                "OUTRO",
+                "Ocorrencia restrita aos relacionados"
+        );
+        String tokenOutroCliente = criarClienteELogar("m9.ocorrencia-detalhe-outra@example.com");
+
+        mockMvc.perform(get("/api/v1/ocorrencias/{id}", ocorrenciaId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenOutroCliente))
+                .andExpect(status().isNotFound())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("OCORRENCIA_NOT_FOUND"))
+                .andExpect(jsonPath("$.errors").isArray());
+    }
+
+    @Test
+    void adminListaEAlteraStatusDaOcorrencia() throws Exception {
+        AtendimentoCriado atendimento = criarAtendimentoConfirmado("m9.ocorrencia-admin", "78158233344", "chk_m9_ocorrencia_admin");
+        Long ocorrenciaId = criarOcorrencia(
+                atendimento.tokenCliente(),
+                atendimento.atendimentoId(),
+                "AUSENCIA",
+                "Profissional nao compareceu"
+        );
+        String tokenAdmin = login("admin@leidycleaner.local", "Admin123!local");
+        Long adminUsuarioId = buscarUsuarioAutenticadoId(tokenAdmin);
+
+        String listaResponse = mockMvc.perform(get("/api/v1/ocorrencias")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenAdmin))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(true))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        List<Long> idsRetornados = objectMapper.readTree(listaResponse)
+                .path("data")
+                .findValues("id")
+                .stream()
+                .map(JsonNode::asLong)
+                .toList();
+        assertThat(idsRetornados).contains(ocorrenciaId);
+
+        mockMvc.perform(patch("/api/v1/ocorrencias/{id}/status", ocorrenciaId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenAdmin)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(statusOcorrenciaJson("RESOLVIDA")))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.id").value(ocorrenciaId))
+                .andExpect(jsonPath("$.data.status").value("RESOLVIDA"))
+                .andExpect(jsonPath("$.data.resolvidoEm").isNotEmpty())
+                .andExpect(jsonPath("$.data.resolvidoPorUsuarioId").value(adminUsuarioId));
+
+        assertThat(ocorrenciaAtendimentoRepository.findById(ocorrenciaId))
+                .isPresent()
+                .get()
+                .satisfies(ocorrencia -> {
+                    assertThat(ocorrencia.getStatus().name()).isEqualTo("RESOLVIDA");
+                    assertThat(ocorrencia.getResolvidoEm()).isNotNull();
+                    assertThat(ocorrencia.getResolvidoPor().getId()).isEqualTo(adminUsuarioId);
+                });
+    }
+
+    @Test
+    void rotasAdminDeOcorrenciaExigemPerfilAdmin() throws Exception {
+        AtendimentoCriado atendimento = criarAtendimentoConfirmado("m9.ocorrencia-admin-negado", "78159233344", "chk_m9_ocorrencia_admin_negado");
+        Long ocorrenciaId = criarOcorrencia(
+                atendimento.tokenCliente(),
+                atendimento.atendimentoId(),
+                "OUTRO",
+                "Ocorrencia para teste de admin"
+        );
+
+        mockMvc.perform(get("/api/v1/ocorrencias")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + atendimento.tokenCliente()))
+                .andExpect(status().isForbidden())
+                .andExpect(header().doesNotExist("WWW-Authenticate"))
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("FORBIDDEN"))
+                .andExpect(jsonPath("$.errors").isArray());
+
+        mockMvc.perform(patch("/api/v1/ocorrencias/{id}/status", ocorrenciaId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + atendimento.tokenCliente())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(statusOcorrenciaJson("EM_ANALISE")))
+                .andExpect(status().isForbidden())
+                .andExpect(header().doesNotExist("WWW-Authenticate"))
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("FORBIDDEN"))
+                .andExpect(jsonPath("$.errors").isArray());
+    }
+
+    @Test
+    void validacaoDeOcorrenciaMantemContratoJson() throws Exception {
+        String tokenCliente = criarClienteELogar("m9.ocorrencia-validacao@example.com");
+
+        mockMvc.perform(post("/api/v1/ocorrencias")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenCliente)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "atendimentoId": null,
+                                  "tipo": null,
+                                  "descricao": ""
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.errors").isArray());
+    }
+
+    @Test
+    void endpointsDeOcorrenciaExigemJwt() throws Exception {
+        mockMvc.perform(post("/api/v1/ocorrencias")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(ocorrenciaJson(1L, "OUTRO", "Sem jwt")))
+                .andExpect(status().isUnauthorized())
+                .andExpect(header().doesNotExist("WWW-Authenticate"))
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
+
+        mockMvc.perform(get("/api/v1/ocorrencias/meus"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(header().doesNotExist("WWW-Authenticate"))
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
+
+        mockMvc.perform(get("/api/v1/ocorrencias/1"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(header().doesNotExist("WWW-Authenticate"))
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
+
+        mockMvc.perform(get("/api/v1/ocorrencias"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(header().doesNotExist("WWW-Authenticate"))
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
+
+        mockMvc.perform(patch("/api/v1/ocorrencias/1/status")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(statusOcorrenciaJson("EM_ANALISE")))
+                .andExpect(status().isUnauthorized())
+                .andExpect(header().doesNotExist("WWW-Authenticate"))
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
+    }
+
+    @Test
     void criacaoDuplicadaDePagamentoParaMesmoAtendimentoERejeitada() throws Exception {
         AtendimentoCriado atendimento = criarAtendimentoAguardandoPagamento("m5a.duplicado", "75222233344");
         mockarCriacaoAsaas("pay_m5a_duplicado", "PENDING", "https://asaas.local/pay_m5a_duplicado", null);
@@ -2377,6 +2658,19 @@ class SolicitacaoFaxinaIntegrationTest {
         return objectMapper.readTree(response).path("data").path("avaliacaoId").asLong();
     }
 
+    private Long criarOcorrencia(String token, Long atendimentoId, String tipo, String descricao) throws Exception {
+        String response = mockMvc.perform(post("/api/v1/ocorrencias")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(ocorrenciaJson(atendimentoId, tipo, descricao)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.success").value(true))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        return objectMapper.readTree(response).path("data").path("id").asLong();
+    }
+
     private Long primeiroConviteId(String tokenProfissional) throws Exception {
         String response = mockMvc.perform(get("/api/v1/convites/meus")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenProfissional))
@@ -2433,6 +2727,24 @@ class SolicitacaoFaxinaIntegrationTest {
                   "comentario": %s
                 }
                 """.formatted(atendimentoId, nota, jsonString(comentario));
+    }
+
+    private String ocorrenciaJson(Long atendimentoId, String tipo, String descricao) {
+        return """
+                {
+                  "atendimentoId": %d,
+                  "tipo": "%s",
+                  "descricao": %s
+                }
+                """.formatted(atendimentoId, tipo, jsonString(descricao));
+    }
+
+    private String statusOcorrenciaJson(String status) {
+        return """
+                {
+                  "status": "%s"
+                }
+                """.formatted(status);
     }
 
     private String jsonString(String valor) {
