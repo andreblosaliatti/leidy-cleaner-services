@@ -32,6 +32,7 @@ app:
   asaas:
     base-url: ${ASAAS_BASE_URL:https://sandbox.asaas.com/api}
     api-key: ${ASAAS_API_KEY:}
+    webhook-token: ${ASAAS_WEBHOOK_TOKEN:}
     default-customer-id: ${ASAAS_DEFAULT_CUSTOMER_ID:}
     checkout-success-url: ${ASAAS_CHECKOUT_SUCCESS_URL:http://localhost:5173/pagamento/sucesso}
     checkout-cancel-url: ${ASAAS_CHECKOUT_CANCEL_URL:http://localhost:5173/pagamento/cancelado}

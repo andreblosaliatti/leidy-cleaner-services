@@ -164,6 +164,14 @@ Um profissional só pode aparecer como elegível se:
 - `POST /api/v1/pagamentos` fica como legado/deprecado para cobranca direta
 - frontend nunca confirma pagamento por conta própria
 - webhook do Asaas atualiza `Pagamento`
+- o endpoint de webhook continua publico no JWT
+- o webhook usa `payment.id` e, no checkout, `checkout.id` para localizar o `Pagamento`
+- eventos suportados de sucesso: `PAYMENT_RECEIVED`, `PAYMENT_CONFIRMED`, `PAYMENT_RECEIVED_IN_CASH`, `CHECKOUT_PAID`
+- `PAYMENT_OVERDUE` representa falha e nao confirma o atendimento
+- o webhook exige o header `asaas-access-token`, comparado com `ASAAS_WEBHOOK_TOKEN` antes de qualquer processamento do payload
+- chamadas sem token ou com token invalido retornam erro JSON e nao processam pagamento
+- o processamento e idempotente
+- eventos nao suportados sao ignorados com resposta 200
 - após webhook válido:
   - `Pagamento = PAGO`
   - `Atendimento = CONFIRMADO`
@@ -499,7 +507,7 @@ Use esta seção como checklist viva de execução.
 - [x] Criar migration de `pagamentos`
 - [x] Implementar integracao Asaas Checkout para iniciar pagamento
 - [x] Persistir identificador externo do checkout/pagamento
-- [x] Criar tela frontend de pagamento e retorno
+- [ ] Criar tela frontend de pagamento e retorno
 - [x] Implementar webhook do Asaas em `POST /api/v1/webhooks/asaas`
 - [x] Garantir idempotencia basica do webhook
 - [x] Atualizar pagamento para `PAGO` via webhook

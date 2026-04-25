@@ -44,6 +44,8 @@ import br.com.leidycleaner.solicitacoes.repository.SolicitacaoProfissionalSeleci
 @ActiveProfiles("test")
 class SolicitacaoFaxinaIntegrationTest {
 
+    private static final String ASAAS_WEBHOOK_TOKEN = "test-webhook-token";
+
     private final MockMvc mockMvc;
     private final ObjectMapper objectMapper;
     private final RegiaoAtendimentoRepository regiaoAtendimentoRepository;
@@ -883,6 +885,163 @@ class SolicitacaoFaxinaIntegrationTest {
     }
 
     @Test
+    void webhookAsaasSemTokenFalhaEmJson() throws Exception {
+        mockMvc.perform(post("/api/v1/webhooks/asaas")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "event": "PAYMENT_CONFIRMED",
+                                  "payment": {
+                                    "id": "pay_sem_token",
+                                    "status": "CONFIRMED"
+                                  }
+                                }
+                                """))
+                .andExpect(status().isUnauthorized())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("ASAAS_WEBHOOK_TOKEN_INVALIDO"))
+                .andExpect(jsonPath("$.errors").isArray());
+    }
+
+    @Test
+    void webhookAsaasComTokenInvalidoFalhaAntesDeProcessarPagamento() throws Exception {
+        AtendimentoCriado atendimento = criarAtendimentoAguardandoPagamento("m5a.webhook-token-invalido", "75148233344");
+        mockarCriacaoAsaas("pay_m5a_token_invalido", "PENDING", "https://asaas.local/pay_m5a_token_invalido", null);
+        Long pagamentoId = criarPagamento(atendimento.tokenCliente(), atendimento.atendimentoId(), "PIX");
+
+        mockMvc.perform(post("/api/v1/webhooks/asaas")
+                        .header("asaas-access-token", "token-incorreto")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{ payload-malformado"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("ASAAS_WEBHOOK_TOKEN_INVALIDO"))
+                .andExpect(jsonPath("$.errors").isArray());
+
+        assertThat(pagamentoRepository.findById(pagamentoId))
+                .isPresent()
+                .get()
+                .satisfies(pagamento -> {
+                    assertThat(pagamento.getStatus().name()).isEqualTo("PENDENTE");
+                    assertThat(pagamento.getRecebidoEm()).isNull();
+                    assertThat(pagamento.isWebhookProcessado()).isFalse();
+                });
+        assertThat(atendimentoFaxinaRepository.findById(atendimento.atendimentoId()))
+                .isPresent()
+                .get()
+                .extracting(atendimentoPersistido -> atendimentoPersistido.getStatus().name())
+                .isEqualTo("AGUARDANDO_PAGAMENTO");
+    }
+
+    @Test
+    void webhookAsaasComEventoNaoSuportadoRetornaOkENaoAlteraPagamento() throws Exception {
+        AtendimentoCriado atendimento = criarAtendimentoAguardandoPagamento("m5a.webhook-evento-ignorado", "75149233344");
+        mockarCriacaoAsaas("pay_m5a_evento_ignorado", "PENDING", "https://asaas.local/pay_m5a_evento_ignorado", null);
+        Long pagamentoId = criarPagamento(atendimento.tokenCliente(), atendimento.atendimentoId(), "PIX");
+
+        mockMvc.perform(post("/api/v1/webhooks/asaas")
+                        .header("asaas-access-token", ASAAS_WEBHOOK_TOKEN)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "event": "PAYMENT_CREATED",
+                                  "payment": {
+                                    "id": "pay_m5a_evento_ignorado",
+                                    "status": "PENDING"
+                                  }
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(true));
+
+        assertThat(pagamentoRepository.findById(pagamentoId))
+                .isPresent()
+                .get()
+                .satisfies(pagamento -> {
+                    assertThat(pagamento.getStatus().name()).isEqualTo("PENDENTE");
+                    assertThat(pagamento.getRecebidoEm()).isNull();
+                    assertThat(pagamento.isWebhookProcessado()).isFalse();
+                });
+        assertThat(atendimentoFaxinaRepository.findById(atendimento.atendimentoId()))
+                .isPresent()
+                .get()
+                .extracting(atendimentoPersistido -> atendimentoPersistido.getStatus().name())
+                .isEqualTo("AGUARDANDO_PAGAMENTO");
+    }
+
+    @Test
+    void webhookAsaasSemEventRetornaErroControladoENaoAlteraPagamento() throws Exception {
+        AtendimentoCriado atendimento = criarAtendimentoAguardandoPagamento("m5a.webhook-sem-event", "75150233344");
+        mockarCriacaoAsaas("pay_m5a_sem_event", "PENDING", "https://asaas.local/pay_m5a_sem_event", null);
+        Long pagamentoId = criarPagamento(atendimento.tokenCliente(), atendimento.atendimentoId(), "PIX");
+
+        mockMvc.perform(post("/api/v1/webhooks/asaas")
+                        .header("asaas-access-token", ASAAS_WEBHOOK_TOKEN)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "payment": {
+                                    "id": "pay_m5a_sem_event",
+                                    "status": "CONFIRMED"
+                                  }
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("WEBHOOK_PAYLOAD_INVALIDO"))
+                .andExpect(jsonPath("$.errors").isArray());
+
+        assertThat(pagamentoRepository.findById(pagamentoId))
+                .isPresent()
+                .get()
+                .satisfies(pagamento -> {
+                    assertThat(pagamento.getStatus().name()).isEqualTo("PENDENTE");
+                    assertThat(pagamento.getRecebidoEm()).isNull();
+                    assertThat(pagamento.isWebhookProcessado()).isFalse();
+                });
+    }
+
+    @Test
+    void webhookAsaasSemPaymentIdRetornaOkENaoAlteraPagamento() throws Exception {
+        AtendimentoCriado atendimento = criarAtendimentoAguardandoPagamento("m5a.webhook-sem-payment-id", "75151233344");
+        mockarCriacaoAsaas("pay_m5a_sem_payment_id", "PENDING", "https://asaas.local/pay_m5a_sem_payment_id", null);
+        Long pagamentoId = criarPagamento(atendimento.tokenCliente(), atendimento.atendimentoId(), "PIX");
+
+        mockMvc.perform(post("/api/v1/webhooks/asaas")
+                        .header("asaas-access-token", ASAAS_WEBHOOK_TOKEN)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "event": "PAYMENT_CONFIRMED",
+                                  "payment": {
+                                    "status": "CONFIRMED"
+                                  }
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(true));
+
+        assertThat(pagamentoRepository.findById(pagamentoId))
+                .isPresent()
+                .get()
+                .satisfies(pagamento -> {
+                    assertThat(pagamento.getStatus().name()).isEqualTo("PENDENTE");
+                    assertThat(pagamento.getRecebidoEm()).isNull();
+                    assertThat(pagamento.isWebhookProcessado()).isFalse();
+                });
+        assertThat(atendimentoFaxinaRepository.findById(atendimento.atendimentoId()))
+                .isPresent()
+                .get()
+                .extracting(atendimentoPersistido -> atendimentoPersistido.getStatus().name())
+                .isEqualTo("AGUARDANDO_PAGAMENTO");
+    }
+
+    @Test
     void webhookCheckoutPagoConfirmaPagamentoEAtendimentoComIdempotencia() throws Exception {
         AtendimentoCriado atendimento = criarAtendimentoAguardandoPagamento("m5a.webhook-checkout", "75152233344");
         mockarCheckoutAsaas("chk_m5a_webhook", "https://asaas.local/checkout/chk_m5a_webhook");
@@ -898,12 +1057,14 @@ class SolicitacaoFaxinaIntegrationTest {
                 """;
 
         mockMvc.perform(post("/api/v1/webhooks/asaas")
+                        .header("asaas-access-token", ASAAS_WEBHOOK_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payload))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
 
         mockMvc.perform(post("/api/v1/webhooks/asaas")
+                        .header("asaas-access-token", ASAAS_WEBHOOK_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payload))
                 .andExpect(status().isOk())
@@ -926,12 +1087,68 @@ class SolicitacaoFaxinaIntegrationTest {
     }
 
     @Test
-    void webhookPaymentOverdueNaoConfirmaPagamentoNemAtendimento() throws Exception {
+    void webhookPaymentConfirmedPorPaymentIdConfirmaPagamentoEAtendimentoSemJwt() throws Exception {
+        AtendimentoCriado atendimento = criarAtendimentoAguardandoPagamento("m5b.webhook-payment", "75157233344");
+        mockarCriacaoAsaas("pay_m5b_confirmado", "PENDING", "https://asaas.local/pay_m5b_confirmado", null);
+        Long pagamentoId = criarPagamento(atendimento.tokenCliente(), atendimento.atendimentoId(), "PIX");
+
+        mockMvc.perform(post("/api/v1/webhooks/asaas")
+                        .header("asaas-access-token", ASAAS_WEBHOOK_TOKEN)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "event": "PAYMENT_CONFIRMED",
+                                  "payment": {
+                                    "id": "pay_m5b_confirmado",
+                                    "status": "CONFIRMED"
+                                  }
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+
+        assertThat(pagamentoRepository.findById(pagamentoId))
+                .isPresent()
+                .get()
+                .satisfies(pagamento -> {
+                    assertThat(pagamento.getStatus().name()).isEqualTo("PAGO");
+                    assertThat(pagamento.getRecebidoEm()).isNotNull();
+                    assertThat(pagamento.isWebhookProcessado()).isTrue();
+                });
+        assertThat(atendimentoFaxinaRepository.findById(atendimento.atendimentoId()))
+                .isPresent()
+                .get()
+                .extracting(atendimentoPersistido -> atendimentoPersistido.getStatus().name())
+                .isEqualTo("CONFIRMADO");
+    }
+
+    @Test
+    void webhookComPagamentoDesconhecidoEhIgnoradoComRespostaEstavel() throws Exception {
+        mockMvc.perform(post("/api/v1/webhooks/asaas")
+                        .header("asaas-access-token", ASAAS_WEBHOOK_TOKEN)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "event": "PAYMENT_CONFIRMED",
+                                  "payment": {
+                                    "id": "pay_m5b_inexistente",
+                                    "status": "CONFIRMED"
+                                  }
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(true));
+    }
+
+    @Test
+    void webhookPaymentOverdueMarcaFalhaSemConfirmarAtendimento() throws Exception {
         AtendimentoCriado atendimento = criarAtendimentoAguardandoPagamento("m5a.webhook-overdue", "75162233344");
         mockarCriacaoAsaas("pay_m5a_overdue", "PENDING", "https://asaas.local/pay_m5a_overdue", null);
         Long pagamentoId = criarPagamento(atendimento.tokenCliente(), atendimento.atendimentoId(), "PIX");
 
         mockMvc.perform(post("/api/v1/webhooks/asaas")
+                        .header("asaas-access-token", ASAAS_WEBHOOK_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -948,7 +1165,7 @@ class SolicitacaoFaxinaIntegrationTest {
                 .isPresent()
                 .get()
                 .satisfies(pagamento -> {
-                    assertThat(pagamento.getStatus().name()).isEqualTo("PENDENTE");
+                    assertThat(pagamento.getStatus().name()).isEqualTo("FALHOU");
                     assertThat(pagamento.getRecebidoEm()).isNull();
                     assertThat(pagamento.isWebhookProcessado()).isFalse();
                 });

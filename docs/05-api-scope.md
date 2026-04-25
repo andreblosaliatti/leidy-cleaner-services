@@ -222,7 +222,15 @@ Consulta pagamento pelo atendimento.
 Reconsulta o gateway, mas nao confirma pagamento de forma definitiva. Estados recebidos do gateway podem ir para `AGUARDANDO_CONFIRMACAO`; `PAGO` so vem do webhook.
 
 ### POST `/webhooks/asaas`
-Recebe webhook do Asaas.
+Recebe webhook do Asaas em `POST /api/v1/webhooks/asaas`. O endpoint:
+- aceita eventos sem JWT, mas exige o header `asaas-access-token`
+- compara `asaas-access-token` com `ASAAS_WEBHOOK_TOKEN` antes de processar o payload
+- rejeita chamadas sem token ou com token invalido com erro JSON 401
+- usa `event`, `payment.id` e, para checkout, `checkout.id` como identificadores principais
+- confirma `Pagamento = PAGO` e `AtendimentoFaxina = CONFIRMADO` apenas em eventos de sucesso suportados
+- e idempotente e ignora entregas duplicadas com resposta 2xx estavel
+- ignora eventos desconhecidos ou nao suportados com resposta 200 para evitar retry desnecessario do gateway
+- valida o payload estruturalmente depois da autenticacao por token do webhook
 
 ---
 
@@ -267,10 +275,12 @@ A rota de aceite deve:
 
 ### 14.2 Webhook de pagamento
 A rota de webhook deve:
-- validar a autenticidade/origem do evento
+- validar `asaas-access-token` contra `ASAAS_WEBHOOK_TOKEN` antes de processar o payload
 - localizar o pagamento correto
 - ser idempotente
-- processar `CHECKOUT_PAID`
+- processar `PAYMENT_RECEIVED`, `PAYMENT_CONFIRMED`, `PAYMENT_RECEIVED_IN_CASH` e `CHECKOUT_PAID` como sucesso definitivo
+- ignorar eventos nao suportados com 200
+- mapear `PAYMENT_OVERDUE` para falha sem confirmar o atendimento
 - atualizar `Pagamento` para `PAGO`
 - atualizar `AtendimentoFaxina` para `CONFIRMADO`
 - nao tratar `PAYMENT_OVERDUE` como confirmacao de pagamento

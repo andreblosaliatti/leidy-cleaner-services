@@ -9,6 +9,7 @@ public class AsaasProperties {
 
     private String baseUrl = "https://sandbox.asaas.com/api";
     private String apiKey;
+    private String webhookToken;
     private String defaultCustomerId;
     private String checkoutSuccessUrl = "http://localhost:5173/pagamento/sucesso";
     private String checkoutCancelUrl = "http://localhost:5173/pagamento/cancelado";
@@ -28,6 +29,14 @@ public class AsaasProperties {
 
     public void setApiKey(String apiKey) {
         this.apiKey = apiKey;
+    }
+
+    public String getWebhookToken() {
+        return webhookToken;
+    }
+
+    public void setWebhookToken(String webhookToken) {
+        this.webhookToken = webhookToken;
     }
 
     public String getDefaultCustomerId() {
