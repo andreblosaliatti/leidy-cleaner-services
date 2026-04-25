@@ -1,0 +1,36 @@
+import { getFirstName } from '../../features/auth/session';
+import { useAuth } from '../../features/auth/useAuth';
+import { DashboardCards, DashboardHeader } from './DashboardCards';
+
+const clienteItems = [
+  {
+    title: 'Endereços',
+    description: 'Base para organizar locais de atendimento do cliente.',
+  },
+  {
+    title: 'Solicitações',
+    description: 'Espaço reservado para criação e acompanhamento de pedidos de faxina.',
+  },
+  {
+    title: 'Pagamentos',
+    description: 'Área futura para acompanhar cobranças vinculadas aos atendimentos.',
+  },
+  {
+    title: 'Histórico',
+    description: 'Consulta futura dos atendimentos concluídos e seus registros.',
+  },
+];
+
+export function ClienteDashboardPage() {
+  const { user } = useAuth();
+
+  return (
+    <div className="grid gap-5">
+      <DashboardHeader
+        title={`Bem-vindo, ${getFirstName(user?.nomeCompleto ?? '')}.`}
+        description="Sua área de cliente está pronta para receber os próximos fluxos operacionais, mantendo contratação, pagamentos e histórico separados por etapa."
+      />
+      <DashboardCards items={clienteItems} />
+    </div>
+  );
+}

@@ -1,23 +1,48 @@
-import { apiBaseUrl } from '../lib/env';
+import { Navigate, Route, Routes } from 'react-router-dom';
+
+import { AuthenticatedLayout } from '../layouts/AuthenticatedLayout';
+import { PublicLayout } from '../layouts/PublicLayout';
+import { AdminDashboardPage } from '../pages/app/AdminDashboardPage';
+import { ClienteDashboardPage } from '../pages/app/ClienteDashboardPage';
+import { ProfissionalDashboardPage } from '../pages/app/ProfissionalDashboardPage';
+import { ClientRegistrationPage } from '../pages/public/ClientRegistrationPage';
+import { HomePage } from '../pages/public/HomePage';
+import { LoginPage } from '../pages/public/LoginPage';
+import { NotFoundPage } from '../pages/public/NotFoundPage';
+import { ProfessionalRegistrationPage } from '../pages/public/ProfessionalRegistrationPage';
+import { AppHomeRedirect } from '../routes/AppHomeRedirect';
+import { RequireAuth } from '../routes/RequireAuth';
+import { RequireProfile } from '../routes/RequireProfile';
 
 export function App() {
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-950">
-      <section className="mx-auto flex min-h-screen w-full max-w-5xl flex-col justify-center px-6 py-12">
-        <p className="text-sm font-semibold uppercase text-emerald-700">
-          Fundacao tecnica
-        </p>
-        <h1 className="mt-3 max-w-3xl text-4xl font-bold leading-tight md:text-6xl">
-          Leidy Cleaner Services
-        </h1>
-        <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-700">
-          Plataforma operacional para intermediacao de servicos de limpeza.
-        </p>
-        <div className="mt-8 rounded-md border border-slate-200 bg-white p-5 shadow-sm">
-          <p className="text-sm font-medium text-slate-600">API configurada</p>
-          <p className="mt-2 break-all font-mono text-sm text-slate-900">{apiBaseUrl}</p>
-        </div>
-      </section>
-    </main>
+    <Routes>
+      <Route element={<PublicLayout />}>
+        <Route index element={<HomePage />} />
+      </Route>
+      <Route path="entrar" element={<LoginPage />} />
+      <Route path="cadastro">
+        <Route path="cliente" element={<ClientRegistrationPage />} />
+        <Route path="profissional" element={<ProfessionalRegistrationPage />} />
+        <Route index element={<Navigate to="/cadastro/cliente" replace />} />
+      </Route>
+      <Route element={<RequireAuth />}>
+        <Route path="app" element={<AuthenticatedLayout />}>
+          <Route index element={<AppHomeRedirect />} />
+          <Route element={<RequireProfile profile="CLIENTE" />}>
+            <Route path="cliente" element={<ClienteDashboardPage />} />
+          </Route>
+          <Route element={<RequireProfile profile="PROFISSIONAL" />}>
+            <Route path="profissional" element={<ProfissionalDashboardPage />} />
+          </Route>
+          <Route element={<RequireProfile profile="ADMIN" />}>
+            <Route path="admin" element={<AdminDashboardPage />} />
+          </Route>
+        </Route>
+      </Route>
+      <Route element={<PublicLayout />}>
+        <Route path="*" element={<NotFoundPage />} />
+      </Route>
+    </Routes>
   );
 }
