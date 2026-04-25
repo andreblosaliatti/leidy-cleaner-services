@@ -181,6 +181,11 @@ Um profissional só pode aparecer como elegível se:
 - não pode finalizar sem iniciar
 - não pode iniciar duas vezes
 - não pode finalizar duas vezes
+- inicio grava checkpoint `INICIO` e muda `Atendimento = EM_EXECUCAO`
+- fim grava checkpoint `FIM` e muda `Atendimento = FINALIZADO`
+- cliente ve os proprios atendimentos; profissional ve atendimentos atribuidos a ela
+- usuarios nao relacionados nao acessam detalhe nem checkpoints
+- evidencias de foto sao persistidas apenas como URL/path neste marco, sem upload real
 
 ### 6.6 Avaliação
 - somente o cliente avalia
@@ -448,25 +453,25 @@ Use esta seção como checklist viva de execução.
 - [ ] Criar `.env.example`
 
 ## M1 — Dados base e autenticação
-- [ ] Criar migration inicial de `usuarios`
-- [ ] Criar migration de `perfis_cliente`
-- [ ] Criar migration de `perfis_profissional`
-- [ ] Criar estrutura de roles/perfis
-- [ ] Implementar registro de cliente
-- [ ] Implementar registro de profissional
-- [ ] Implementar login com JWT
-- [ ] Implementar endpoint `auth/me`
+- [x] Criar migration inicial de `usuarios`
+- [x] Criar migration de `perfis_cliente`
+- [x] Criar migration de `perfis_profissional`
+- [x] Criar estrutura de roles/perfis
+- [x] Implementar registro de cliente
+- [x] Implementar registro de profissional
+- [x] Implementar login com JWT
+- [x] Implementar endpoint `auth/me`
 
 ## M2 — Regiões, endereços e onboarding profissional
-- [ ] Criar migration de `enderecos`
-- [ ] Criar migration de `regioes_atendimento`
-- [ ] Criar migration de `profissional_regioes`
-- [ ] Criar migration de `disponibilidades_profissional`
-- [ ] Seed inicial de bairros/regiões
-- [ ] Implementar CRUD básico de endereços
-- [ ] Implementar seleção de regiões da profissional
-- [ ] Implementar disponibilidade semanal
-- [ ] Implementar estrutura de documentos/verificação
+- [x] Criar migration de `enderecos`
+- [x] Criar migration de `regioes_atendimento`
+- [x] Criar migration de `profissional_regioes`
+- [x] Criar migration de `disponibilidades_profissional`
+- [x] Seed inicial de bairros/regiões
+- [x] Implementar CRUD básico de endereços
+- [x] Implementar seleção de regiões da profissional
+- [x] Implementar disponibilidade semanal
+- [x] Implementar estrutura de documentos/verificação
 
 ## M3 — Frontend base
 - [ ] Criar layout público
@@ -479,29 +484,29 @@ Use esta seção como checklist viva de execução.
 - [ ] Criar dashboard admin placeholder
 
 ## M4 — Solicitações
-- [ ] Criar migration de `solicitacoes_faxina`
-- [ ] Implementar criação de solicitação
-- [ ] Implementar listagem das minhas solicitações
-- [ ] Implementar listagem de profissionais elegíveis
-- [ ] Implementar seleção de até 3 profissionais
-- [ ] Validar limite máximo no backend
+- [x] Criar migration de `solicitacoes_faxina`
+- [x] Implementar criação de solicitação
+- [x] Implementar listagem das minhas solicitações
+- [x] Implementar listagem de profissionais elegíveis
+- [x] Implementar seleção de até 3 profissionais
+- [x] Validar limite máximo no backend
 
 ## M5 — Convites
-- [ ] Criar migration de `convites_profissional`
-- [ ] Implementar disparo de convites
-- [ ] Implementar listagem de convites da profissional
-- [ ] Implementar recusa de convite
-- [ ] Implementar aceite de convite com transação
-- [ ] Cancelar automaticamente convites concorrentes
+- [x] Criar migration de `convites_profissional`
+- [x] Implementar disparo de convites
+- [x] Implementar listagem de convites da profissional
+- [x] Implementar recusa de convite
+- [x] Implementar aceite de convite com transação
+- [x] Cancelar automaticamente convites concorrentes
 
 ## M6 — Atendimento
-- [ ] Criar migration de `atendimentos_faxina`
-- [ ] Criar atendimento ao aceitar convite
-- [ ] Implementar detalhes do atendimento
-- [ ] Implementar endpoint de início do serviço
-- [ ] Implementar endpoint de finalização do serviço
-- [ ] Criar migration de `checkpoints_servico`
-- [ ] Persistir checkpoints de início e fim
+- [x] Criar migration de `atendimentos_faxina`
+- [x] Criar atendimento ao aceitar convite
+- [x] Implementar detalhes do atendimento
+- [x] Implementar endpoint de início do serviço
+- [x] Implementar endpoint de finalização do serviço
+- [x] Criar migration de `checkpoints_servico`
+- [x] Persistir checkpoints de início e fim
 
 ## M7 — Pagamentos
 - [x] Criar migration de `pagamentos`
@@ -514,12 +519,12 @@ Use esta seção como checklist viva de execução.
 - [x] Atualizar atendimento para `CONFIRMADO` apenas via webhook
 
 ## M8 — Avaliações
-- [ ] Criar migration de `avaliacoes_profissional`
-- [ ] Implementar criação de avaliação
-- [ ] Validar 1 avaliação por atendimento
-- [ ] Validar avaliação só após finalização
-- [ ] Atualizar `notaMedia` e `totalAvaliacoes`
-- [ ] Exibir avaliações da profissional
+- [x] Criar migration de `avaliacoes_profissional`
+- [x] Implementar criação de avaliação
+- [x] Validar 1 avaliação por atendimento
+- [x] Validar avaliação só após finalização
+- [x] Atualizar `notaMedia` e `totalAvaliacoes`
+- [x] Exibir avaliações da profissional
 
 ## M9 — Ocorrências e admin
 - [ ] Criar migration de `ocorrencias_atendimento`

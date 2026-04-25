@@ -185,22 +185,37 @@ Profissional recusa convite.
 ## 10. Atendimentos
 
 ### GET `/atendimentos/meus`
-Lista atendimentos do usuário autenticado.
+Lista atendimentos do usuario autenticado:
+- cliente ve atendimentos em que e dona
+- profissional ve atendimentos em que esta atribuida
+- nao implementa listagem admin ampla neste marco
 
 ### GET `/atendimentos/{id}`
-Detalha atendimento.
+Detalha atendimento relacionado ao usuario autenticado.
 
 ### GET `/atendimentos`
 Admin lista atendimentos.
 
 ### POST `/atendimentos/{id}/iniciar`
-Profissional inicia o serviço.
+Profissional atribuida inicia o servico. Transicao: `CONFIRMADO -> EM_EXECUCAO`.
+
+Payload:
+```json
+{
+  "latitude": -30.1234567,
+  "longitude": -51.1234567,
+  "fotoComprovacaoUrl": "local/checkpoints/inicio.png",
+  "observacao": "Inicio registrado"
+}
+```
 
 ### POST `/atendimentos/{id}/finalizar`
-Profissional finaliza o serviço.
+Profissional atribuida finaliza o servico. Transicao: `EM_EXECUCAO -> FINALIZADO`.
+
+Payload igual ao de inicio. `fotoComprovacaoUrl` e apenas metadado; upload/armazenamento real ficam fora deste marco.
 
 ### GET `/atendimentos/{id}/checkpoints`
-Lista checkpoints do atendimento.
+Lista checkpoints do atendimento para usuario relacionado.
 
 ---
 

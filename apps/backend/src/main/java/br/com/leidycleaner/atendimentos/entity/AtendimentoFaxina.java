@@ -152,4 +152,14 @@ public class AtendimentoFaxina {
             status = StatusAtendimento.CONFIRMADO;
         }
     }
+
+    public void iniciarServico(OffsetDateTime inicioRealEm) {
+        this.status = StatusAtendimento.EM_EXECUCAO;
+        this.inicioRealEm = inicioRealEm;
+    }
+
+    public void finalizarServico(OffsetDateTime fimRealEm) {
+        this.status = StatusAtendimento.FINALIZADO;
+        this.fimRealEm = fimRealEm;
+    }
 }

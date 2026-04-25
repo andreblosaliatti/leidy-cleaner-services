@@ -1,6 +1,7 @@
 package br.com.leidycleaner.profissionais.entity;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 
@@ -127,6 +128,11 @@ public class PerfilProfissional {
 
     public void alterarStatusAprovacao(StatusAprovacaoProfissional statusAprovacao) {
         this.statusAprovacao = statusAprovacao;
+    }
+
+    public void atualizarAgregadoAvaliacoes(BigDecimal notaMedia, int totalAvaliacoes) {
+        this.notaMedia = notaMedia == null ? BigDecimal.ZERO : notaMedia.setScale(2, RoundingMode.HALF_UP);
+        this.totalAvaliacoes = totalAvaliacoes;
     }
 
     public Long getId() {

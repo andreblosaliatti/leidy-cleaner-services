@@ -31,6 +31,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import br.com.leidycleaner.atendimentos.repository.AtendimentoFaxinaRepository;
+import br.com.leidycleaner.atendimentos.repository.CheckpointServicoRepository;
+import br.com.leidycleaner.avaliacoes.repository.AvaliacaoProfissionalRepository;
 import br.com.leidycleaner.convites.repository.ConviteProfissionalRepository;
 import br.com.leidycleaner.pagamentos.gateway.AsaasCheckoutGatewayResponse;
 import br.com.leidycleaner.pagamentos.gateway.AsaasGatewayClient;
@@ -52,6 +54,8 @@ class SolicitacaoFaxinaIntegrationTest {
     private final SolicitacaoProfissionalSelecionadoRepository solicitacaoProfissionalSelecionadoRepository;
     private final ConviteProfissionalRepository conviteProfissionalRepository;
     private final AtendimentoFaxinaRepository atendimentoFaxinaRepository;
+    private final CheckpointServicoRepository checkpointServicoRepository;
+    private final AvaliacaoProfissionalRepository avaliacaoProfissionalRepository;
     private final PagamentoRepository pagamentoRepository;
 
     @MockBean
@@ -71,6 +75,8 @@ class SolicitacaoFaxinaIntegrationTest {
             SolicitacaoProfissionalSelecionadoRepository solicitacaoProfissionalSelecionadoRepository,
             ConviteProfissionalRepository conviteProfissionalRepository,
             AtendimentoFaxinaRepository atendimentoFaxinaRepository,
+            CheckpointServicoRepository checkpointServicoRepository,
+            AvaliacaoProfissionalRepository avaliacaoProfissionalRepository,
             PagamentoRepository pagamentoRepository
     ) {
         this.mockMvc = mockMvc;
@@ -79,6 +85,8 @@ class SolicitacaoFaxinaIntegrationTest {
         this.solicitacaoProfissionalSelecionadoRepository = solicitacaoProfissionalSelecionadoRepository;
         this.conviteProfissionalRepository = conviteProfissionalRepository;
         this.atendimentoFaxinaRepository = atendimentoFaxinaRepository;
+        this.checkpointServicoRepository = checkpointServicoRepository;
+        this.avaliacaoProfissionalRepository = avaliacaoProfissionalRepository;
         this.pagamentoRepository = pagamentoRepository;
     }
 
@@ -1177,6 +1185,465 @@ class SolicitacaoFaxinaIntegrationTest {
     }
 
     @Test
+    void profissionalDesignadaIniciaAtendimentoConfirmadoECriaCheckpointInicio() throws Exception {
+        AtendimentoCriado atendimento = criarAtendimentoConfirmado("m6a.iniciar", "76152233344", "chk_m6a_iniciar");
+
+        mockMvc.perform(post("/api/v1/atendimentos/{id}/iniciar", atendimento.atendimentoId())
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + atendimento.tokenProfissional())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(checkpointJson("local/checkpoints/inicio.png", "Inicio registrado pela profissional")))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.id").value(atendimento.atendimentoId()))
+                .andExpect(jsonPath("$.data.status").value("EM_EXECUCAO"))
+                .andExpect(jsonPath("$.data.inicioRealEm").isNotEmpty());
+
+        assertThat(checkpointServicoRepository.findByAtendimentoIdOrderByRegistradoEmAscIdAsc(atendimento.atendimentoId()))
+                .hasSize(1)
+                .first()
+                .satisfies(checkpoint -> {
+                    assertThat(checkpoint.getTipo().name()).isEqualTo("INICIO");
+                    assertThat(checkpoint.getFotoComprovacaoUrl()).isEqualTo("local/checkpoints/inicio.png");
+                    assertThat(checkpoint.getObservacao()).isEqualTo("Inicio registrado pela profissional");
+                    assertThat(checkpoint.getRegistradoPor().getId()).isNotNull();
+                });
+        assertThat(atendimentoFaxinaRepository.findById(atendimento.atendimentoId()))
+                .isPresent()
+                .get()
+                .satisfies(atendimentoPersistido -> {
+                    assertThat(atendimentoPersistido.getStatus().name()).isEqualTo("EM_EXECUCAO");
+                    assertThat(atendimentoPersistido.getInicioRealEm()).isNotNull();
+                    assertThat(atendimentoPersistido.getFimRealEm()).isNull();
+                });
+    }
+
+    @Test
+    void profissionalDesignadaNaoIniciaAtendimentoDuasVezes() throws Exception {
+        AtendimentoCriado atendimento = criarAtendimentoConfirmado("m6a.iniciar-duas-vezes", "76153233344", "chk_m6a_iniciar_duas");
+        iniciarAtendimento(atendimento);
+
+        mockMvc.perform(post("/api/v1/atendimentos/{id}/iniciar", atendimento.atendimentoId())
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + atendimento.tokenProfissional())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(checkpointJson("local/checkpoints/inicio-duplicado.png", "Inicio duplicado")))
+                .andExpect(status().isConflict())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("ATENDIMENTO_JA_INICIADO"))
+                .andExpect(jsonPath("$.errors").isArray());
+
+        assertThat(checkpointServicoRepository.findByAtendimentoIdOrderByRegistradoEmAscIdAsc(atendimento.atendimentoId()))
+                .hasSize(1)
+                .first()
+                .extracting(checkpoint -> checkpoint.getTipo().name())
+                .isEqualTo("INICIO");
+    }
+
+    @Test
+    void profissionalDesignadaNaoFinalizaAntesDeIniciar() throws Exception {
+        AtendimentoCriado atendimento = criarAtendimentoConfirmado("m6a.finalizar-sem-inicio", "76154233344", "chk_m6a_finalizar_sem_inicio");
+
+        mockMvc.perform(post("/api/v1/atendimentos/{id}/finalizar", atendimento.atendimentoId())
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + atendimento.tokenProfissional())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(checkpointJson("local/checkpoints/fim.png", "Fim antecipado")))
+                .andExpect(status().isConflict())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("ATENDIMENTO_NAO_INICIADO"))
+                .andExpect(jsonPath("$.errors").isArray());
+
+        assertThat(checkpointServicoRepository.findByAtendimentoIdOrderByRegistradoEmAscIdAsc(atendimento.atendimentoId()))
+                .isEmpty();
+        assertThat(atendimentoFaxinaRepository.findById(atendimento.atendimentoId()))
+                .isPresent()
+                .get()
+                .extracting(atendimentoPersistido -> atendimentoPersistido.getStatus().name())
+                .isEqualTo("CONFIRMADO");
+    }
+
+    @Test
+    void profissionalDesignadaFinalizaAtendimentoEmExecucaoECriaCheckpointFim() throws Exception {
+        AtendimentoCriado atendimento = criarAtendimentoConfirmado("m6a.finalizar", "76155233344", "chk_m6a_finalizar");
+        iniciarAtendimento(atendimento);
+
+        mockMvc.perform(post("/api/v1/atendimentos/{id}/finalizar", atendimento.atendimentoId())
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + atendimento.tokenProfissional())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(checkpointJson("local/checkpoints/fim.png", "Servico finalizado")))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.id").value(atendimento.atendimentoId()))
+                .andExpect(jsonPath("$.data.status").value("FINALIZADO"))
+                .andExpect(jsonPath("$.data.fimRealEm").isNotEmpty());
+
+        assertThat(checkpointServicoRepository.findByAtendimentoIdOrderByRegistradoEmAscIdAsc(atendimento.atendimentoId()))
+                .hasSize(2)
+                .extracting(checkpoint -> checkpoint.getTipo().name())
+                .containsExactly("INICIO", "FIM");
+        assertThat(atendimentoFaxinaRepository.findById(atendimento.atendimentoId()))
+                .isPresent()
+                .get()
+                .satisfies(atendimentoPersistido -> {
+                    assertThat(atendimentoPersistido.getStatus().name()).isEqualTo("FINALIZADO");
+                    assertThat(atendimentoPersistido.getInicioRealEm()).isNotNull();
+                    assertThat(atendimentoPersistido.getFimRealEm()).isNotNull();
+                });
+    }
+
+    @Test
+    void profissionalDesignadaNaoFinalizaAtendimentoDuasVezes() throws Exception {
+        AtendimentoCriado atendimento = criarAtendimentoConfirmado("m6a.finalizar-duas-vezes", "76156233344", "chk_m6a_finalizar_duas");
+        iniciarAtendimento(atendimento);
+        finalizarAtendimento(atendimento);
+
+        mockMvc.perform(post("/api/v1/atendimentos/{id}/finalizar", atendimento.atendimentoId())
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + atendimento.tokenProfissional())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(checkpointJson("local/checkpoints/fim-duplicado.png", "Fim duplicado")))
+                .andExpect(status().isConflict())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("ATENDIMENTO_JA_FINALIZADO"))
+                .andExpect(jsonPath("$.errors").isArray());
+
+        assertThat(checkpointServicoRepository.findByAtendimentoIdOrderByRegistradoEmAscIdAsc(atendimento.atendimentoId()))
+                .hasSize(2)
+                .extracting(checkpoint -> checkpoint.getTipo().name())
+                .containsExactly("INICIO", "FIM");
+    }
+
+    @Test
+    void profissionalNaoRelacionadaNaoIniciaNemFinalizaAtendimentoDeOutraProfissional() throws Exception {
+        AtendimentoCriado atendimento = criarAtendimentoConfirmado("m6a.profissional-nao-relacionada", "76157233344", "chk_m6a_profissional_nao_relacionada");
+        String tokenOutraProfissional = criarProfissionalELogar("m6a.outra-profissional@example.com", "76158233344");
+
+        mockMvc.perform(post("/api/v1/atendimentos/{id}/iniciar", atendimento.atendimentoId())
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenOutraProfissional)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(checkpointJson("local/checkpoints/inicio.png", "Tentativa indevida")))
+                .andExpect(status().isNotFound())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("ATENDIMENTO_NOT_FOUND"))
+                .andExpect(jsonPath("$.errors").isArray());
+
+        iniciarAtendimento(atendimento);
+
+        mockMvc.perform(post("/api/v1/atendimentos/{id}/finalizar", atendimento.atendimentoId())
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenOutraProfissional)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(checkpointJson("local/checkpoints/fim.png", "Tentativa indevida")))
+                .andExpect(status().isNotFound())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("ATENDIMENTO_NOT_FOUND"))
+                .andExpect(jsonPath("$.errors").isArray());
+    }
+
+    @Test
+    void clienteListaEVisualizaProprioAtendimento() throws Exception {
+        AtendimentoCriado atendimento = criarAtendimentoConfirmado("m6a.cliente-lista", "76159233344", "chk_m6a_cliente_lista");
+
+        mockMvc.perform(get("/api/v1/atendimentos/meus")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + atendimento.tokenCliente()))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.length()").value(1))
+                .andExpect(jsonPath("$.data[0].id").value(atendimento.atendimentoId()))
+                .andExpect(jsonPath("$.data[0].status").value("CONFIRMADO"));
+
+        mockMvc.perform(get("/api/v1/atendimentos/{id}", atendimento.atendimentoId())
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + atendimento.tokenCliente()))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.id").value(atendimento.atendimentoId()))
+                .andExpect(jsonPath("$.data.status").value("CONFIRMADO"));
+    }
+
+    @Test
+    void profissionalListaEVisualizaAtendimentoAtribuido() throws Exception {
+        AtendimentoCriado atendimento = criarAtendimentoConfirmado("m6a.profissional-lista", "76160233344", "chk_m6a_profissional_lista");
+
+        mockMvc.perform(get("/api/v1/atendimentos/meus")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + atendimento.tokenProfissional()))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.length()").value(1))
+                .andExpect(jsonPath("$.data[0].id").value(atendimento.atendimentoId()))
+                .andExpect(jsonPath("$.data[0].status").value("CONFIRMADO"));
+
+        mockMvc.perform(get("/api/v1/atendimentos/{id}", atendimento.atendimentoId())
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + atendimento.tokenProfissional()))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.id").value(atendimento.atendimentoId()))
+                .andExpect(jsonPath("$.data.status").value("CONFIRMADO"));
+    }
+
+    @Test
+    void usuarioNaoRelacionadoNaoVisualizaAtendimentoNemCheckpoints() throws Exception {
+        AtendimentoCriado atendimento = criarAtendimentoConfirmado("m6a.nao-relacionado", "76161233344", "chk_m6a_nao_relacionado");
+        iniciarAtendimento(atendimento);
+        String tokenOutroCliente = criarClienteELogar("m6a.outro-cliente@example.com");
+
+        mockMvc.perform(get("/api/v1/atendimentos/{id}", atendimento.atendimentoId())
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenOutroCliente))
+                .andExpect(status().isNotFound())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("ATENDIMENTO_NOT_FOUND"))
+                .andExpect(jsonPath("$.errors").isArray());
+
+        mockMvc.perform(get("/api/v1/atendimentos/{id}/checkpoints", atendimento.atendimentoId())
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenOutroCliente))
+                .andExpect(status().isNotFound())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("ATENDIMENTO_NOT_FOUND"))
+                .andExpect(jsonPath("$.errors").isArray());
+    }
+
+    @Test
+    void endpointsDeAtendimentoExigemJwt() throws Exception {
+        mockMvc.perform(get("/api/v1/atendimentos/meus"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(header().doesNotExist("WWW-Authenticate"))
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
+
+        mockMvc.perform(get("/api/v1/atendimentos/1"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(header().doesNotExist("WWW-Authenticate"))
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
+
+        mockMvc.perform(get("/api/v1/atendimentos/1/checkpoints"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(header().doesNotExist("WWW-Authenticate"))
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
+
+        mockMvc.perform(post("/api/v1/atendimentos/1/iniciar")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(checkpointJson(null, null)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(header().doesNotExist("WWW-Authenticate"))
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
+
+        mockMvc.perform(post("/api/v1/atendimentos/1/finalizar")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(checkpointJson(null, null)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(header().doesNotExist("WWW-Authenticate"))
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
+    }
+
+    @Test
+    void clienteAvaliaAtendimentoFinalizadoEAtualizaAgregados() throws Exception {
+        AtendimentoCriado atendimento = criarAtendimentoFinalizado("m8.avalia", "77152233344", "chk_m8_avalia");
+        Long profissionalId = buscarMeuPerfilProfissionalId(atendimento.tokenProfissional());
+
+        String response = mockMvc.perform(post("/api/v1/avaliacoes")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + atendimento.tokenCliente())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(avaliacaoJson(atendimento.atendimentoId(), 5, "Atendimento excelente")))
+                .andExpect(status().isCreated())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.atendimentoId").value(atendimento.atendimentoId()))
+                .andExpect(jsonPath("$.data.profissionalId").value(profissionalId))
+                .andExpect(jsonPath("$.data.nota").value(5))
+                .andExpect(jsonPath("$.data.comentario").value("Atendimento excelente"))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        Long avaliacaoId = objectMapper.readTree(response).path("data").path("avaliacaoId").asLong();
+        assertThat(avaliacaoProfissionalRepository.findById(avaliacaoId)).isPresent();
+        assertThat(avaliacaoProfissionalRepository.countByProfissionalId(profissionalId)).isEqualTo(1);
+
+        String perfilResponse = mockMvc.perform(get("/api/v1/profissionais/me")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + atendimento.tokenProfissional()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.totalAvaliacoes").value(1))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        assertThat(objectMapper.readTree(perfilResponse).path("data").path("notaMedia").decimalValue())
+                .isEqualByComparingTo("5.00");
+
+        mockMvc.perform(get("/api/v1/profissionais/{id}/avaliacoes", profissionalId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + atendimento.tokenCliente()))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.length()").value(1))
+                .andExpect(jsonPath("$.data[0].avaliacaoId").value(avaliacaoId))
+                .andExpect(jsonPath("$.data[0].atendimentoId").value(atendimento.atendimentoId()))
+                .andExpect(jsonPath("$.data[0].nota").value(5));
+    }
+
+    @Test
+    void clienteNaoAvaliaAtendimentoAntesDeFinalizar() throws Exception {
+        AtendimentoCriado atendimento = criarAtendimentoConfirmado("m8.nao-finalizado", "77153233344", "chk_m8_nao_finalizado");
+
+        mockMvc.perform(post("/api/v1/avaliacoes")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + atendimento.tokenCliente())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(avaliacaoJson(atendimento.atendimentoId(), 5, "Ainda nao finalizado")))
+                .andExpect(status().isConflict())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("ATENDIMENTO_NAO_FINALIZADO"))
+                .andExpect(jsonPath("$.errors").isArray());
+
+        Long profissionalId = buscarMeuPerfilProfissionalId(atendimento.tokenProfissional());
+        assertThat(avaliacaoProfissionalRepository.countByProfissionalId(profissionalId)).isZero();
+    }
+
+    @Test
+    void clienteNaoAvaliaAtendimentoDeOutraCliente() throws Exception {
+        AtendimentoCriado atendimento = criarAtendimentoFinalizado("m8.outra-cliente", "77154233344", "chk_m8_outra_cliente");
+        String tokenOutraCliente = criarClienteELogar("m8.outra-cliente-nao-dona@example.com");
+
+        mockMvc.perform(post("/api/v1/avaliacoes")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenOutraCliente)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(avaliacaoJson(atendimento.atendimentoId(), 5, "Tentativa indevida")))
+                .andExpect(status().isNotFound())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("ATENDIMENTO_NOT_FOUND"))
+                .andExpect(jsonPath("$.errors").isArray());
+    }
+
+    @Test
+    void avaliacaoDuplicadaDoMesmoAtendimentoERejeitada() throws Exception {
+        AtendimentoCriado atendimento = criarAtendimentoFinalizado("m8.duplicada", "77155233344", "chk_m8_duplicada");
+        criarAvaliacao(atendimento.tokenCliente(), atendimento.atendimentoId(), 5, "Primeira avaliacao");
+
+        mockMvc.perform(post("/api/v1/avaliacoes")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + atendimento.tokenCliente())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(avaliacaoJson(atendimento.atendimentoId(), 4, "Segunda avaliacao")))
+                .andExpect(status().isConflict())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("AVALIACAO_JA_EXISTE"))
+                .andExpect(jsonPath("$.errors").isArray());
+
+        Long profissionalId = buscarMeuPerfilProfissionalId(atendimento.tokenProfissional());
+        assertThat(avaliacaoProfissionalRepository.countByProfissionalId(profissionalId)).isEqualTo(1);
+    }
+
+    @Test
+    void notaForaDoIntervaloERejeitadaEmJson() throws Exception {
+        AtendimentoCriado atendimento = criarAtendimentoFinalizado("m8.nota-invalida", "77156233344", "chk_m8_nota_invalida");
+
+        mockMvc.perform(post("/api/v1/avaliacoes")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + atendimento.tokenCliente())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(avaliacaoJson(atendimento.atendimentoId(), 6, "Nota invalida")))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.errors").isArray());
+
+        Long profissionalId = buscarMeuPerfilProfissionalId(atendimento.tokenProfissional());
+        assertThat(avaliacaoProfissionalRepository.countByProfissionalId(profissionalId)).isZero();
+    }
+
+    @Test
+    void avaliacoesRecalculamMediaTotalEListamPorProfissional() throws Exception {
+        Long regiaoId = ultimaRegiaoId();
+        ProfissionalConfigurada profissional = criarProfissionalConfiguradaComToken(
+                "m8.agregados-profissional@example.com",
+                "77157233344",
+                "Profissional Agregados",
+                "ATIVA",
+                "APROVADO",
+                true,
+                "APROVADO",
+                List.of(regiaoId),
+                "QUINTA",
+                "08:00",
+                "12:00"
+        );
+        AtendimentoCriado primeiro = criarAtendimentoFinalizadoComProfissional(
+                "m8.agregados-primeiro",
+                regiaoId,
+                profissional,
+                "chk_m8_agregados_primeiro"
+        );
+        AtendimentoCriado segundo = criarAtendimentoFinalizadoComProfissional(
+                "m8.agregados-segundo",
+                regiaoId,
+                profissional,
+                "chk_m8_agregados_segundo"
+        );
+
+        criarAvaliacao(primeiro.tokenCliente(), primeiro.atendimentoId(), 5, "Excelente");
+        criarAvaliacao(segundo.tokenCliente(), segundo.atendimentoId(), 3, "Regular");
+
+        String perfilResponse = mockMvc.perform(get("/api/v1/profissionais/me")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + profissional.tokenProfissional()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.totalAvaliacoes").value(2))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        assertThat(objectMapper.readTree(perfilResponse).path("data").path("notaMedia").decimalValue())
+                .isEqualByComparingTo("4.00");
+
+        mockMvc.perform(get("/api/v1/profissionais/{id}/avaliacoes", profissional.perfilId())
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + primeiro.tokenCliente()))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.length()").value(2))
+                .andExpect(jsonPath("$.data[0].atendimentoId").value(segundo.atendimentoId()))
+                .andExpect(jsonPath("$.data[0].nota").value(3))
+                .andExpect(jsonPath("$.data[1].atendimentoId").value(primeiro.atendimentoId()))
+                .andExpect(jsonPath("$.data[1].nota").value(5));
+    }
+
+    @Test
+    void endpointsDeAvaliacaoExigemJwt() throws Exception {
+        mockMvc.perform(post("/api/v1/avaliacoes")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(avaliacaoJson(1L, 5, "Sem jwt")))
+                .andExpect(status().isUnauthorized())
+                .andExpect(header().doesNotExist("WWW-Authenticate"))
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
+
+        mockMvc.perform(get("/api/v1/profissionais/1/avaliacoes"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(header().doesNotExist("WWW-Authenticate"))
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
+    }
+
+    @Test
     void criacaoDuplicadaDePagamentoParaMesmoAtendimentoERejeitada() throws Exception {
         AtendimentoCriado atendimento = criarAtendimentoAguardandoPagamento("m5a.duplicado", "75222233344");
         mockarCriacaoAsaas("pay_m5a_duplicado", "PENDING", "https://asaas.local/pay_m5a_duplicado", null);
@@ -1765,6 +2232,94 @@ class SolicitacaoFaxinaIntegrationTest {
         return new AtendimentoCriado(tokenCliente, profissional.tokenProfissional(), solicitacaoId, atendimentoId);
     }
 
+    private AtendimentoCriado criarAtendimentoConfirmado(String prefixoEmail, String cpf, String checkoutId) throws Exception {
+        AtendimentoCriado atendimento = criarAtendimentoAguardandoPagamento(prefixoEmail, cpf);
+        mockarCheckoutAsaas(checkoutId, "https://asaas.local/checkout/" + checkoutId);
+        criarCheckout(atendimento.tokenCliente(), atendimento.atendimentoId());
+        confirmarCheckoutAsaas(checkoutId);
+        return atendimento;
+    }
+
+    private AtendimentoCriado criarAtendimentoFinalizado(String prefixoEmail, String cpf, String checkoutId) throws Exception {
+        AtendimentoCriado atendimento = criarAtendimentoConfirmado(prefixoEmail, cpf, checkoutId);
+        iniciarAtendimento(atendimento);
+        finalizarAtendimento(atendimento);
+        return atendimento;
+    }
+
+    private AtendimentoCriado criarAtendimentoAguardandoPagamentoComProfissional(
+            String prefixoEmail,
+            Long regiaoId,
+            ProfissionalConfigurada profissional
+    ) throws Exception {
+        String tokenCliente = criarClienteELogar(prefixoEmail + "-cliente@example.com");
+        Long solicitacaoId = criarSolicitacao(tokenCliente, criarEndereco(tokenCliente), regiaoId, "FAXINA_RESIDENCIAL");
+        selecionarProfissionais(tokenCliente, solicitacaoId, List.of(profissional.perfilId()));
+        var convites = conviteProfissionalRepository.findBySolicitacaoId(solicitacaoId);
+        assertThat(convites).hasSize(1);
+        Long conviteId = convites.getFirst().getId();
+        String response = mockMvc.perform(post("/api/v1/convites/{id}/aceitar", conviteId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + profissional.tokenProfissional()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.atendimentoStatus").value("AGUARDANDO_PAGAMENTO"))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        Long atendimentoId = objectMapper.readTree(response).path("data").path("atendimentoId").asLong();
+        return new AtendimentoCriado(tokenCliente, profissional.tokenProfissional(), solicitacaoId, atendimentoId);
+    }
+
+    private AtendimentoCriado criarAtendimentoFinalizadoComProfissional(
+            String prefixoEmail,
+            Long regiaoId,
+            ProfissionalConfigurada profissional,
+            String checkoutId
+    ) throws Exception {
+        AtendimentoCriado atendimento = criarAtendimentoAguardandoPagamentoComProfissional(prefixoEmail, regiaoId, profissional);
+        mockarCheckoutAsaas(checkoutId, "https://asaas.local/checkout/" + checkoutId);
+        criarCheckout(atendimento.tokenCliente(), atendimento.atendimentoId());
+        confirmarCheckoutAsaas(checkoutId);
+        iniciarAtendimento(atendimento);
+        finalizarAtendimento(atendimento);
+        return atendimento;
+    }
+
+    private void confirmarCheckoutAsaas(String checkoutId) throws Exception {
+        mockMvc.perform(post("/api/v1/webhooks/asaas")
+                        .header("asaas-access-token", ASAAS_WEBHOOK_TOKEN)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "event": "CHECKOUT_PAID",
+                                  "checkout": {
+                                    "id": "%s"
+                                  }
+                                }
+                                """.formatted(checkoutId)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+    }
+
+    private void iniciarAtendimento(AtendimentoCriado atendimento) throws Exception {
+        mockMvc.perform(post("/api/v1/atendimentos/{id}/iniciar", atendimento.atendimentoId())
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + atendimento.tokenProfissional())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(checkpointJson("local/checkpoints/inicio.png", "Inicio do atendimento")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.status").value("EM_EXECUCAO"));
+    }
+
+    private void finalizarAtendimento(AtendimentoCriado atendimento) throws Exception {
+        mockMvc.perform(post("/api/v1/atendimentos/{id}/finalizar", atendimento.atendimentoId())
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + atendimento.tokenProfissional())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(checkpointJson("local/checkpoints/fim.png", "Fim do atendimento")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.status").value("FINALIZADO"));
+    }
+
     private void mockarCriacaoAsaas(String gatewayPaymentId, String status, String urlPagamento, String pixCopiaECola) {
         given(asaasGatewayClient.criarCobranca(any()))
                 .willReturn(new AsaasPagamentoGatewayResponse(
@@ -1809,6 +2364,19 @@ class SolicitacaoFaxinaIntegrationTest {
                 .andExpect(jsonPath("$.success").value(true));
     }
 
+    private Long criarAvaliacao(String tokenCliente, Long atendimentoId, int nota, String comentario) throws Exception {
+        String response = mockMvc.perform(post("/api/v1/avaliacoes")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenCliente)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(avaliacaoJson(atendimentoId, nota, comentario)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.success").value(true))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        return objectMapper.readTree(response).path("data").path("avaliacaoId").asLong();
+    }
+
     private Long primeiroConviteId(String tokenProfissional) throws Exception {
         String response = mockMvc.perform(get("/api/v1/convites/meus")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenProfissional))
@@ -1844,6 +2412,34 @@ class SolicitacaoFaxinaIntegrationTest {
                   "atendimentoId": %d
                 }
                 """.formatted(atendimentoId);
+    }
+
+    private String checkpointJson(String fotoComprovacaoUrl, String observacao) {
+        return """
+                {
+                  "latitude": -30.1234567,
+                  "longitude": -51.1234567,
+                  "fotoComprovacaoUrl": %s,
+                  "observacao": %s
+                }
+                """.formatted(jsonString(fotoComprovacaoUrl), jsonString(observacao));
+    }
+
+    private String avaliacaoJson(Long atendimentoId, int nota, String comentario) {
+        return """
+                {
+                  "atendimentoId": %d,
+                  "nota": %d,
+                  "comentario": %s
+                }
+                """.formatted(atendimentoId, nota, jsonString(comentario));
+    }
+
+    private String jsonString(String valor) {
+        if (valor == null) {
+            return "null";
+        }
+        return "\"" + valor + "\"";
     }
 
     private String login(String email, String senha) throws Exception {
