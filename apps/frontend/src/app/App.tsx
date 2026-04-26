@@ -5,6 +5,7 @@ import { PublicLayout } from '../layouts/PublicLayout';
 import { AdminDashboardPage } from '../pages/app/AdminDashboardPage';
 import { ClienteDashboardPage } from '../pages/app/ClienteDashboardPage';
 import { ClienteEnderecosPage } from '../pages/app/ClienteEnderecosPage';
+import { ClienteSolicitacoesPage } from '../pages/app/ClienteSolicitacoesPage';
 import { ProfissionalDashboardPage } from '../pages/app/ProfissionalDashboardPage';
 import { ProfissionalOnboardingPage } from '../pages/app/ProfissionalOnboardingPage';
 import { ClientRegistrationPage } from '../pages/public/ClientRegistrationPage';
@@ -35,6 +36,7 @@ export function App() {
             <Route path="cliente">
               <Route index element={<ClienteDashboardPage />} />
               <Route path="enderecos" element={<ClienteEnderecosPage />} />
+              <Route path="solicitacoes" element={<ClienteSolicitacoesPage />} />
             </Route>
           </Route>
           <Route element={<RequireProfile profile="PROFISSIONAL" />}>

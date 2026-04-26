@@ -11,6 +11,7 @@ const clienteItems = [
   {
     title: 'Solicitações',
     description: 'Espaço reservado para criação e acompanhamento de pedidos de faxina.',
+    href: '/app/cliente/solicitacoes',
   },
   {
     title: 'Pagamentos',
