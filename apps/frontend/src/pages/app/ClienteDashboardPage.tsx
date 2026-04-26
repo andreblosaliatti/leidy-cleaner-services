@@ -6,6 +6,7 @@ const clienteItems = [
   {
     title: 'Endereços',
     description: 'Base para organizar locais de atendimento do cliente.',
+    href: '/app/cliente/enderecos',
   },
   {
     title: 'Solicitações',

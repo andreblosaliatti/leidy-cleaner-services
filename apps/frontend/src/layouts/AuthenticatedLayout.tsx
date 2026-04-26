@@ -13,7 +13,7 @@ type NavigationItem = {
 const navigationByProfile: Record<TipoUsuario, NavigationItem[]> = {
   CLIENTE: [
     { label: 'Resumo', href: '/app/cliente' },
-    { label: 'Endereços' },
+    { label: 'Meus endereços', href: '/app/cliente/enderecos' },
     { label: 'Solicitações' },
     { label: 'Pagamentos' },
     { label: 'Histórico' },
@@ -92,6 +92,7 @@ export function AuthenticatedLayout() {
                       isActive ? 'bg-green-50 text-green-700' : 'text-slate-700 hover:bg-slate-50 hover:text-green-700',
                     ].join(' ')
                   }
+                  end={item.href === '/app/cliente' || item.href === '/app/profissional' || item.href === '/app/admin'}
                   to={item.href}
                 >
                   {item.label}

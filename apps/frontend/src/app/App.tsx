@@ -4,6 +4,7 @@ import { AuthenticatedLayout } from '../layouts/AuthenticatedLayout';
 import { PublicLayout } from '../layouts/PublicLayout';
 import { AdminDashboardPage } from '../pages/app/AdminDashboardPage';
 import { ClienteDashboardPage } from '../pages/app/ClienteDashboardPage';
+import { ClienteEnderecosPage } from '../pages/app/ClienteEnderecosPage';
 import { ProfissionalDashboardPage } from '../pages/app/ProfissionalDashboardPage';
 import { ClientRegistrationPage } from '../pages/public/ClientRegistrationPage';
 import { HomePage } from '../pages/public/HomePage';
@@ -30,7 +31,10 @@ export function App() {
         <Route path="app" element={<AuthenticatedLayout />}>
           <Route index element={<AppHomeRedirect />} />
           <Route element={<RequireProfile profile="CLIENTE" />}>
-            <Route path="cliente" element={<ClienteDashboardPage />} />
+            <Route path="cliente">
+              <Route index element={<ClienteDashboardPage />} />
+              <Route path="enderecos" element={<ClienteEnderecosPage />} />
+            </Route>
           </Route>
           <Route element={<RequireProfile profile="PROFISSIONAL" />}>
             <Route path="profissional" element={<ProfissionalDashboardPage />} />

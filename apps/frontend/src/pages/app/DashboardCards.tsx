@@ -1,6 +1,9 @@
+import { Link } from 'react-router-dom';
+
 type DashboardCard = {
   title: string;
   description: string;
+  href?: string;
 };
 
 type DashboardCardsProps = {
@@ -11,16 +14,35 @@ export function DashboardCards({ items }: DashboardCardsProps) {
   return (
     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
       {items.map((item) => (
-        <article key={item.title} className="rounded-lg border border-slate-100 bg-white p-5 shadow-sm">
-          <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-green-50 text-lg font-black text-green-700">
-            {item.title.charAt(0)}
-          </div>
-          <h2 className="mt-4 text-lg font-black text-slate-900">{item.title}</h2>
-          <p className="mt-2 text-sm leading-6 text-slate-600">{item.description}</p>
-        </article>
+        <DashboardCardItem key={item.title} item={item} />
       ))}
     </div>
   );
+}
+
+function DashboardCardItem({ item }: { item: DashboardCard }) {
+  const content = (
+    <>
+      <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-green-50 text-lg font-black text-green-700">
+        {item.title.charAt(0)}
+      </div>
+      <h2 className="mt-4 text-lg font-black text-slate-900">{item.title}</h2>
+      <p className="mt-2 text-sm leading-6 text-slate-600">{item.description}</p>
+    </>
+  );
+
+  if (item.href) {
+    return (
+      <Link
+        className="rounded-lg border border-slate-100 bg-white p-5 shadow-sm transition hover:border-green-100 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-green-700"
+        to={item.href}
+      >
+        {content}
+      </Link>
+    );
+  }
+
+  return <article className="rounded-lg border border-slate-100 bg-white p-5 shadow-sm">{content}</article>;
 }
 
 export function DashboardHeader({ title, description }: { title: string; description: string }) {
