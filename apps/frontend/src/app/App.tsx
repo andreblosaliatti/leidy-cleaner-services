@@ -6,6 +6,7 @@ import { AdminDashboardPage } from '../pages/app/AdminDashboardPage';
 import { ClienteDashboardPage } from '../pages/app/ClienteDashboardPage';
 import { ClienteEnderecosPage } from '../pages/app/ClienteEnderecosPage';
 import { ProfissionalDashboardPage } from '../pages/app/ProfissionalDashboardPage';
+import { ProfissionalOnboardingPage } from '../pages/app/ProfissionalOnboardingPage';
 import { ClientRegistrationPage } from '../pages/public/ClientRegistrationPage';
 import { HomePage } from '../pages/public/HomePage';
 import { LoginPage } from '../pages/public/LoginPage';
@@ -37,7 +38,10 @@ export function App() {
             </Route>
           </Route>
           <Route element={<RequireProfile profile="PROFISSIONAL" />}>
-            <Route path="profissional" element={<ProfissionalDashboardPage />} />
+            <Route path="profissional">
+              <Route index element={<ProfissionalDashboardPage />} />
+              <Route path="perfil" element={<ProfissionalOnboardingPage />} />
+            </Route>
           </Route>
           <Route element={<RequireProfile profile="ADMIN" />}>
             <Route path="admin" element={<AdminDashboardPage />} />

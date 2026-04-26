@@ -6,6 +6,7 @@ const profissionalItems = [
   {
     title: 'Perfil',
     description: 'Base para dados profissionais e apresentação dentro da plataforma.',
+    href: '/app/profissional/perfil',
   },
   {
     title: 'Regiões',

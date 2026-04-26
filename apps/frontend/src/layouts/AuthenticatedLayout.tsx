@@ -20,7 +20,7 @@ const navigationByProfile: Record<TipoUsuario, NavigationItem[]> = {
   ],
   PROFISSIONAL: [
     { label: 'Resumo', href: '/app/profissional' },
-    { label: 'Perfil' },
+    { label: 'Meu perfil', href: '/app/profissional/perfil' },
     { label: 'Regiões' },
     { label: 'Disponibilidade' },
     { label: 'Verificações' },
