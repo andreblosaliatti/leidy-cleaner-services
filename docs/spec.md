@@ -445,12 +445,12 @@ Mesmo com sistema funcionando, o modelo quebra se não houver profissionais e cl
 Use esta seção como checklist viva de execução.
 
 ## M0 — Fundação
-- [ ] Criar monorepo (`apps/frontend`, `apps/backend`, `docs`, `infra`)
-- [ ] Configurar backend Spring Boot base
-- [ ] Configurar frontend React + Vite base
-- [ ] Configurar PostgreSQL com Docker Compose
-- [ ] Criar README com instruções locais
-- [ ] Criar `.env.example`
+- [x] Criar monorepo (`apps/frontend`, `apps/backend`, `docs`, `infra`)
+- [x] Configurar backend Spring Boot base
+- [x] Configurar frontend React + Vite base
+- [x] Configurar PostgreSQL com Docker Compose
+- [x] Criar README com instruções locais
+- [x] Criar `.env.example`
 
 ## M1 — Dados base e autenticação
 - [x] Criar migration inicial de `usuarios`
@@ -474,14 +474,14 @@ Use esta seção como checklist viva de execução.
 - [x] Implementar estrutura de documentos/verificação
 
 ## M3 — Frontend base
-- [ ] Criar layout público
-- [ ] Criar layout autenticado
-- [ ] Criar páginas de login
-- [ ] Criar cadastro de cliente
-- [ ] Criar cadastro de profissional
-- [ ] Criar dashboard cliente placeholder
-- [ ] Criar dashboard profissional placeholder
-- [ ] Criar dashboard admin placeholder
+- [x] Criar layout público
+- [x] Criar layout autenticado
+- [x] Criar páginas de login
+- [x] Criar cadastro de cliente
+- [x] Criar cadastro de profissional
+- [x] Criar dashboard cliente placeholder
+- [x] Criar dashboard profissional placeholder
+- [x] Criar dashboard admin placeholder
 
 ## M4 — Solicitações
 - [x] Criar migration de `solicitacoes_faxina`
@@ -532,7 +532,7 @@ Use esta seção como checklist viva de execução.
 - [x] Implementar listagem/admin de ocorrências
 - [ ] Implementar dashboard admin básico
 - [ ] Implementar listagem de profissionais pendentes
-- [ ] Implementar fluxo de aprovação/rejeição
+- [x] Implementar fluxo de aprovação/rejeição
 
 ## M10 — Polimento
 - [ ] Adicionar validações UX no frontend

@@ -1,0 +1,73 @@
+import type { ProfissionalDisponivel } from './types';
+
+type ProfissionalElegivelCardProps = {
+  disabled?: boolean;
+  onToggle: (profissional: ProfissionalDisponivel) => void;
+  profissional: ProfissionalDisponivel;
+  selectionOrder?: number;
+  selected?: boolean;
+};
+
+export function ProfissionalElegivelCard({
+  disabled = false,
+  onToggle,
+  profissional,
+  selectionOrder,
+  selected = false,
+}: ProfissionalElegivelCardProps) {
+  return (
+    <article
+      className={[
+        'rounded-lg border bg-white p-5 shadow-sm transition',
+        selected ? 'border-green-200 ring-2 ring-green-100' : 'border-slate-100',
+        disabled && !selected ? 'opacity-60' : 'hover:border-green-100',
+      ].join(' ')}
+    >
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex min-w-0 gap-4">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-green-50 text-xl font-black text-green-700">
+            {profissional.nomeExibicao.charAt(0).toUpperCase()}
+          </div>
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-lg font-black text-slate-900">{profissional.nomeExibicao}</h2>
+              {selectionOrder && (
+                <span className="rounded-lg bg-green-50 px-3 py-1 text-xs font-black uppercase tracking-[0.1em] text-green-700">
+                  {selectionOrder}ª escolha
+                </span>
+              )}
+            </div>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              {profissional.experienciaAnos} ano{profissional.experienciaAnos === 1 ? '' : 's'} de experiência
+            </p>
+            <p className="mt-1 text-sm leading-6 text-slate-500">
+              Nota {formatRating(profissional.notaMedia)} · {profissional.totalAvaliacoes} avaliação
+              {profissional.totalAvaliacoes === 1 ? '' : 'ões'}
+            </p>
+          </div>
+        </div>
+
+        <button
+          className={[
+            'min-h-10 rounded-lg px-4 text-sm font-black transition focus:outline-none focus-visible:ring-2 focus-visible:ring-green-700',
+            selected
+              ? 'border border-red-100 text-red-700 hover:bg-red-50 focus-visible:ring-red-600'
+              : 'bg-green-700 text-white hover:bg-green-800 disabled:cursor-not-allowed disabled:bg-slate-300',
+          ].join(' ')}
+          disabled={disabled && !selected}
+          type="button"
+          onClick={() => onToggle(profissional)}
+        >
+          {selected ? 'Remover' : 'Selecionar'}
+        </button>
+      </div>
+    </article>
+  );
+}
+
+function formatRating(value: number) {
+  return new Intl.NumberFormat('pt-BR', {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 2,
+  }).format(value);
+}

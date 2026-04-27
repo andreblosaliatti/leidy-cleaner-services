@@ -9,7 +9,11 @@ import type { Endereco } from '../../features/cliente/enderecos/types';
 import { SolicitacaoForm } from '../../features/cliente/solicitacoes/SolicitacaoForm';
 import { SolicitacaoList } from '../../features/cliente/solicitacoes/SolicitacaoList';
 import { formatDateTime } from '../../features/cliente/solicitacoes/SolicitacaoCard';
-import { getStatusSolicitacaoInfo, getTipoServicoLabel } from '../../features/cliente/solicitacoes/solicitacaoLabels';
+import {
+  canSelectProfessionals,
+  getStatusSolicitacaoInfo,
+  getTipoServicoLabel,
+} from '../../features/cliente/solicitacoes/solicitacaoLabels';
 import {
   buscarSolicitacao,
   cancelarSolicitacao,
@@ -332,14 +336,24 @@ function SolicitacaoDetailPanel({
       </dl>
 
       {['CRIADA', 'AGUARDANDO_SELECAO', 'CONVITES_ENVIADOS', 'AGUARDANDO_ACEITE'].includes(solicitacao.status) && (
-        <button
-          className="mt-5 min-h-10 w-full rounded-lg border border-red-100 px-4 text-sm font-black text-red-700 transition hover:bg-red-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-600 disabled:cursor-not-allowed disabled:text-slate-400"
-          disabled={isCancelling}
-          type="button"
-          onClick={() => onCancel(solicitacao)}
-        >
-          {isCancelling ? 'Cancelando...' : 'Cancelar solicitação'}
-        </button>
+        <div className="mt-5 grid gap-3">
+          {canSelectProfessionals(solicitacao.status) && (
+            <Link
+              className="inline-flex min-h-10 items-center justify-center rounded-lg bg-green-700 px-4 text-sm font-black text-white transition hover:bg-green-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-700"
+              to={`/app/cliente/solicitacoes/${solicitacao.id}/profissionais`}
+            >
+              Selecionar profissionais
+            </Link>
+          )}
+          <button
+            className="min-h-10 w-full rounded-lg border border-red-100 px-4 text-sm font-black text-red-700 transition hover:bg-red-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-600 disabled:cursor-not-allowed disabled:text-slate-400"
+            disabled={isCancelling}
+            type="button"
+            onClick={() => onCancel(solicitacao)}
+          >
+            {isCancelling ? 'Cancelando...' : 'Cancelar solicitação'}
+          </button>
+        </div>
       )}
     </aside>
   );

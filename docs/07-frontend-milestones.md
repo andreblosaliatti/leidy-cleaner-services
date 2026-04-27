@@ -6,11 +6,11 @@ Este documento organiza a construção de **todo o frontend** do projeto **Leidy
 ---
 
 ## Princípios
-- [ ] manter o frontend separado do backend dentro do monorepo
-- [ ] usar o backend como fonte de verdade para regras críticas
-- [ ] não jogar lógica de negócio sensível no frontend
-- [ ] priorizar fluxos reais do produto antes de polimento visual
-- [ ] construir primeiro o que dá suporte ao fluxo operacional principal
+- [x] manter o frontend separado do backend dentro do monorepo
+- [x] usar o backend como fonte de verdade para regras críticas
+- [x] não jogar lógica de negócio sensível no frontend
+- [x] priorizar fluxos reais do produto antes de polimento visual
+- [x] construir primeiro o que dá suporte ao fluxo operacional principal
 
 Fluxo central do produto:
 **solicitação → seleção → convites → aceite → atendimento → pagamento → execução → avaliação**
@@ -21,10 +21,10 @@ Fluxo central do produto:
 O projeto já possui base de frontend criada, mas ainda não tem o frontend operacional completo.
 
 Checklist de contexto atual:
-- [ ] frontend base/scaffold revisado
-- [ ] estrutura atual auditada antes de novas telas
-- [ ] dependências principais confirmadas
-- [ ] build do frontend validado
+- [x] frontend base/scaffold revisado
+- [x] estrutura atual auditada antes de novas telas
+- [x] dependências principais confirmadas
+- [x] build do frontend validado
 
 ---
 
@@ -35,25 +35,25 @@ Checklist de contexto atual:
 Deixar a base do frontend organizada para crescimento real, sem virar bagunça.
 
 ### Entregas
-- [ ] revisar estrutura de pastas do `apps/frontend/src`
-- [ ] definir layout público
-- [ ] definir layout autenticado
-- [ ] definir sistema básico de rotas
-- [ ] padronizar consumo da API
-- [ ] padronizar tratamento de autenticação JWT no frontend
-- [ ] definir estrutura de `app/`
-- [ ] definir estrutura de `components/`
-- [ ] definir estrutura de `layouts/`
-- [ ] definir estrutura de `pages/`
-- [ ] definir estrutura de `features/`
-- [ ] definir estrutura de `services/`
-- [ ] definir estrutura de `routes/`
+- [x] revisar estrutura de pastas do `apps/frontend/src`
+- [x] definir layout público
+- [x] definir layout autenticado
+- [x] definir sistema básico de rotas
+- [x] padronizar consumo da API
+- [x] padronizar tratamento de autenticação JWT no frontend
+- [x] definir estrutura de `app/`
+- [x] definir estrutura de `components/`
+- [x] definir estrutura de `layouts/`
+- [x] definir estrutura de `pages/`
+- [x] definir estrutura de `features/`
+- [x] definir estrutura de `services/`
+- [x] definir estrutura de `routes/`
 - [ ] definir estrutura de `types/`
-- [ ] criar base de tema visual alinhada à identidade do projeto
+- [x] criar base de tema visual alinhada à identidade do projeto
 - [ ] criar componente base de botão
-- [ ] criar componente base de input
+- [x] criar componente base de input
 - [ ] criar componente base de select
-- [ ] criar componente base de textarea
+- [x] criar componente base de textarea
 - [ ] criar componente base de card
 - [ ] criar componente base de badge/status
 - [ ] criar componente base de modal/drawer
@@ -62,10 +62,10 @@ Deixar a base do frontend organizada para crescimento real, sem virar bagunça.
 - [ ] criar componente base de empty state
 
 ### Critério de pronto
-- [ ] frontend sobe limpo
-- [ ] rotas base organizadas
-- [ ] consumo da API centralizado
-- [ ] autenticação pronta para integração real com login
+- [x] frontend sobe limpo
+- [x] rotas base organizadas
+- [x] consumo da API centralizado
+- [x] autenticação pronta para integração real com login
 
 ---
 
@@ -74,23 +74,23 @@ Deixar a base do frontend organizada para crescimento real, sem virar bagunça.
 Transformar o mock visual em uma home pública real e criar a camada pública do produto.
 
 ### Entregas
-- [ ] implementar home pública baseada no mock visual aprovado
-- [ ] implementar header responsivo
-- [ ] implementar hero principal
-- [ ] implementar seções de benefícios/como funciona
-- [ ] implementar CTA para cadastro/login
-- [ ] implementar seção explicando o fluxo do serviço
-- [ ] implementar footer
-- [ ] implementar página de login visual
-- [ ] implementar página de cadastro de cliente visual
-- [ ] implementar página de cadastro de profissional visual
-- [ ] implementar página 404 básica
+- [x] implementar home pública baseada no mock visual aprovado
+- [x] implementar header responsivo
+- [x] implementar hero principal
+- [x] implementar seções de benefícios/como funciona
+- [x] implementar CTA para cadastro/login
+- [x] implementar seção explicando o fluxo do serviço
+- [x] implementar footer
+- [x] implementar página de login visual
+- [x] implementar página de cadastro de cliente visual
+- [x] implementar página de cadastro de profissional visual
+- [x] implementar página 404 básica
 
 ### Critério de pronto
-- [ ] layout responsivo desktop/mobile
-- [ ] identidade visual coerente
-- [ ] home utilizável como vitrine real do produto
-- [ ] navegação pública funcionando
+- [x] layout responsivo desktop/mobile
+- [x] identidade visual coerente
+- [x] home utilizável como vitrine real do produto
+- [x] navegação pública funcionando
 
 ---
 
@@ -99,20 +99,20 @@ Transformar o mock visual em uma home pública real e criar a camada pública do
 Conectar o frontend ao que já existe no backend para login e sessão do usuário.
 
 ### Entregas
-- [ ] integrar formulário de login com `POST /api/v1/auth/login`
-- [ ] persistir token JWT no frontend
-- [ ] carregar contexto do usuário com `GET /api/v1/auth/me`
-- [ ] proteger rotas autenticadas
-- [ ] redirecionar por perfil
-- [ ] implementar logout
-- [ ] tratar sessão expirada/401
-- [ ] exibir mensagens de erro de autenticação
+- [x] integrar formulário de login com `POST /api/v1/auth/login`
+- [x] persistir token JWT no frontend
+- [x] carregar contexto do usuário com `GET /api/v1/auth/me`
+- [x] proteger rotas autenticadas
+- [x] redirecionar por perfil
+- [x] implementar logout
+- [x] tratar sessão expirada/401
+- [x] exibir mensagens de erro de autenticação
 
 ### Critério de pronto
-- [ ] usuário consegue logar
-- [ ] frontend sabe quem está autenticado
-- [ ] rotas privadas protegidas
-- [ ] sessão inválida é tratada sem quebrar a aplicação
+- [x] usuário consegue logar
+- [x] frontend sabe quem está autenticado
+- [x] rotas privadas protegidas
+- [x] sessão inválida é tratada sem quebrar a aplicação
 
 ---
 
@@ -121,17 +121,17 @@ Conectar o frontend ao que já existe no backend para login e sessão do usuári
 Ligar os formulários públicos ao backend de cadastro já existente.
 
 ### Entregas
-- [ ] integrar tela de cadastro de cliente
-- [ ] integrar tela de cadastro de profissional
-- [ ] implementar validação visual de formulário
-- [ ] exibir mensagens de erro vindas da API
+- [x] integrar tela de cadastro de cliente
+- [x] integrar tela de cadastro de profissional
+- [x] implementar validação visual de formulário
+- [x] exibir mensagens de erro vindas da API
 - [ ] implementar redirecionamento pós-cadastro
-- [ ] implementar feedback de sucesso
+- [x] implementar feedback de sucesso
 
 ### Critério de pronto
-- [ ] cliente consegue criar conta pelo frontend
-- [ ] profissional consegue criar conta pelo frontend
-- [ ] erros de duplicidade/validação aparecem corretamente
+- [x] cliente consegue criar conta pelo frontend
+- [x] profissional consegue criar conta pelo frontend
+- [x] erros de duplicidade/validação aparecem corretamente
 
 ---
 
@@ -140,19 +140,19 @@ Ligar os formulários públicos ao backend de cadastro já existente.
 Criar a estrutura inicial das áreas logadas, sem ainda implementar todos os fluxos internos.
 
 ### Entregas
-- [ ] implementar layout autenticado
-- [ ] implementar sidebar/topbar
-- [ ] implementar menu por perfil
-- [ ] implementar dashboard inicial de cliente
-- [ ] implementar dashboard inicial de profissional
-- [ ] implementar dashboard inicial de admin
+- [x] implementar layout autenticado
+- [x] implementar sidebar/topbar
+- [x] implementar menu por perfil
+- [x] implementar dashboard inicial de cliente
+- [x] implementar dashboard inicial de profissional
+- [x] implementar dashboard inicial de admin
 - [ ] implementar componente de status do usuário/perfil
-- [ ] criar placeholders funcionais para áreas ainda não finalizadas
+- [x] criar placeholders funcionais para áreas ainda não finalizadas
 
 ### Critério de pronto
-- [ ] cada perfil entra em sua área correta
-- [ ] navegação interna existe
-- [ ] estrutura suporta expansão dos módulos
+- [x] cada perfil entra em sua área correta
+- [x] navegação interna existe
+- [x] estrutura suporta expansão dos módulos
 
 ---
 
@@ -161,21 +161,21 @@ Criar a estrutura inicial das áreas logadas, sem ainda implementar todos os flu
 Entregar a primeira parte operacional da área do cliente.
 
 ### Entregas
-- [ ] implementar tela de listagem de endereços
-- [ ] implementar formulário de criação de endereço
-- [ ] implementar edição de endereço
-- [ ] implementar exclusão de endereço
-- [ ] implementar marcação visual de endereço principal
-- [ ] implementar tratamento de loading, erro e vazio
-- [ ] integrar com `POST /api/v1/enderecos`
-- [ ] integrar com `GET /api/v1/enderecos/meus`
-- [ ] integrar com `PUT /api/v1/enderecos/{id}`
-- [ ] integrar com `DELETE /api/v1/enderecos/{id}`
+- [x] implementar tela de listagem de endereços
+- [x] implementar formulário de criação de endereço
+- [x] implementar edição de endereço
+- [x] implementar exclusão de endereço
+- [x] implementar marcação visual de endereço principal
+- [x] implementar tratamento de loading, erro e vazio
+- [x] integrar com `POST /api/v1/enderecos`
+- [x] integrar com `GET /api/v1/enderecos/meus`
+- [x] integrar com `PUT /api/v1/enderecos/{id}`
+- [x] integrar com `DELETE /api/v1/enderecos/{id}`
 
 ### Critério de pronto
-- [ ] cliente gerencia os próprios endereços pelo frontend
-- [ ] principal é exibido corretamente
-- [ ] UX mínima coerente
+- [x] cliente gerencia os próprios endereços pelo frontend
+- [x] principal é exibido corretamente
+- [x] UX mínima coerente
 
 ---
 
@@ -184,29 +184,29 @@ Entregar a primeira parte operacional da área do cliente.
 Entregar o fluxo de configuração da profissional no frontend.
 
 ### Entregas
-- [ ] implementar tela “meu perfil profissional”
-- [ ] implementar edição do perfil profissional
-- [ ] implementar seleção de regiões atendidas
-- [ ] implementar gestão de disponibilidades
-- [ ] implementar envio/cadastro de verificação documental
-- [ ] implementar consulta do status da própria verificação
-- [ ] exibir aprovação pendente/rejeitada/aprovada
-- [ ] integrar com `GET /api/v1/profissionais/me`
-- [ ] integrar com `PUT /api/v1/profissionais/me`
-- [ ] integrar com `POST /api/v1/profissionais/me/regioes`
-- [ ] integrar com `GET /api/v1/profissionais/me/regioes`
-- [ ] integrar com `POST /api/v1/profissionais/me/disponibilidades`
-- [ ] integrar com `GET /api/v1/profissionais/me/disponibilidades`
-- [ ] integrar com `PUT /api/v1/profissionais/me/disponibilidades/{id}`
-- [ ] integrar com `DELETE /api/v1/profissionais/me/disponibilidades/{id}`
-- [ ] integrar com `POST /api/v1/verificacoes/documentos`
-- [ ] integrar com `GET /api/v1/verificacoes/minha`
-- [ ] integrar com `GET /api/v1/regioes`
+- [x] implementar tela “meu perfil profissional”
+- [x] implementar edição do perfil profissional
+- [x] implementar seleção de regiões atendidas
+- [x] implementar gestão de disponibilidades
+- [x] implementar envio/cadastro de verificação documental
+- [x] implementar consulta do status da própria verificação
+- [x] exibir aprovação pendente/rejeitada/aprovada
+- [x] integrar com `GET /api/v1/profissionais/me`
+- [x] integrar com `PUT /api/v1/profissionais/me`
+- [x] integrar com `POST /api/v1/profissionais/me/regioes`
+- [x] integrar com `GET /api/v1/profissionais/me/regioes`
+- [x] integrar com `POST /api/v1/profissionais/me/disponibilidades`
+- [x] integrar com `GET /api/v1/profissionais/me/disponibilidades`
+- [x] integrar com `PUT /api/v1/profissionais/me/disponibilidades/{id}`
+- [x] integrar com `DELETE /api/v1/profissionais/me/disponibilidades/{id}`
+- [x] integrar com `POST /api/v1/verificacoes/documentos`
+- [x] integrar com `GET /api/v1/verificacoes/minha`
+- [x] integrar com `GET /api/v1/regioes`
 
 ### Critério de pronto
-- [ ] profissional consegue completar seu onboarding pelo frontend
-- [ ] status da configuração fica visível
-- [ ] regiões/disponibilidades/documentos funcionam de ponta a ponta
+- [x] profissional consegue completar seu onboarding pelo frontend
+- [x] status da configuração fica visível
+- [x] regiões/disponibilidades/documentos funcionam de ponta a ponta
 
 ---
 
@@ -215,23 +215,23 @@ Entregar o fluxo de configuração da profissional no frontend.
 Implementar o início do fluxo principal do produto no frontend.
 
 ### Entregas
-- [ ] implementar formulário de criação de solicitação
-- [ ] implementar escolha de endereço
-- [ ] implementar escolha de tipo de serviço
-- [ ] implementar data/hora desejada
-- [ ] implementar duração estimada
-- [ ] implementar observações
-- [ ] implementar listagem das solicitações do cliente
-- [ ] implementar tela de detalhe da solicitação
-- [ ] implementar cancelamento da solicitação quando permitido
-- [ ] integrar com `POST /api/v1/solicitacoes`
-- [ ] integrar com `GET /api/v1/solicitacoes/minhas`
-- [ ] integrar com `GET /api/v1/solicitacoes/{id}`
-- [ ] integrar com `PATCH /api/v1/solicitacoes/{id}/cancelar`
+- [x] implementar formulário de criação de solicitação
+- [x] implementar escolha de endereço
+- [x] implementar escolha de tipo de serviço
+- [x] implementar data/hora desejada
+- [x] implementar duração estimada
+- [x] implementar observações
+- [x] implementar listagem das solicitações do cliente
+- [x] implementar tela de detalhe da solicitação
+- [x] implementar cancelamento da solicitação quando permitido
+- [x] integrar com `POST /api/v1/solicitacoes`
+- [x] integrar com `GET /api/v1/solicitacoes/minhas`
+- [x] integrar com `GET /api/v1/solicitacoes/{id}`
+- [x] integrar com `PATCH /api/v1/solicitacoes/{id}/cancelar`
 
 ### Critério de pronto
-- [ ] cliente consegue criar e acompanhar sua solicitação
-- [ ] estados e erros ficam claros na UI
+- [x] cliente consegue criar e acompanhar sua solicitação
+- [x] estados e erros ficam claros na UI
 
 ---
 
@@ -240,19 +240,19 @@ Implementar o início do fluxo principal do produto no frontend.
 Entregar a seleção de profissionais a partir da solicitação.
 
 ### Entregas
-- [ ] implementar tela com profissionais elegíveis
-- [ ] implementar cards/lista de profissionais
-- [ ] exibir experiência/nota/média
-- [ ] implementar seleção ordenada de até 3 profissionais
-- [ ] implementar feedback visual da ordem da escolha
-- [ ] persistir seleção
-- [ ] integrar com `GET /api/v1/solicitacoes/{id}/profissionais-disponiveis`
-- [ ] integrar com `POST /api/v1/solicitacoes/{id}/selecionados`
+- [x] implementar tela com profissionais elegíveis
+- [x] implementar cards/lista de profissionais
+- [x] exibir experiência/nota/média
+- [x] implementar seleção ordenada de até 3 profissionais
+- [x] implementar feedback visual da ordem da escolha
+- [x] persistir seleção
+- [x] integrar com `GET /api/v1/solicitacoes/{id}/profissionais-disponiveis`
+- [x] integrar com `POST /api/v1/solicitacoes/{id}/selecionados`
 
 ### Critério de pronto
-- [ ] cliente consegue escolher de 1 a 3 profissionais
-- [ ] frontend respeita a UX do limite
-- [ ] backend continua sendo a validação final
+- [x] cliente consegue escolher de 1 a 3 profissionais
+- [x] frontend respeita a UX do limite
+- [x] backend continua sendo a validação final
 
 ---
 
@@ -261,19 +261,19 @@ Entregar a seleção de profissionais a partir da solicitação.
 Entregar o módulo de convites da profissional.
 
 ### Entregas
-- [ ] implementar listagem de convites recebidos
-- [ ] implementar detalhe do convite
-- [ ] implementar ação de aceitar convite
-- [ ] implementar ação de recusar convite
-- [ ] implementar exibição de status do convite
-- [ ] implementar indicação de prazo/expiração quando aplicável
-- [ ] integrar com `GET /api/v1/convites/meus`
-- [ ] integrar com `GET /api/v1/convites/{id}`
-- [ ] integrar com `POST /api/v1/convites/{id}/aceitar`
-- [ ] integrar com `POST /api/v1/convites/{id}/recusar`
+- [x] implementar listagem de convites recebidos
+- [x] implementar detalhe do convite
+- [x] implementar ação de aceitar convite
+- [x] implementar ação de recusar convite
+- [x] implementar exibição de status do convite
+- [x] implementar indicação de prazo/expiração quando aplicável
+- [x] integrar com `GET /api/v1/convites/meus`
+- [x] integrar com `GET /api/v1/convites/{id}`
+- [x] integrar com `POST /api/v1/convites/{id}/aceitar`
+- [x] integrar com `POST /api/v1/convites/{id}/recusar`
 
 ### Critério de pronto
-- [ ] profissional consegue visualizar e responder convites pelo frontend
+- [x] profissional consegue visualizar e responder convites pelo frontend
 
 ---
 
@@ -378,15 +378,15 @@ Transformar o frontend de funcional em utilizável de verdade.
 
 # Ordem recomendada de execução
 - [ ] F0 — Fundação do frontend
-- [ ] F1 — Home pública e páginas institucionais
-- [ ] F2 — Autenticação e sessão
+- [x] F1 — Home pública e páginas institucionais
+- [x] F2 — Autenticação e sessão
 - [ ] F3 — Cadastro real
 - [ ] F4 — Dashboard base por perfil
-- [ ] F5 — Endereços do cliente
-- [ ] F6 — Onboarding profissional
-- [ ] F7 — Solicitação de faxina
-- [ ] F8 — Profissionais elegíveis e seleção
-- [ ] F9 — Convites
+- [x] F5 — Endereços do cliente
+- [x] F6 — Onboarding profissional
+- [x] F7 — Solicitação de faxina
+- [x] F8 — Profissionais elegíveis e seleção
+- [x] F9 — Convites
 - [ ] F10 — Pagamento
 - [ ] F11 — Atendimentos
 - [ ] F12 — Avaliação
@@ -396,17 +396,17 @@ Transformar o frontend de funcional em utilizável de verdade.
 ---
 
 # Observações importantes
-- [ ] não construir primeiro telas bonitas de dashboard antes dos fluxos reais
-- [ ] não jogar validação crítica no frontend
-- [ ] frontend deve refletir o backend, não reinventar regra de negócio
-- [ ] cada milestone deve terminar com build funcionando
-- [ ] preferir avanço incremental com revisão visual constante
+- [x] não construir primeiro telas bonitas de dashboard antes dos fluxos reais
+- [x] não jogar validação crítica no frontend
+- [x] frontend deve refletir o backend, não reinventar regra de negócio
+- [x] cada milestone deve terminar com build funcionando
+- [x] preferir avanço incremental com revisão visual constante
 
 ---
 
 # Definição de pronto do frontend
-- [ ] a home pública está alinhada ao mock
-- [ ] login/cadastro estão conectados ao backend
+- [x] a home pública está alinhada ao mock
+- [x] login/cadastro estão conectados ao backend
 - [ ] cliente consegue percorrer o fluxo principal do produto
 - [ ] profissional consegue operar onboarding, convites e atendimento
 - [ ] pagamento pode ser acompanhado pelo frontend sem violar a regra do webhook

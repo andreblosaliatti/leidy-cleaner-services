@@ -5,7 +5,10 @@ import { PublicLayout } from '../layouts/PublicLayout';
 import { AdminDashboardPage } from '../pages/app/AdminDashboardPage';
 import { ClienteDashboardPage } from '../pages/app/ClienteDashboardPage';
 import { ClienteEnderecosPage } from '../pages/app/ClienteEnderecosPage';
+import { ClienteSelecionarProfissionaisPage } from '../pages/app/ClienteSelecionarProfissionaisPage';
 import { ClienteSolicitacoesPage } from '../pages/app/ClienteSolicitacoesPage';
+import { ProfissionalConviteDetalhePage } from '../pages/app/ProfissionalConviteDetalhePage';
+import { ProfissionalConvitesPage } from '../pages/app/ProfissionalConvitesPage';
 import { ProfissionalDashboardPage } from '../pages/app/ProfissionalDashboardPage';
 import { ProfissionalOnboardingPage } from '../pages/app/ProfissionalOnboardingPage';
 import { ClientRegistrationPage } from '../pages/public/ClientRegistrationPage';
@@ -37,12 +40,15 @@ export function App() {
               <Route index element={<ClienteDashboardPage />} />
               <Route path="enderecos" element={<ClienteEnderecosPage />} />
               <Route path="solicitacoes" element={<ClienteSolicitacoesPage />} />
+              <Route path="solicitacoes/:id/profissionais" element={<ClienteSelecionarProfissionaisPage />} />
             </Route>
           </Route>
           <Route element={<RequireProfile profile="PROFISSIONAL" />}>
             <Route path="profissional">
               <Route index element={<ProfissionalDashboardPage />} />
               <Route path="perfil" element={<ProfissionalOnboardingPage />} />
+              <Route path="convites" element={<ProfissionalConvitesPage />} />
+              <Route path="convites/:id" element={<ProfissionalConviteDetalhePage />} />
             </Route>
           </Route>
           <Route element={<RequireProfile profile="ADMIN" />}>

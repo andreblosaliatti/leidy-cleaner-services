@@ -1,4 +1,11 @@
-import { canRequestCancellation, getStatusSolicitacaoInfo, getTipoServicoLabel } from './solicitacaoLabels';
+import { Link } from 'react-router-dom';
+
+import {
+  canRequestCancellation,
+  canSelectProfessionals,
+  getStatusSolicitacaoInfo,
+  getTipoServicoLabel,
+} from './solicitacaoLabels';
 import type { SolicitacaoContexto, SolicitacaoFaxina } from './types';
 
 type SolicitacaoCardProps = {
@@ -54,6 +61,14 @@ export function SolicitacaoCard({
           >
             Detalhes
           </button>
+          {canSelectProfessionals(solicitacao.status) && (
+            <Link
+              className="inline-flex min-h-10 items-center justify-center rounded-lg bg-green-700 px-4 text-sm font-black text-white transition hover:bg-green-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-700"
+              to={`/app/cliente/solicitacoes/${solicitacao.id}/profissionais`}
+            >
+              Selecionar profissionais
+            </Link>
+          )}
           {canRequestCancellation(solicitacao.status) && (
             <button
               className="min-h-10 rounded-lg border border-red-100 px-4 text-sm font-black text-red-700 transition hover:bg-red-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-600 disabled:cursor-not-allowed disabled:text-slate-400"

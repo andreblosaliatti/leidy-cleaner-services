@@ -22,7 +22,8 @@ const profissionalItems = [
   },
   {
     title: 'Convites',
-    description: 'Área futura para convites de solicitações de faxina.',
+    description: 'Visualize solicitações recebidas e responda aos convites pendentes.',
+    href: '/app/profissional/convites',
   },
   {
     title: 'Atendimentos',
@@ -37,7 +38,7 @@ export function ProfissionalDashboardPage() {
     <div className="grid gap-5">
       <DashboardHeader
         title={`Olá, ${getFirstName(user?.nomeCompleto ?? '')}.`}
-        description="Sua área profissional está preparada para receber perfil, regiões, disponibilidade, verificações, convites e atendimentos nos próximos marcos."
+        description="Sua área profissional reúne perfil, regiões, disponibilidade, verificações e convites operacionais."
       />
       <DashboardCards items={profissionalItems} />
     </div>

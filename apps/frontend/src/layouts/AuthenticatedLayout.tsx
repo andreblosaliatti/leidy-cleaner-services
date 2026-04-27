@@ -24,7 +24,7 @@ const navigationByProfile: Record<TipoUsuario, NavigationItem[]> = {
     { label: 'Regiões' },
     { label: 'Disponibilidade' },
     { label: 'Verificações' },
-    { label: 'Convites' },
+    { label: 'Convites', href: '/app/profissional/convites' },
     { label: 'Atendimentos' },
   ],
   ADMIN: [

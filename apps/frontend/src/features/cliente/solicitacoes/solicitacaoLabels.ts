@@ -47,3 +47,7 @@ export function getStatusSolicitacaoInfo(status: StatusSolicitacao) {
 export function canRequestCancellation(status: StatusSolicitacao) {
   return ['CRIADA', 'AGUARDANDO_SELECAO', 'CONVITES_ENVIADOS', 'AGUARDANDO_ACEITE'].includes(status);
 }
+
+export function canSelectProfessionals(status: StatusSolicitacao) {
+  return ['CRIADA', 'AGUARDANDO_SELECAO'].includes(status);
+}
