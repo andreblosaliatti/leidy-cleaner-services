@@ -2,6 +2,8 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 
 import { AuthenticatedLayout } from '../layouts/AuthenticatedLayout';
 import { PublicLayout } from '../layouts/PublicLayout';
+import { AdminAtendimentoDetalhePage } from '../pages/app/AdminAtendimentoDetalhePage';
+import { AdminAtendimentosPage } from '../pages/app/AdminAtendimentosPage';
 import { AdminDashboardPage } from '../pages/app/AdminDashboardPage';
 import { AdminOcorrenciaDetalhePage } from '../pages/app/AdminOcorrenciaDetalhePage';
 import { AdminOcorrenciasPage } from '../pages/app/AdminOcorrenciasPage';
@@ -85,6 +87,8 @@ export function App() {
               <Route path="profissionais" element={<AdminProfissionaisPage />} />
               <Route path="ocorrencias" element={<AdminOcorrenciasPage />} />
               <Route path="ocorrencias/:id" element={<AdminOcorrenciaDetalhePage />} />
+              <Route path="atendimentos" element={<AdminAtendimentosPage />} />
+              <Route path="atendimentos/:id" element={<AdminAtendimentoDetalhePage />} />
             </Route>
           </Route>
         </Route>

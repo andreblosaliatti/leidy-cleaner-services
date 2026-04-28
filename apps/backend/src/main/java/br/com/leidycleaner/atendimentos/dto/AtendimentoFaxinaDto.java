@@ -14,6 +14,7 @@ public record AtendimentoFaxinaDto(
         StatusAtendimento status,
         TipoServico tipoServico,
         BigDecimal valorServico,
+        BigDecimal percentualComissaoAgencia,
         BigDecimal valorEstimadoProfissional,
         OffsetDateTime inicioPrevistoEm,
         OffsetDateTime inicioRealEm,

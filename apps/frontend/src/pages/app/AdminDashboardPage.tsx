@@ -14,12 +14,13 @@ const adminItems = [
     href: '/app/admin/profissionais',
   },
   {
-    title: 'Solicitações',
-    description: 'Espaço reservado para supervisão das solicitações de faxina.',
+    title: 'Atendimentos',
+    description: 'Consulte atendimentos e checkpoints em visão administrativa somente leitura.',
+    href: '/app/admin/atendimentos',
   },
   {
-    title: 'Atendimentos',
-    description: 'Área futura para visão operacional de serviços confirmados.',
+    title: 'Solicitações',
+    description: 'Espaço reservado para supervisão das solicitações de faxina.',
   },
   {
     title: 'Pagamentos',

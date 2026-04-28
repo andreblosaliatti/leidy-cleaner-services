@@ -377,8 +377,9 @@ Entregar o básico do operacional administrativo no frontend.
 
 ### F13-C — Listagens operacionais admin
 - [x] auditar endpoints administrativos reais para atendimentos, pagamentos, solicitações e usuários/clientes
-- [ ] implementar listagem admin de atendimentos — Bloqueado: `GET /api/v1/atendimentos` não existe no backend atual.
-- [ ] implementar detalhe admin de atendimento — Bloqueado: `GET /api/v1/atendimentos/{id}` existe apenas para usuário relacionado.
+- [x] implementar listagem admin de atendimentos
+- [x] implementar detalhe admin de atendimento
+- [x] implementar checkpoints no detalhe admin de atendimento
 - [ ] exibir pagamento no detalhe admin de atendimento — Bloqueado: `GET /api/v1/pagamentos/atendimento/{atendimentoId}` existe apenas para cliente relacionado.
 - [ ] implementar listagem admin de pagamentos — Bloqueado: não há endpoint administrativo de listagem.
 - [ ] implementar listagem admin de solicitações — Bloqueado: não há endpoint administrativo de listagem.
@@ -386,11 +387,12 @@ Entregar o básico do operacional administrativo no frontend.
 
 ### Critério de pronto F13-C
 - [x] gaps reais de backend foram identificados sem criar telas falsas
-- [ ] admin consegue listar atendimentos operacionalmente — Bloqueado por backend.
+- [x] admin consegue listar e consultar atendimentos operacionalmente
+- [x] admin consegue consultar checkpoints de atendimentos
 
 ### Entregas futuras
-- [ ] implementar listagens operacionais mínimas conforme backend existente — Parcial: verificações, profissionais e ocorrências estão integrados; atendimentos/pagamentos/solicitações/clientes dependem de endpoints admin.
-- [ ] integrar com endpoints admin disponíveis — Parcial: não há endpoints admin disponíveis além dos já integrados para verificações, profissionais e ocorrências.
+- [ ] implementar listagens operacionais mínimas conforme backend existente — Parcial: verificações, profissionais, ocorrências e atendimentos estão integrados; pagamentos/solicitações/clientes dependem de endpoints admin.
+- [ ] integrar com endpoints admin disponíveis — Parcial: faltam endpoints admin para pagamentos, solicitações e clientes.
 
 ---
 

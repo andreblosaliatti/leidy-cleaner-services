@@ -19,6 +19,7 @@ import br.com.leidycleaner.atendimentos.mapper.AtendimentoFaxinaMapper;
 import br.com.leidycleaner.atendimentos.repository.AtendimentoFaxinaRepository;
 import br.com.leidycleaner.atendimentos.repository.CheckpointServicoRepository;
 import br.com.leidycleaner.core.exception.BusinessException;
+import br.com.leidycleaner.usuarios.entity.TipoUsuario;
 import br.com.leidycleaner.usuarios.entity.Usuario;
 import br.com.leidycleaner.usuarios.repository.UsuarioRepository;
 
@@ -48,13 +49,25 @@ public class AtendimentoFaxinaService {
     }
 
     @Transactional(readOnly = true)
+    public List<AtendimentoFaxinaDto> listarAdmin(
+            StatusAtendimento status,
+            Long clienteId,
+            Long profissionalId
+    ) {
+        return atendimentoFaxinaRepository.findAdminList(status, clienteId, profissionalId)
+                .stream()
+                .map(AtendimentoFaxinaMapper::paraDto)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
     public AtendimentoFaxinaDto buscarRelacionado(Long usuarioId, Long atendimentoId) {
-        return AtendimentoFaxinaMapper.paraDto(buscarAtendimentoRelacionado(usuarioId, atendimentoId));
+        return AtendimentoFaxinaMapper.paraDto(buscarAtendimentoVisivel(usuarioId, atendimentoId));
     }
 
     @Transactional(readOnly = true)
     public List<CheckpointServicoDto> listarCheckpoints(Long usuarioId, Long atendimentoId) {
-        AtendimentoFaxina atendimento = buscarAtendimentoRelacionado(usuarioId, atendimentoId);
+        AtendimentoFaxina atendimento = buscarAtendimentoVisivel(usuarioId, atendimentoId);
         return checkpointServicoRepository.findByAtendimentoIdOrderByRegistradoEmAscIdAsc(atendimento.getId())
                 .stream()
                 .map(AtendimentoFaxinaMapper::paraDto)
@@ -92,6 +105,19 @@ public class AtendimentoFaxinaService {
                         "Atendimento nao encontrado",
                         HttpStatus.NOT_FOUND
                 ));
+    }
+
+    private AtendimentoFaxina buscarAtendimentoVisivel(Long usuarioId, Long atendimentoId) {
+        if (isAdmin(usuarioId)) {
+            return atendimentoFaxinaRepository.findById(atendimentoId)
+                    .orElseThrow(() -> new BusinessException(
+                            "ATENDIMENTO_NOT_FOUND",
+                            "Atendimento nao encontrado",
+                            HttpStatus.NOT_FOUND
+                    ));
+        }
+
+        return buscarAtendimentoRelacionado(usuarioId, atendimentoId);
     }
 
     private AtendimentoFaxina buscarAtendimentoParaExecucao(Long usuarioId, Long atendimentoId) {
@@ -160,5 +186,11 @@ public class AtendimentoFaxinaService {
                 request.observacao(),
                 registradoEm
         ));
+    }
+
+    private boolean isAdmin(Long usuarioId) {
+        return usuarioRepository.findById(usuarioId)
+                .map(usuario -> usuario.getTipoUsuario() == TipoUsuario.ADMIN)
+                .orElse(false);
     }
 }

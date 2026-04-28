@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import br.com.leidycleaner.atendimentos.entity.AtendimentoFaxina;
+import br.com.leidycleaner.atendimentos.entity.StatusAtendimento;
 
 public interface AtendimentoFaxinaRepository extends JpaRepository<AtendimentoFaxina, Long> {
 
@@ -23,6 +24,23 @@ public interface AtendimentoFaxinaRepository extends JpaRepository<AtendimentoFa
             order by a.inicioPrevistoEm desc, a.id desc
             """)
     List<AtendimentoFaxina> findRelacionadosByUsuarioId(@Param("usuarioId") Long usuarioId);
+
+    @Query("""
+            select a
+            from AtendimentoFaxina a
+            join fetch a.solicitacao s
+            join fetch a.cliente c
+            join fetch a.profissional p
+            where (:status is null or a.status = :status)
+              and (:clienteId is null or c.id = :clienteId)
+              and (:profissionalId is null or p.id = :profissionalId)
+            order by a.inicioPrevistoEm desc, a.id desc
+            """)
+    List<AtendimentoFaxina> findAdminList(
+            @Param("status") StatusAtendimento status,
+            @Param("clienteId") Long clienteId,
+            @Param("profissionalId") Long profissionalId
+    );
 
     @Query("""
             select a

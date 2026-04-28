@@ -1415,6 +1415,109 @@ class SolicitacaoFaxinaIntegrationTest {
     }
 
     @Test
+    void adminListaAtendimentosComFiltros() throws Exception {
+        AtendimentoCriado atendimentoConfirmado = criarAtendimentoConfirmado(
+                "m6b.admin-lista-confirmado",
+                "76211233344",
+                "chk_m6b_admin_lista_confirmado"
+        );
+        AtendimentoCriado atendimentoFinalizado = criarAtendimentoFinalizado(
+                "m6b.admin-lista-finalizado",
+                "76212233344",
+                "chk_m6b_admin_lista_finalizado"
+        );
+        String tokenAdmin = login("admin@leidycleaner.local", "Admin123!local");
+
+        String listaResponse = mockMvc.perform(get("/api/v1/atendimentos")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenAdmin))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(true))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        JsonNode atendimentoNode = encontrarAtendimentoNaLista(listaResponse, atendimentoConfirmado.atendimentoId());
+        assertThat(atendimentoNode).isNotNull();
+        assertThat(atendimentoNode.path("status").asText()).isEqualTo("CONFIRMADO");
+        assertThat(atendimentoNode.path("percentualComissaoAgencia").asText()).isNotBlank();
+        assertThat(listaContemAtendimento(listaResponse, atendimentoFinalizado.atendimentoId())).isTrue();
+
+        Long clienteId = atendimentoNode.path("clienteId").asLong();
+        Long profissionalId = atendimentoNode.path("profissionalId").asLong();
+
+        String listaPorStatus = mockMvc.perform(get("/api/v1/atendimentos")
+                        .param("status", "CONFIRMADO")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenAdmin))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        assertThat(listaContemAtendimento(listaPorStatus, atendimentoConfirmado.atendimentoId())).isTrue();
+        assertThat(listaContemAtendimento(listaPorStatus, atendimentoFinalizado.atendimentoId())).isFalse();
+
+        String listaPorCliente = mockMvc.perform(get("/api/v1/atendimentos")
+                        .param("clienteId", String.valueOf(clienteId))
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenAdmin))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        assertThat(listaContemAtendimento(listaPorCliente, atendimentoConfirmado.atendimentoId())).isTrue();
+
+        String listaPorProfissional = mockMvc.perform(get("/api/v1/atendimentos")
+                        .param("profissionalId", String.valueOf(profissionalId))
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenAdmin))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        assertThat(listaContemAtendimento(listaPorProfissional, atendimentoConfirmado.atendimentoId())).isTrue();
+    }
+
+    @Test
+    void naoAdminNaoListaTodosAtendimentos() throws Exception {
+        AtendimentoCriado atendimento = criarAtendimentoConfirmado("m6b.admin-lista-negado", "76213233344", "chk_m6b_admin_lista_negado");
+
+        mockMvc.perform(get("/api/v1/atendimentos")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + atendimento.tokenCliente()))
+                .andExpect(status().isForbidden())
+                .andExpect(header().doesNotExist("WWW-Authenticate"))
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("FORBIDDEN"))
+                .andExpect(jsonPath("$.errors").isArray());
+    }
+
+    @Test
+    void adminVisualizaDetalheECheckpointsDoAtendimento() throws Exception {
+        AtendimentoCriado atendimento = criarAtendimentoConfirmado("m6b.admin-detalhe", "76214233344", "chk_m6b_admin_detalhe");
+        iniciarAtendimento(atendimento);
+        String tokenAdmin = login("admin@leidycleaner.local", "Admin123!local");
+
+        mockMvc.perform(get("/api/v1/atendimentos/{id}", atendimento.atendimentoId())
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenAdmin))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.id").value(atendimento.atendimentoId()))
+                .andExpect(jsonPath("$.data.status").value("EM_EXECUCAO"))
+                .andExpect(jsonPath("$.data.percentualComissaoAgencia").isNotEmpty());
+
+        mockMvc.perform(get("/api/v1/atendimentos/{id}/checkpoints", atendimento.atendimentoId())
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenAdmin))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.length()").value(1))
+                .andExpect(jsonPath("$.data[0].atendimentoId").value(atendimento.atendimentoId()))
+                .andExpect(jsonPath("$.data[0].tipo").value("INICIO"));
+    }
+
+    @Test
     void endpointsDeAtendimentoExigemJwt() throws Exception {
         mockMvc.perform(get("/api/v1/atendimentos/meus"))
                 .andExpect(status().isUnauthorized())
@@ -1431,6 +1534,13 @@ class SolicitacaoFaxinaIntegrationTest {
                 .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
 
         mockMvc.perform(get("/api/v1/atendimentos/1/checkpoints"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(header().doesNotExist("WWW-Authenticate"))
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
+
+        mockMvc.perform(get("/api/v1/atendimentos"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(header().doesNotExist("WWW-Authenticate"))
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
@@ -2526,6 +2636,20 @@ class SolicitacaoFaxinaIntegrationTest {
         iniciarAtendimento(atendimento);
         finalizarAtendimento(atendimento);
         return atendimento;
+    }
+
+    private JsonNode encontrarAtendimentoNaLista(String response, Long atendimentoId) throws Exception {
+        for (JsonNode item : objectMapper.readTree(response).path("data")) {
+            if (item.path("id").asLong() == atendimentoId) {
+                return item;
+            }
+        }
+
+        return null;
+    }
+
+    private boolean listaContemAtendimento(String response, Long atendimentoId) throws Exception {
+        return encontrarAtendimentoNaLista(response, atendimentoId) != null;
     }
 
     private AtendimentoCriado criarAtendimentoAguardandoPagamentoComProfissional(

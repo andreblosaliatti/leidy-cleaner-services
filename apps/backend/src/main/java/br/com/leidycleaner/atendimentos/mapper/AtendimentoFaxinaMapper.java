@@ -19,6 +19,7 @@ public final class AtendimentoFaxinaMapper {
                 atendimento.getStatus(),
                 atendimento.getSolicitacao().getTipoServico(),
                 atendimento.getValorServico(),
+                atendimento.getPercentualComissaoAgencia(),
                 atendimento.getValorEstimadoProfissional(),
                 atendimento.getInicioPrevistoEm(),
                 atendimento.getInicioRealEm(),

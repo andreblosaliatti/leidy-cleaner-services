@@ -22,6 +22,7 @@ export type AtendimentoFaxina = {
   status: StatusAtendimento;
   tipoServico: TipoServicoAtendimento;
   valorServico: number;
+  percentualComissaoAgencia: number;
   valorEstimadoProfissional: number;
   inicioPrevistoEm: string;
   inicioRealEm: string | null;

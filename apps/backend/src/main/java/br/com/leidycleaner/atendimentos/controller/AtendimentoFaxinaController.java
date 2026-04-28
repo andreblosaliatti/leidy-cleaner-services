@@ -2,17 +2,20 @@ package br.com.leidycleaner.atendimentos.controller;
 
 import java.util.List;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import br.com.leidycleaner.atendimentos.dto.AtendimentoFaxinaDto;
 import br.com.leidycleaner.atendimentos.dto.CheckpointServicoDto;
 import br.com.leidycleaner.atendimentos.dto.CheckpointServicoRequest;
+import br.com.leidycleaner.atendimentos.entity.StatusAtendimento;
 import br.com.leidycleaner.atendimentos.service.AtendimentoFaxinaService;
 import br.com.leidycleaner.auth.security.UsuarioPrincipal;
 import br.com.leidycleaner.core.ApiPaths;
@@ -32,6 +35,16 @@ public class AtendimentoFaxinaController {
     @GetMapping("/meus")
     public ApiResponse<List<AtendimentoFaxinaDto>> listarMeus(@AuthenticationPrincipal UsuarioPrincipal principal) {
         return ApiResponse.success(atendimentoFaxinaService.listarMeus(principal.getId()));
+    }
+
+    @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ApiResponse<List<AtendimentoFaxinaDto>> listarAdmin(
+            @RequestParam(required = false) StatusAtendimento status,
+            @RequestParam(required = false) Long clienteId,
+            @RequestParam(required = false) Long profissionalId
+    ) {
+        return ApiResponse.success(atendimentoFaxinaService.listarAdmin(status, clienteId, profissionalId));
     }
 
     @GetMapping("/{id}")

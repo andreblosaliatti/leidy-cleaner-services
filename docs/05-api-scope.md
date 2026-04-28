@@ -205,13 +205,17 @@ Profissional recusa convite.
 Lista atendimentos do usuario autenticado:
 - cliente ve atendimentos em que e dona
 - profissional ve atendimentos em que esta atribuida
-- nao implementa listagem admin ampla neste marco
 
 ### GET `/atendimentos/{id}`
-Detalha atendimento relacionado ao usuario autenticado. Admin não tem acesso amplo por esta rota no backend atual.
+Detalha atendimento relacionado ao usuario autenticado. Admin também pode consultar qualquer atendimento em modo somente leitura.
 
 ### GET `/atendimentos`
-Gap F13-C: documentado como necessário para listagem admin, mas não existe no backend atual.
+Admin lista atendimentos em modo somente leitura.
+
+Parâmetros opcionais:
+- `status`
+- `clienteId`
+- `profissionalId`
 
 ### POST `/atendimentos/{id}/iniciar`
 Profissional atribuida inicia o servico. Transicao: `CONFIRMADO -> EM_EXECUCAO`.
@@ -232,7 +236,7 @@ Profissional atribuida finaliza o servico. Transicao: `EM_EXECUCAO -> FINALIZADO
 Payload igual ao de inicio. `fotoComprovacaoUrl` e apenas metadado; upload/armazenamento real ficam fora deste marco.
 
 ### GET `/atendimentos/{id}/checkpoints`
-Lista checkpoints do atendimento para usuario relacionado.
+Lista checkpoints do atendimento para usuario relacionado. Admin também pode consultar checkpoints de qualquer atendimento.
 
 ---
 

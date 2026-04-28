@@ -22,6 +22,7 @@ export function AtendimentoInfoPanel({ atendimento }: { atendimento: Atendimento
         <DetailItem label="Valor do serviço" value={formatCurrency(atendimento.valorServico)} />
         <DetailItem label="Cliente" value={`#${atendimento.clienteId}`} />
         <DetailItem label="Profissional" value={`#${atendimento.profissionalId}`} />
+        <DetailItem label="Comissão agência" value={`${Number(atendimento.percentualComissaoAgencia).toLocaleString('pt-BR')}%`} />
         <DetailItem label="Valor profissional" value={formatCurrency(atendimento.valorEstimadoProfissional)} />
         <DetailItem label="Relação com pagamento" value={getPaymentRelationLabel(atendimento.status)} />
         <DetailItem label="Início real" value={formatDateTime(atendimento.inicioRealEm)} />
