@@ -5,11 +5,13 @@ import { DashboardCards, DashboardHeader } from './DashboardCards';
 const adminItems = [
   {
     title: 'Verificações',
-    description: 'Área futura para análise operacional de documentos e perfis.',
+    description: 'Revise documentos e registre a análise operacional.',
+    href: '/app/admin/verificacoes',
   },
   {
     title: 'Profissionais',
-    description: 'Base para acompanhamento administrativo de perfis profissionais.',
+    description: 'Acompanhe aprovação de perfis conforme contratos disponíveis.',
+    href: '/app/admin/profissionais',
   },
   {
     title: 'Solicitações',
@@ -36,7 +38,7 @@ export function AdminDashboardPage() {
     <div className="grid gap-5">
       <DashboardHeader
         title={`Administração, ${getFirstName(user?.nomeCompleto ?? '')}.`}
-        description="A fundação da área administrativa está pronta para receber as telas operacionais sem simular dados ou indicadores."
+        description="Acompanhe verificações documentais e aprovações profissionais sem simular dados ou indicadores."
       />
       <DashboardCards items={adminItems} />
     </div>

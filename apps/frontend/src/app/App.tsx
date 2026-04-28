@@ -3,6 +3,9 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { AuthenticatedLayout } from '../layouts/AuthenticatedLayout';
 import { PublicLayout } from '../layouts/PublicLayout';
 import { AdminDashboardPage } from '../pages/app/AdminDashboardPage';
+import { AdminProfissionaisPage } from '../pages/app/AdminProfissionaisPage';
+import { AdminVerificacaoDetalhePage } from '../pages/app/AdminVerificacaoDetalhePage';
+import { AdminVerificacoesPage } from '../pages/app/AdminVerificacoesPage';
 import { ClienteAtendimentoDetalhePage } from '../pages/app/ClienteAtendimentoDetalhePage';
 import { ClienteAtendimentosPage } from '../pages/app/ClienteAtendimentosPage';
 import { ClienteDashboardPage } from '../pages/app/ClienteDashboardPage';
@@ -67,7 +70,12 @@ export function App() {
             </Route>
           </Route>
           <Route element={<RequireProfile profile="ADMIN" />}>
-            <Route path="admin" element={<AdminDashboardPage />} />
+            <Route path="admin">
+              <Route index element={<AdminDashboardPage />} />
+              <Route path="verificacoes" element={<AdminVerificacoesPage />} />
+              <Route path="verificacoes/:id" element={<AdminVerificacaoDetalhePage />} />
+              <Route path="profissionais" element={<AdminProfissionaisPage />} />
+            </Route>
           </Route>
         </Route>
       </Route>

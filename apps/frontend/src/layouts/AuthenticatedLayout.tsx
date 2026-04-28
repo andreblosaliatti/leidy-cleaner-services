@@ -29,8 +29,8 @@ const navigationByProfile: Record<TipoUsuario, NavigationItem[]> = {
   ],
   ADMIN: [
     { label: 'Resumo', href: '/app/admin' },
-    { label: 'Verificações' },
-    { label: 'Profissionais' },
+    { label: 'Verificações', href: '/app/admin/verificacoes' },
+    { label: 'Profissionais', href: '/app/admin/profissionais' },
     { label: 'Solicitações' },
     { label: 'Atendimentos' },
     { label: 'Pagamentos' },

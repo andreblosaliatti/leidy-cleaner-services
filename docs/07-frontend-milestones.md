@@ -342,17 +342,26 @@ Entregar o fechamento do fluxo principal com a avaliação da profissional.
 ### Objetivo
 Entregar o básico do operacional administrativo no frontend.
 
-### Entregas
-- [ ] implementar listagem de verificações documentais
-- [ ] implementar detalhe de verificação
-- [ ] implementar análise de verificação
-- [ ] implementar aprovação/rejeição de profissional
+### F13-A — Verificações e aprovação profissional
+- [x] implementar listagem de verificações documentais
+- [x] implementar detalhe de verificação
+- [x] implementar análise de verificação
+- [x] implementar rota administrativa de profissionais
+- [x] implementar aprovação/rejeição de profissional por `PATCH /api/v1/profissionais/{id}/aprovacao`
+- [x] integrar com `GET /api/v1/verificacoes`
+- [x] integrar com `GET /api/v1/verificacoes/{id}`
+- [x] integrar com `PATCH /api/v1/verificacoes/{id}/analisar`
+- [ ] implementar listagem de profissionais por `GET /api/v1/profissionais` — bloqueado: endpoint não existe no backend auditado
+
+### Entregas futuras
 - [ ] implementar listagens operacionais mínimas conforme backend existente
 - [ ] preparar futura área de ocorrências quando esse módulo estiver pronto
 - [ ] integrar com endpoints admin disponíveis
 
-### Critério de pronto
-- [ ] admin consegue operar aprovações e verificações pelo frontend
+### Critério de pronto F13-A
+- [x] admin consegue operar verificações pelo frontend
+- [x] admin consegue alterar aprovação profissional quando o ID do perfil é conhecido
+- [ ] admin consegue listar profissionais pelo frontend — bloqueado: endpoint de listagem ausente no backend
 
 ---
 
