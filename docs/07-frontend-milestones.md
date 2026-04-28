@@ -351,7 +351,7 @@ Entregar o básico do operacional administrativo no frontend.
 - [x] integrar com `GET /api/v1/verificacoes`
 - [x] integrar com `GET /api/v1/verificacoes/{id}`
 - [x] integrar com `PATCH /api/v1/verificacoes/{id}/analisar`
-- [ ] implementar listagem de profissionais por `GET /api/v1/profissionais` — bloqueado: endpoint não existe no backend auditado
+- [x] implementar listagem de profissionais por `GET /api/v1/profissionais`
 
 ### Entregas futuras
 - [ ] implementar listagens operacionais mínimas conforme backend existente
@@ -360,8 +360,8 @@ Entregar o básico do operacional administrativo no frontend.
 
 ### Critério de pronto F13-A
 - [x] admin consegue operar verificações pelo frontend
-- [x] admin consegue alterar aprovação profissional quando o ID do perfil é conhecido
-- [ ] admin consegue listar profissionais pelo frontend — bloqueado: endpoint de listagem ausente no backend
+- [x] admin consegue alterar aprovação profissional pelo frontend
+- [x] admin consegue listar profissionais pelo frontend
 
 ---
 

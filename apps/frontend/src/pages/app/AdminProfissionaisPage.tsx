@@ -1,20 +1,25 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { FormAlert } from '../../components/ui/FormAlert';
-import { AprovacaoProfissionalForm } from '../../features/admin/profissionais/AprovacaoProfissionalForm';
 import {
   analisarProfissionalAdmin,
   listarProfissionaisAdmin,
 } from '../../features/admin/profissionais/adminProfissionaisApi';
 import { ProfissionalAdminCard } from '../../features/admin/profissionais/ProfissionalAdminCard';
+import { statusAprovacaoProfissionalOptions } from '../../features/admin/profissionais/profissionalLabels';
 import type { StatusAprovacaoProfissional } from '../../features/admin/profissionais/types';
 import { useAuth } from '../../features/auth/useAuth';
 import { ApiError, getApiErrorMessage } from '../../services/apiClient';
 
 const queryKeys = {
-  profissionais: ['admin', 'profissionais'],
+  profissionais: (statusAprovacao: StatusAprovacaoProfissional | '', search: string) => [
+    'admin',
+    'profissionais',
+    statusAprovacao,
+    search,
+  ],
 };
 
 type Feedback = {
@@ -29,10 +34,17 @@ export function AdminProfissionaisPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [feedback, setFeedback] = useState<Feedback | null>(null);
+  const [statusFilter, setStatusFilter] = useState<StatusAprovacaoProfissional | ''>('');
+  const [searchFilter, setSearchFilter] = useState('');
+  const [searchDraft, setSearchDraft] = useState('');
 
   const profissionaisQuery = useQuery({
-    queryKey: queryKeys.profissionais,
-    queryFn: () => listarProfissionaisAdmin(requireToken(token)),
+    queryKey: queryKeys.profissionais(statusFilter, searchFilter),
+    queryFn: () =>
+      listarProfissionaisAdmin(requireToken(token), {
+        statusAprovacao: statusFilter || undefined,
+        search: searchFilter || undefined,
+      }),
     enabled: Boolean(token),
     retry: false,
   });
@@ -46,7 +58,7 @@ export function AdminProfissionaisPage() {
         title: 'Aprovação atualizada',
         message: `Status da profissional #${profissional.id} salvo como ${profissional.statusAprovacao}.`,
       });
-      await queryClient.invalidateQueries({ queryKey: queryKeys.profissionais });
+      await queryClient.invalidateQueries({ queryKey: ['admin', 'profissionais'] });
     },
     onError: (error) => {
       if (error instanceof ApiError && error.status === 401) {
@@ -81,6 +93,17 @@ export function AdminProfissionaisPage() {
     approvalMutation.mutate(values);
   }
 
+  function handleFilterSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSearchFilter(searchDraft.trim());
+  }
+
+  function handleClearFilters() {
+    setStatusFilter('');
+    setSearchDraft('');
+    setSearchFilter('');
+  }
+
   const profissionais = profissionaisQuery.data ?? [];
 
   return (
@@ -91,7 +114,7 @@ export function AdminProfissionaisPage() {
             <p className="text-xs font-black uppercase tracking-[0.16em] text-green-700">Administração</p>
             <h1 className="mt-3 text-3xl font-black tracking-normal text-slate-900 md:text-4xl">Profissionais</h1>
             <p className="mt-3 max-w-3xl text-base leading-7 text-slate-600">
-              Acompanhe perfis profissionais e altere o status de aprovação pelo backend quando o perfil for conhecido.
+              Liste perfis profissionais e altere o status de aprovação pelo backend.
             </p>
           </div>
           <Link
@@ -105,38 +128,68 @@ export function AdminProfissionaisPage() {
 
       {feedback && <FormAlert tone={feedback.tone} title={feedback.title} message={feedback.message} details={feedback.details} />}
 
-      <section className="grid gap-4 rounded-lg border border-slate-100 bg-white p-5 shadow-sm md:p-6">
-        <div>
-          <h2 className="text-2xl font-black text-slate-900">Aprovação por ID</h2>
-          <p className="mt-2 text-sm leading-6 text-slate-600">
-            O backend atual expõe a ação de aprovação por ID do perfil profissional.
-          </p>
-        </div>
-        <AprovacaoProfissionalForm isSubmitting={approvalMutation.isPending} onSubmit={handleAprovacaoSubmit} />
-      </section>
-
       <section className="grid gap-4">
         <div>
           <h2 className="text-2xl font-black text-slate-900">Listagem de profissionais</h2>
-          <p className="mt-2 text-sm leading-6 text-slate-600">Esta área usa o contrato `GET /api/v1/profissionais` quando disponível.</p>
+          <p className="mt-2 text-sm leading-6 text-slate-600">Filtre por status ou busque por nome e e-mail.</p>
         </div>
+
+        <form
+          className="grid gap-3 rounded-lg border border-slate-100 bg-white p-4 shadow-sm md:grid-cols-[220px_1fr_auto_auto]"
+          onSubmit={handleFilterSubmit}
+        >
+          <label className="grid gap-2 text-sm font-bold text-slate-700">
+            Status
+            <select
+              className="min-h-11 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-700"
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value as StatusAprovacaoProfissional | '')}
+            >
+              <option value="">Todos</option>
+              {statusAprovacaoProfissionalOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="grid gap-2 text-sm font-bold text-slate-700">
+            Busca
+            <input
+              className="min-h-11 rounded-lg border border-slate-200 px-3 text-sm font-semibold text-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-700"
+              placeholder="Nome ou e-mail"
+              type="search"
+              value={searchDraft}
+              onChange={(event) => setSearchDraft(event.target.value)}
+            />
+          </label>
+
+          <button
+            className="min-h-11 self-end rounded-lg bg-green-700 px-5 text-sm font-black text-white transition hover:bg-green-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-700"
+            type="submit"
+          >
+            Filtrar
+          </button>
+
+          <button
+            className="min-h-11 self-end rounded-lg border border-slate-200 px-5 text-sm font-black text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-700"
+            type="button"
+            onClick={handleClearFilters}
+          >
+            Limpar
+          </button>
+        </form>
 
         {profissionaisQuery.isLoading && <StateBox title="Carregando profissionais" description="Buscando perfis profissionais." />}
 
         {profissionaisQuery.isError && !protectedError && (
-          <div className="grid gap-3">
-            <FormAlert
-              tone="error"
-              title="Não foi possível carregar profissionais"
-              message={getApiErrorMessage(profissionaisQuery.error)}
-              details={profissionaisQuery.error instanceof ApiError ? profissionaisQuery.error.errors : []}
-            />
-            <FormAlert
-              tone="info"
-              title="Contrato incompleto no backend atual"
-              message="A auditoria local encontrou PATCH /profissionais/{id}/aprovacao, mas não encontrou GET /profissionais no controller."
-            />
-          </div>
+          <FormAlert
+            tone="error"
+            title="Não foi possível carregar profissionais"
+            message={getApiErrorMessage(profissionaisQuery.error)}
+            details={profissionaisQuery.error instanceof ApiError ? profissionaisQuery.error.errors : []}
+          />
         )}
 
         {profissionaisQuery.isSuccess && profissionais.length === 0 && (

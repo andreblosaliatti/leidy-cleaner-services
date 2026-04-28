@@ -25,6 +25,24 @@ public interface PerfilProfissionalRepository extends JpaRepository<PerfilProfis
 
     List<PerfilProfissional> findByIdIn(Collection<Long> ids);
 
+    @Query("""
+            select perfil
+            from PerfilProfissional perfil
+            join fetch perfil.usuario usuario
+            where (:statusAprovacao is null or perfil.statusAprovacao = :statusAprovacao)
+              and (
+                  :searchTerm is null
+                  or lower(perfil.nomeExibicao) like :searchTerm
+                  or lower(usuario.nomeCompleto) like :searchTerm
+                  or lower(usuario.email) like :searchTerm
+              )
+            order by perfil.criadoEm desc, perfil.id desc
+            """)
+    List<PerfilProfissional> findAdminList(
+            @Param("statusAprovacao") StatusAprovacaoProfissional statusAprovacao,
+            @Param("searchTerm") String searchTerm
+    );
+
     // Effective/current verification means no newer document exists by analisadoEm,
     // otherwise criadoEm, with id desc as deterministic tie-breaker.
     @Query("""

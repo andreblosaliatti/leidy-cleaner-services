@@ -112,7 +112,15 @@ Atualiza disponibilidade.
 Remove disponibilidade.
 
 ### GET `/profissionais`
-Admin lista profissionais.
+Admin lista profissionais. Retorna `ApiResponse<List<AdminProfissionalResponse>>`.
+
+Parâmetros opcionais:
+- `statusAprovacao`: filtra por status de aprovação.
+- `search`: busca simples por nome de exibição, nome completo ou e-mail.
+
+Campos principais retornados: `id`, `usuarioId`, `nomeCompleto`, `email`, `telefone`, `nomeExibicao`, `cpf`, `dataNascimento`, `descricao`, `fotoPerfilUrl`, `experienciaAnos`, `ativoParaReceberChamados`, `statusAprovacao`, `notaMedia`, `totalAvaliacoes`, `criadoEm`, `atualizadoEm`, `statusConta` e `tipoUsuario`.
+
+Não expõe senha/hash, documentos de verificação ou URLs sensíveis.
 
 ### PATCH `/profissionais/{id}/aprovacao`
 Admin aprova/rejeita profissional.

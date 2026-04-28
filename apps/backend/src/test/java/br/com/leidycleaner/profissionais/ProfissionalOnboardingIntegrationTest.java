@@ -222,10 +222,95 @@ class ProfissionalOnboardingIntegrationTest {
     }
 
     @Test
+    void adminListaProfissionaisComDadosDeUsuarioSemSenhaHash() throws Exception {
+        String email = "m2a.lista-admin@example.com";
+        criarProfissionalELogar(email, "50922233344");
+        Long perfilId = perfilProfissionalRepository.findByCpf("50922233344").orElseThrow().getId();
+        String tokenAdmin = login("admin@leidycleaner.local", "Admin123!local");
+
+        String response = mockMvc.perform(get("/api/v1/profissionais")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenAdmin))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data").isArray())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        assertThat(response).doesNotContain("senhaHash");
+        JsonNode profissional = encontrarProfissionalNaLista(response, perfilId);
+        assertThat(profissional.path("id").asLong()).isEqualTo(perfilId);
+        assertThat(profissional.path("email").asText()).isEqualTo(email);
+        assertThat(profissional.path("telefone").asText()).isEqualTo("+5551988885555");
+        assertThat(profissional.path("nomeCompleto").asText()).isEqualTo("Profissional M2A");
+        assertThat(profissional.path("statusConta").asText()).isEqualTo("PENDENTE_VERIFICACAO");
+        assertThat(profissional.path("tipoUsuario").asText()).isEqualTo("PROFISSIONAL");
+    }
+
+    @Test
+    void adminFiltraProfissionaisPorStatusESearch() throws Exception {
+        String emailAprovada = "m2a.lista-filtro-aprovada@example.com";
+        String emailPendente = "m2a.lista-filtro-pendente@example.com";
+        criarProfissionalELogar(emailAprovada, "51022233344");
+        criarProfissionalELogar(emailPendente, "51122233344");
+        Long perfilAprovadoId = perfilProfissionalRepository.findByCpf("51022233344").orElseThrow().getId();
+        Long perfilPendenteId = perfilProfissionalRepository.findByCpf("51122233344").orElseThrow().getId();
+        String tokenAdmin = login("admin@leidycleaner.local", "Admin123!local");
+
+        mockMvc.perform(patch("/api/v1/profissionais/{id}/aprovacao", perfilAprovadoId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenAdmin)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "statusAprovacao": "APROVADO"
+                                }
+                                """))
+                .andExpect(status().isOk());
+
+        String responseStatus = mockMvc.perform(get("/api/v1/profissionais")
+                        .queryParam("statusAprovacao", "APROVADO")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenAdmin))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        assertThat(listaContemProfissional(responseStatus, perfilAprovadoId)).isTrue();
+        assertThat(listaContemProfissional(responseStatus, perfilPendenteId)).isFalse();
+
+        String responseSearch = mockMvc.perform(get("/api/v1/profissionais")
+                        .queryParam("search", emailPendente)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenAdmin))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        assertThat(listaContemProfissional(responseSearch, perfilPendenteId)).isTrue();
+        assertThat(listaContemProfissional(responseSearch, perfilAprovadoId)).isFalse();
+    }
+
+    @Test
     void naoAdminNaoAcessaEndpointsAdministrativosDeVerificacao() throws Exception {
         String token = criarProfissionalELogar("m2a.nao-admin@example.com", "50722233344");
 
         mockMvc.perform(get("/api/v1/verificacoes")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+                .andExpect(status().isForbidden())
+                .andExpect(header().doesNotExist("WWW-Authenticate"))
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("FORBIDDEN"))
+                .andExpect(jsonPath("$.errors").isArray());
+    }
+
+    @Test
+    void naoAdminNaoListaProfissionais() throws Exception {
+        String token = criarProfissionalELogar("m2a.lista-nao-admin@example.com", "51222233344");
+
+        mockMvc.perform(get("/api/v1/profissionais")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
                 .andExpect(status().isForbidden())
                 .andExpect(header().doesNotExist("WWW-Authenticate"))
@@ -294,6 +379,26 @@ class ProfissionalOnboardingIntegrationTest {
                 .getContentAsString();
         JsonNode root = objectMapper.readTree(response);
         return root.path("data").path("accessToken").asText();
+    }
+
+    private JsonNode encontrarProfissionalNaLista(String response, Long perfilId) throws Exception {
+        JsonNode data = objectMapper.readTree(response).path("data");
+        for (JsonNode profissional : data) {
+            if (profissional.path("id").asLong() == perfilId) {
+                return profissional;
+            }
+        }
+        throw new AssertionError("Profissional nao encontrado na resposta: " + perfilId);
+    }
+
+    private boolean listaContemProfissional(String response, Long perfilId) throws Exception {
+        JsonNode data = objectMapper.readTree(response).path("data");
+        for (JsonNode profissional : data) {
+            if (profissional.path("id").asLong() == perfilId) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private Long criarDisponibilidade(String token, String diaSemana, String horaInicio, String horaFim) throws Exception {

@@ -1,4 +1,4 @@
-import type { StatusAprovacaoProfissional } from './types';
+import type { StatusAprovacaoProfissional, StatusConta, TipoUsuario } from './types';
 
 export const statusAprovacaoProfissionalOptions: Array<{ value: StatusAprovacaoProfissional; label: string }> = [
   { value: 'PENDENTE', label: 'Pendente' },
@@ -48,4 +48,25 @@ export function formatRating(value: number | null | undefined) {
     minimumFractionDigits: 1,
     maximumFractionDigits: 2,
   });
+}
+
+export function getStatusContaLabel(statusConta: StatusConta) {
+  const labels: Record<StatusConta, string> = {
+    ATIVA: 'Ativa',
+    INATIVA: 'Inativa',
+    BLOQUEADA: 'Bloqueada',
+    PENDENTE_VERIFICACAO: 'Pendente de verificação',
+  };
+
+  return labels[statusConta];
+}
+
+export function getTipoUsuarioLabel(tipoUsuario: TipoUsuario) {
+  const labels: Record<TipoUsuario, string> = {
+    ADMIN: 'Admin',
+    CLIENTE: 'Cliente',
+    PROFISSIONAL: 'Profissional',
+  };
+
+  return labels[tipoUsuario];
 }

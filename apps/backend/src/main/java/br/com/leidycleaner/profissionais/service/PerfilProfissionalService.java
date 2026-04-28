@@ -8,10 +8,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import br.com.leidycleaner.core.exception.BusinessException;
+import br.com.leidycleaner.profissionais.dto.AdminProfissionalResponse;
 import br.com.leidycleaner.profissionais.dto.AnalisarProfissionalRequest;
 import br.com.leidycleaner.profissionais.dto.AtualizarPerfilProfissionalRequest;
 import br.com.leidycleaner.profissionais.dto.PerfilProfissionalResumoDto;
 import br.com.leidycleaner.profissionais.entity.PerfilProfissional;
+import br.com.leidycleaner.profissionais.entity.StatusAprovacaoProfissional;
 import br.com.leidycleaner.profissionais.mapper.PerfilProfissionalMapper;
 import br.com.leidycleaner.profissionais.repository.PerfilProfissionalRepository;
 
@@ -46,6 +48,18 @@ public class PerfilProfissionalService {
         return PerfilProfissionalMapper.paraResumo(buscarPerfilDaProfissional(usuarioId));
     }
 
+    @Transactional(readOnly = true)
+    public java.util.List<AdminProfissionalResponse> listarProfissionaisAdmin(
+            StatusAprovacaoProfissional statusAprovacao,
+            String search
+    ) {
+        String searchTerm = normalizarSearchTerm(search);
+        return perfilProfissionalRepository.findAdminList(statusAprovacao, searchTerm)
+                .stream()
+                .map(PerfilProfissionalMapper::paraAdminResponse)
+                .toList();
+    }
+
     @Transactional
     public PerfilProfissionalResumoDto atualizarMeuPerfil(Long usuarioId, AtualizarPerfilProfissionalRequest request) {
         PerfilProfissional perfil = buscarPerfilDaProfissional(usuarioId);
@@ -75,5 +89,13 @@ public class PerfilProfissionalService {
 
         perfilProfissionalRepository.flush();
         return PerfilProfissionalMapper.paraResumo(perfil);
+    }
+
+    private String normalizarSearchTerm(String search) {
+        if (search == null || search.isBlank()) {
+            return null;
+        }
+
+        return "%" + search.trim().toLowerCase() + "%";
     }
 }

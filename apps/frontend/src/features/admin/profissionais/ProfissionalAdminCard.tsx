@@ -1,5 +1,11 @@
 import { AprovacaoProfissionalForm } from './AprovacaoProfissionalForm';
-import { formatAdminDate, formatAdminDateTime, formatRating } from './profissionalLabels';
+import {
+  formatAdminDate,
+  formatAdminDateTime,
+  formatRating,
+  getStatusContaLabel,
+  getTipoUsuarioLabel,
+} from './profissionalLabels';
 import { ProfissionalStatusBadge } from './ProfissionalStatusBadge';
 import type { PerfilProfissionalAdmin, StatusAprovacaoProfissional } from './types';
 
@@ -18,13 +24,18 @@ export function ProfissionalAdminCard({ isSubmitting, profissional, onSubmitApro
             <h2 className="text-lg font-black text-slate-900">{profissional.nomeExibicao}</h2>
             <ProfissionalStatusBadge status={profissional.statusAprovacao} />
           </div>
+          <p className="mt-2 text-sm font-semibold text-slate-700">{profissional.nomeCompleto}</p>
+          <p className="mt-1 break-words text-sm leading-6 text-slate-600">{profissional.email}</p>
           <dl className="mt-4 grid gap-3 text-sm md:grid-cols-2 xl:grid-cols-3">
             <DetailItem label="Profissional" value={`#${profissional.id}`} />
             <DetailItem label="Usuário" value={`#${profissional.usuarioId}`} />
+            <DetailItem label="Telefone" value={profissional.telefone} />
             <DetailItem label="CPF" value={profissional.cpf} />
             <DetailItem label="Nascimento" value={formatAdminDate(profissional.dataNascimento)} />
             <DetailItem label="Experiência" value={`${profissional.experienciaAnos} ano(s)`} />
             <DetailItem label="Recebe chamados" value={profissional.ativoParaReceberChamados ? 'Sim' : 'Não'} />
+            <DetailItem label="Conta" value={getStatusContaLabel(profissional.statusConta)} />
+            <DetailItem label="Tipo" value={getTipoUsuarioLabel(profissional.tipoUsuario)} />
             <DetailItem label="Nota média" value={formatRating(profissional.notaMedia)} />
             <DetailItem label="Avaliações" value={String(profissional.totalAvaliacoes)} />
             <DetailItem label="Atualizado em" value={formatAdminDateTime(profissional.atualizadoEm)} />
@@ -33,7 +44,7 @@ export function ProfissionalAdminCard({ isSubmitting, profissional, onSubmitApro
       </div>
 
       <AprovacaoProfissionalForm
-        initialProfissionalId={profissional.id}
+        profissionalId={profissional.id}
         initialStatus={profissional.statusAprovacao}
         isSubmitting={isSubmitting}
         onSubmit={onSubmitAprovacao}

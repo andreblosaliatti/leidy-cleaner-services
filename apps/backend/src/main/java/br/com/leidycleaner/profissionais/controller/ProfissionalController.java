@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -19,12 +20,14 @@ import org.springframework.web.bind.annotation.RestController;
 import br.com.leidycleaner.auth.security.UsuarioPrincipal;
 import br.com.leidycleaner.core.ApiPaths;
 import br.com.leidycleaner.core.dto.ApiResponse;
+import br.com.leidycleaner.profissionais.dto.AdminProfissionalResponse;
 import br.com.leidycleaner.profissionais.dto.AnalisarProfissionalRequest;
 import br.com.leidycleaner.profissionais.dto.AtualizarPerfilProfissionalRequest;
 import br.com.leidycleaner.profissionais.dto.DefinirRegioesProfissionalRequest;
 import br.com.leidycleaner.profissionais.dto.DisponibilidadeProfissionalDto;
 import br.com.leidycleaner.profissionais.dto.DisponibilidadeProfissionalRequest;
 import br.com.leidycleaner.profissionais.dto.PerfilProfissionalResumoDto;
+import br.com.leidycleaner.profissionais.entity.StatusAprovacaoProfissional;
 import br.com.leidycleaner.profissionais.service.PerfilProfissionalService;
 import br.com.leidycleaner.profissionais.service.ProfissionalOnboardingService;
 import br.com.leidycleaner.regioes.dto.RegiaoAtendimentoDto;
@@ -106,6 +109,15 @@ public class ProfissionalController {
     @PreAuthorize("hasRole('PROFISSIONAL')")
     public void excluirDisponibilidade(@AuthenticationPrincipal UsuarioPrincipal principal, @PathVariable Long id) {
         profissionalOnboardingService.excluirDisponibilidade(principal.getId(), id);
+    }
+
+    @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ApiResponse<List<AdminProfissionalResponse>> listarProfissionais(
+            @RequestParam(required = false) StatusAprovacaoProfissional statusAprovacao,
+            @RequestParam(required = false) String search
+    ) {
+        return ApiResponse.success(perfilProfissionalService.listarProfissionaisAdmin(statusAprovacao, search));
     }
 
     @PatchMapping("/{id}/aprovacao")
