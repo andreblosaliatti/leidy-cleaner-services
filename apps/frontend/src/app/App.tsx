@@ -3,6 +3,8 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { AuthenticatedLayout } from '../layouts/AuthenticatedLayout';
 import { PublicLayout } from '../layouts/PublicLayout';
 import { AdminDashboardPage } from '../pages/app/AdminDashboardPage';
+import { ClienteAtendimentoDetalhePage } from '../pages/app/ClienteAtendimentoDetalhePage';
+import { ClienteAtendimentosPage } from '../pages/app/ClienteAtendimentosPage';
 import { ClienteDashboardPage } from '../pages/app/ClienteDashboardPage';
 import { ClienteEnderecosPage } from '../pages/app/ClienteEnderecosPage';
 import { ClientePagamentoPage } from '../pages/app/ClientePagamentoPage';
@@ -10,6 +12,8 @@ import { ClientePagamentoRetornoPage } from '../pages/app/ClientePagamentoRetorn
 import { ClientePagamentosPage } from '../pages/app/ClientePagamentosPage';
 import { ClienteSelecionarProfissionaisPage } from '../pages/app/ClienteSelecionarProfissionaisPage';
 import { ClienteSolicitacoesPage } from '../pages/app/ClienteSolicitacoesPage';
+import { ProfissionalAtendimentoDetalhePage } from '../pages/app/ProfissionalAtendimentoDetalhePage';
+import { ProfissionalAtendimentosPage } from '../pages/app/ProfissionalAtendimentosPage';
 import { ProfissionalConviteDetalhePage } from '../pages/app/ProfissionalConviteDetalhePage';
 import { ProfissionalConvitesPage } from '../pages/app/ProfissionalConvitesPage';
 import { ProfissionalDashboardPage } from '../pages/app/ProfissionalDashboardPage';
@@ -48,6 +52,8 @@ export function App() {
               <Route path="pagamentos/retorno" element={<ClientePagamentoRetornoPage />} />
               <Route path="pagamentos/atendimento/:atendimentoId" element={<ClientePagamentoPage />} />
               <Route path="pagamentos/:pagamentoId" element={<ClientePagamentoPage />} />
+              <Route path="atendimentos" element={<ClienteAtendimentosPage />} />
+              <Route path="atendimentos/:id" element={<ClienteAtendimentoDetalhePage />} />
             </Route>
           </Route>
           <Route element={<RequireProfile profile="PROFISSIONAL" />}>
@@ -56,6 +62,8 @@ export function App() {
               <Route path="perfil" element={<ProfissionalOnboardingPage />} />
               <Route path="convites" element={<ProfissionalConvitesPage />} />
               <Route path="convites/:id" element={<ProfissionalConviteDetalhePage />} />
+              <Route path="atendimentos" element={<ProfissionalAtendimentosPage />} />
+              <Route path="atendimentos/:id" element={<ProfissionalAtendimentoDetalhePage />} />
             </Route>
           </Route>
           <Route element={<RequireProfile profile="ADMIN" />}>

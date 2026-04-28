@@ -303,21 +303,21 @@ Entregar a tela de pagamento alinhada ao backend e ao Asaas.
 Entregar a experiência operacional de atendimento para ambos os lados.
 
 ### Entregas
-- [ ] implementar listagem “meus atendimentos”
-- [ ] implementar detalhe do atendimento
-- [ ] implementar exibição de checkpoints
-- [ ] implementar ação de iniciar atendimento (profissional)
-- [ ] implementar ação de finalizar atendimento (profissional)
-- [ ] implementar visualização do atendimento pelo cliente
-- [ ] integrar com `GET /api/v1/atendimentos/meus`
-- [ ] integrar com `GET /api/v1/atendimentos/{id}`
-- [ ] integrar com `GET /api/v1/atendimentos/{id}/checkpoints`
-- [ ] integrar com `POST /api/v1/atendimentos/{id}/iniciar`
-- [ ] integrar com `POST /api/v1/atendimentos/{id}/finalizar`
+- [x] implementar listagem “meus atendimentos”
+- [x] implementar detalhe do atendimento
+- [x] implementar exibição de checkpoints
+- [x] implementar ação de iniciar atendimento (profissional)
+- [x] implementar ação de finalizar atendimento (profissional)
+- [x] implementar visualização do atendimento pelo cliente
+- [x] integrar com `GET /api/v1/atendimentos/meus`
+- [x] integrar com `GET /api/v1/atendimentos/{id}`
+- [x] integrar com `GET /api/v1/atendimentos/{id}/checkpoints`
+- [x] integrar com `POST /api/v1/atendimentos/{id}/iniciar`
+- [x] integrar com `POST /api/v1/atendimentos/{id}/finalizar`
 
 ### Critério de pronto
-- [ ] execução do serviço pode ser acompanhada no frontend
-- [ ] profissional opera início/fim sem ambiguidade
+- [x] execução do serviço pode ser acompanhada no frontend
+- [x] profissional opera início/fim sem ambiguidade
 
 ---
 
@@ -388,7 +388,7 @@ Transformar o frontend de funcional em utilizável de verdade.
 - [x] F8 — Profissionais elegíveis e seleção
 - [x] F9 — Convites
 - [x] F10 — Pagamento
-- [ ] F11 — Atendimentos
+- [x] F11 — Atendimentos
 - [ ] F12 — Avaliação
 - [ ] F13 — Admin
 - [ ] F14 — Polimento

@@ -27,7 +27,8 @@ const profissionalItems = [
   },
   {
     title: 'Atendimentos',
-    description: 'Resumo futuro dos serviços confirmados, em execução e concluídos.',
+    description: 'Acompanhe serviços atribuídos e registre início ou fim quando permitido.',
+    href: '/app/profissional/atendimentos',
   },
 ];
 
@@ -38,7 +39,7 @@ export function ProfissionalDashboardPage() {
     <div className="grid gap-5">
       <DashboardHeader
         title={`Olá, ${getFirstName(user?.nomeCompleto ?? '')}.`}
-        description="Sua área profissional reúne perfil, regiões, disponibilidade, verificações e convites operacionais."
+        description="Sua área profissional reúne perfil, regiões, disponibilidade, convites e atendimentos operacionais."
       />
       <DashboardCards items={profissionalItems} />
     </div>

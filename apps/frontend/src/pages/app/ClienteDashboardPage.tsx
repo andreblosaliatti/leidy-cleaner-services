@@ -20,7 +20,8 @@ const clienteItems = [
   },
   {
     title: 'Histórico',
-    description: 'Consulta futura dos atendimentos concluídos e seus registros.',
+    description: 'Acompanhe atendimentos, checkpoints e andamento operacional.',
+    href: '/app/cliente/atendimentos',
   },
 ];
 
