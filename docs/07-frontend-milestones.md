@@ -326,15 +326,15 @@ Entregar a experiência operacional de atendimento para ambos os lados.
 Entregar o fechamento do fluxo principal com a avaliação da profissional.
 
 ### Entregas
-- [ ] implementar formulário de avaliação pós-atendimento finalizado
-- [ ] implementar nota de 1 a 5
-- [ ] implementar comentário opcional
-- [ ] implementar listagem de avaliações da profissional quando necessário
-- [ ] integrar com `POST /api/v1/avaliacoes`
-- [ ] integrar com `GET /api/v1/profissionais/{id}/avaliacoes`
+- [x] implementar formulário de avaliação pós-atendimento finalizado
+- [x] implementar nota de 1 a 5
+- [x] implementar comentário opcional
+- [x] implementar listagem de avaliações da profissional quando necessário
+- [x] integrar com `POST /api/v1/avaliacoes`
+- [x] integrar com `GET /api/v1/profissionais/{id}/avaliacoes`
 
 ### Critério de pronto
-- [ ] cliente consegue avaliar uma única vez após atendimento finalizado
+- [x] cliente consegue avaliar uma única vez após atendimento finalizado
 
 ---
 
@@ -389,7 +389,7 @@ Transformar o frontend de funcional em utilizável de verdade.
 - [x] F9 — Convites
 - [x] F10 — Pagamento
 - [x] F11 — Atendimentos
-- [ ] F12 — Avaliação
+- [x] F12 — Avaliação
 - [ ] F13 — Admin
 - [ ] F14 — Polimento
 
