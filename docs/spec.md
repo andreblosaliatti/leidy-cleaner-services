@@ -388,6 +388,7 @@ apps/frontend/src/
 ### Pagamentos
 - `POST /api/v1/pagamentos/checkout`
 - `POST /api/v1/pagamentos` (legado/deprecado para cobranca direta)
+- `GET /api/v1/pagamentos`
 - `GET /api/v1/pagamentos/{id}`
 - `GET /api/v1/pagamentos/atendimento/{atendimentoId}`
 - `POST /api/v1/pagamentos/{id}/consultar-status`
@@ -560,7 +561,8 @@ Use esta seção como checklist viva de execução.
 - [x] Implementar listagem de profissionais pendentes
 - [x] Implementar fluxo de aprovação/rejeição
 - [x] Implementar listagem admin de atendimentos
-- [ ] Implementar listagens admin de pagamentos/solicitações/clientes — Pendente: F13-C identificou gaps de backend para essas listagens.
+- [x] Implementar listagem admin de pagamentos
+- [ ] Implementar listagens admin de solicitações/clientes — Pendente: F13-C identificou gaps de backend para essas listagens.
 
 ## M10 — Polimento
 - [ ] Adicionar validações UX no frontend — Parcial: formulários principais usam Zod, falta revisão global.

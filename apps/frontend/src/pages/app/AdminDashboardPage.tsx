@@ -24,7 +24,8 @@ const adminItems = [
   },
   {
     title: 'Pagamentos',
-    description: 'Base para consulta administrativa de pagamentos recebidos.',
+    description: 'Consulte pagamentos vinculados a atendimentos sem alterar status.',
+    href: '/app/admin/pagamentos',
   },
   {
     title: 'Ocorrências',

@@ -380,8 +380,11 @@ Entregar o básico do operacional administrativo no frontend.
 - [x] implementar listagem admin de atendimentos
 - [x] implementar detalhe admin de atendimento
 - [x] implementar checkpoints no detalhe admin de atendimento
-- [ ] exibir pagamento no detalhe admin de atendimento — Bloqueado: `GET /api/v1/pagamentos/atendimento/{atendimentoId}` existe apenas para cliente relacionado.
-- [ ] implementar listagem admin de pagamentos — Bloqueado: não há endpoint administrativo de listagem.
+- [ ] exibir pagamento no detalhe admin de atendimento — Parcial: endpoint admin existe, painel no detalhe de atendimento ainda pendente.
+- [x] implementar listagem admin de pagamentos
+- [x] implementar detalhe admin de pagamento
+- [x] integrar com `GET /api/v1/pagamentos`
+- [x] integrar admin read-only com `GET /api/v1/pagamentos/{id}`
 - [ ] implementar listagem admin de solicitações — Bloqueado: não há endpoint administrativo de listagem.
 - [ ] implementar listagem admin de usuários/clientes — Bloqueado: não há endpoint administrativo de listagem.
 
@@ -389,10 +392,11 @@ Entregar o básico do operacional administrativo no frontend.
 - [x] gaps reais de backend foram identificados sem criar telas falsas
 - [x] admin consegue listar e consultar atendimentos operacionalmente
 - [x] admin consegue consultar checkpoints de atendimentos
+- [x] admin consegue listar e consultar pagamentos sem alterar status
 
 ### Entregas futuras
-- [ ] implementar listagens operacionais mínimas conforme backend existente — Parcial: verificações, profissionais, ocorrências e atendimentos estão integrados; pagamentos/solicitações/clientes dependem de endpoints admin.
-- [ ] integrar com endpoints admin disponíveis — Parcial: faltam endpoints admin para pagamentos, solicitações e clientes.
+- [ ] implementar listagens operacionais mínimas conforme backend existente — Parcial: verificações, profissionais, ocorrências, atendimentos e pagamentos estão integrados; solicitações/clientes dependem de endpoints admin.
+- [ ] integrar com endpoints admin disponíveis — Parcial: faltam endpoints admin para solicitações e clientes.
 
 ---
 

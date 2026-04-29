@@ -249,16 +249,21 @@ Cria checkout Asaas para um atendimento da cliente autenticada. Esse e o caminho
 Cria cobranca direta do atendimento. Endpoint legado/deprecado; depende de `ASAAS_DEFAULT_CUSTOMER_ID` e nao e o caminho principal do checkout.
 
 ### GET `/pagamentos/{id}`
-Consulta pagamento do cliente relacionado. Não é endpoint administrativo amplo.
+Consulta pagamento do cliente relacionado. Admin tambem pode consultar qualquer pagamento em modo somente leitura.
 
 ### GET `/pagamentos/atendimento/{atendimentoId}`
-Consulta pagamento pelo atendimento para o cliente relacionado. Não é endpoint administrativo amplo.
+Consulta pagamento pelo atendimento para o cliente relacionado. Admin tambem pode consultar o pagamento de qualquer atendimento em modo somente leitura.
 
 ### GET `/pagamentos`
-Gap F13-C: não existe listagem administrativa no backend atual.
+Admin lista pagamentos em modo somente leitura.
+
+Parametros opcionais:
+- `status`
+- `metodoPagamento`
+- `atendimentoId`
 
 ### POST `/pagamentos/{id}/consultar-status`
-Reconsulta o gateway, mas nao confirma pagamento de forma definitiva. Estados recebidos do gateway podem ir para `AGUARDANDO_CONFIRMACAO`; `PAGO` so vem do webhook.
+Cliente relacionado reconsulta o gateway, mas nao confirma pagamento de forma definitiva. Estados recebidos do gateway podem ir para `AGUARDANDO_CONFIRMACAO`; `PAGO` so vem do webhook. Admin nao usa essa rota para forcar transicao.
 
 ### POST `/webhooks/asaas`
 Recebe webhook do Asaas em `POST /api/v1/webhooks/asaas`. O endpoint:

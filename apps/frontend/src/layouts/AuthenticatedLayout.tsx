@@ -35,7 +35,7 @@ const navigationByProfile: Record<TipoUsuario, NavigationItem[]> = {
     { label: 'Profissionais', href: '/app/admin/profissionais' },
     { label: 'Solicitações' },
     { label: 'Atendimentos', href: '/app/admin/atendimentos' },
-    { label: 'Pagamentos' },
+    { label: 'Pagamentos', href: '/app/admin/pagamentos' },
     { label: 'Ocorrências', href: '/app/admin/ocorrencias' },
   ],
 };

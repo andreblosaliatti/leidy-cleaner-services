@@ -2103,6 +2103,131 @@ class SolicitacaoFaxinaIntegrationTest {
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.code").value("FORBIDDEN"))
                 .andExpect(jsonPath("$.errors").isArray());
+
+        mockMvc.perform(get("/api/v1/pagamentos/atendimento/{atendimentoId}", atendimento.atendimentoId())
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenOutraCliente))
+                .andExpect(status().isForbidden())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("FORBIDDEN"))
+                .andExpect(jsonPath("$.errors").isArray());
+    }
+
+    @Test
+    void adminListaPagamentosComFiltros() throws Exception {
+        AtendimentoCriado atendimentoPix = criarAtendimentoAguardandoPagamento("m7.admin-lista-pix", "78222233344");
+        mockarCriacaoAsaas("pay_m7_admin_lista_pix", "PENDING", "https://asaas.local/pay_m7_admin_lista_pix", "pix-admin");
+        Long pagamentoPixId = criarPagamento(atendimentoPix.tokenCliente(), atendimentoPix.atendimentoId(), "PIX");
+
+        AtendimentoCriado atendimentoBoleto = criarAtendimentoAguardandoPagamento("m7.admin-lista-boleto", "78223233344");
+        mockarCriacaoAsaas("pay_m7_admin_lista_boleto", "RECEIVED", "https://asaas.local/pay_m7_admin_lista_boleto", null);
+        Long pagamentoBoletoId = criarPagamento(atendimentoBoleto.tokenCliente(), atendimentoBoleto.atendimentoId(), "BOLETO");
+
+        String tokenAdmin = login("admin@leidycleaner.local", "Admin123!local");
+
+        String response = mockMvc.perform(get("/api/v1/pagamentos")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenAdmin))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data").isArray())
+                .andExpect(jsonPath("$.data[0].payloadResumo").doesNotExist())
+                .andExpect(jsonPath("$.data[0].senhaHash").doesNotExist())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        JsonNode pagamentoPix = encontrarPagamentoNaLista(response, pagamentoPixId);
+        assertThat(pagamentoPix).isNotNull();
+        assertThat(pagamentoPix.path("atendimentoId").asLong()).isEqualTo(atendimentoPix.atendimentoId());
+        assertThat(pagamentoPix.path("metodoPagamento").asText()).isEqualTo("PIX");
+        assertThat(pagamentoPix.path("status").asText()).isEqualTo("PENDENTE");
+        assertThat(pagamentoPix.path("pixCopiaECola").asText()).isEqualTo("pix-admin");
+
+        String responseStatus = mockMvc.perform(get("/api/v1/pagamentos")
+                        .param("status", "AGUARDANDO_CONFIRMACAO")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenAdmin))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        assertThat(listaContemPagamento(responseStatus, pagamentoBoletoId)).isTrue();
+        assertThat(listaContemPagamento(responseStatus, pagamentoPixId)).isFalse();
+
+        String responseMetodo = mockMvc.perform(get("/api/v1/pagamentos")
+                        .param("metodoPagamento", "PIX")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenAdmin))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        assertThat(listaContemPagamento(responseMetodo, pagamentoPixId)).isTrue();
+        assertThat(listaContemPagamento(responseMetodo, pagamentoBoletoId)).isFalse();
+
+        String responseAtendimento = mockMvc.perform(get("/api/v1/pagamentos")
+                        .param("atendimentoId", String.valueOf(atendimentoPix.atendimentoId()))
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenAdmin))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        assertThat(listaContemPagamento(responseAtendimento, pagamentoPixId)).isTrue();
+        assertThat(listaContemPagamento(responseAtendimento, pagamentoBoletoId)).isFalse();
+    }
+
+    @Test
+    void naoAdminNaoListaTodosPagamentos() throws Exception {
+        String tokenCliente = criarClienteELogar("m7.admin-pagamentos-negado@example.com");
+
+        mockMvc.perform(get("/api/v1/pagamentos")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenCliente))
+                .andExpect(status().isForbidden())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("FORBIDDEN"))
+                .andExpect(jsonPath("$.errors").isArray());
+    }
+
+    @Test
+    void adminConsultaPagamentoPorIdEPeloAtendimento() throws Exception {
+        AtendimentoCriado atendimento = criarAtendimentoAguardandoPagamento("m7.admin-consulta", "78224233344");
+        mockarCriacaoAsaas("pay_m7_admin_consulta", "PENDING", "https://asaas.local/pay_m7_admin_consulta", null);
+        Long pagamentoId = criarPagamento(atendimento.tokenCliente(), atendimento.atendimentoId(), "PIX");
+        String tokenAdmin = login("admin@leidycleaner.local", "Admin123!local");
+
+        mockMvc.perform(get("/api/v1/pagamentos/{id}", pagamentoId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenAdmin))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.id").value(pagamentoId))
+                .andExpect(jsonPath("$.data.atendimentoId").value(atendimento.atendimentoId()))
+                .andExpect(jsonPath("$.data.gatewayPaymentId").value("pay_m7_admin_consulta"))
+                .andExpect(jsonPath("$.data.payloadResumo").doesNotExist());
+
+        mockMvc.perform(get("/api/v1/pagamentos/atendimento/{atendimentoId}", atendimento.atendimentoId())
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenAdmin))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.id").value(pagamentoId))
+                .andExpect(jsonPath("$.data.atendimentoId").value(atendimento.atendimentoId()));
+    }
+
+    @Test
+    void adminNaoReconsultaStatusPagamento() throws Exception {
+        AtendimentoCriado atendimento = criarAtendimentoAguardandoPagamento("m7.admin-sem-reconsulta", "78225233344");
+        mockarCriacaoAsaas("pay_m7_admin_sem_reconsulta", "PENDING", "https://asaas.local/pay_m7_admin_sem_reconsulta", null);
+        Long pagamentoId = criarPagamento(atendimento.tokenCliente(), atendimento.atendimentoId(), "PIX");
+        String tokenAdmin = login("admin@leidycleaner.local", "Admin123!local");
+
+        mockMvc.perform(post("/api/v1/pagamentos/{id}/consultar-status", pagamentoId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenAdmin))
+                .andExpect(status().isForbidden())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("FORBIDDEN"))
+                .andExpect(jsonPath("$.errors").isArray());
     }
 
     @Test
@@ -2167,6 +2292,13 @@ class SolicitacaoFaxinaIntegrationTest {
                 .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
 
         mockMvc.perform(get("/api/v1/pagamentos/1"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(header().doesNotExist("WWW-Authenticate"))
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
+
+        mockMvc.perform(get("/api/v1/pagamentos"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(header().doesNotExist("WWW-Authenticate"))
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
@@ -2650,6 +2782,20 @@ class SolicitacaoFaxinaIntegrationTest {
 
     private boolean listaContemAtendimento(String response, Long atendimentoId) throws Exception {
         return encontrarAtendimentoNaLista(response, atendimentoId) != null;
+    }
+
+    private JsonNode encontrarPagamentoNaLista(String response, Long pagamentoId) throws Exception {
+        for (JsonNode item : objectMapper.readTree(response).path("data")) {
+            if (item.path("id").asLong() == pagamentoId) {
+                return item;
+            }
+        }
+
+        return null;
+    }
+
+    private boolean listaContemPagamento(String response, Long pagamentoId) throws Exception {
+        return encontrarPagamentoNaLista(response, pagamentoId) != null;
     }
 
     private AtendimentoCriado criarAtendimentoAguardandoPagamentoComProfissional(

@@ -1,12 +1,16 @@
 package br.com.leidycleaner.pagamentos.controller;
 
+import java.util.List;
+
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -17,6 +21,8 @@ import br.com.leidycleaner.pagamentos.dto.CheckoutDto;
 import br.com.leidycleaner.pagamentos.dto.CheckoutRequest;
 import br.com.leidycleaner.pagamentos.dto.PagamentoDto;
 import br.com.leidycleaner.pagamentos.dto.PagamentoRequest;
+import br.com.leidycleaner.pagamentos.entity.MetodoPagamento;
+import br.com.leidycleaner.pagamentos.entity.StatusPagamento;
 import br.com.leidycleaner.pagamentos.service.PagamentoService;
 import jakarta.validation.Valid;
 
@@ -38,6 +44,16 @@ public class PagamentoController {
             @Valid @RequestBody PagamentoRequest request
     ) {
         return ApiResponse.success(pagamentoService.criar(principal.getId(), request));
+    }
+
+    @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ApiResponse<List<PagamentoDto>> listarAdmin(
+            @RequestParam(required = false) StatusPagamento status,
+            @RequestParam(required = false) MetodoPagamento metodoPagamento,
+            @RequestParam(required = false) Long atendimentoId
+    ) {
+        return ApiResponse.success(pagamentoService.listarAdmin(status, metodoPagamento, atendimentoId));
     }
 
     @GetMapping("/atendimento/{atendimentoId}")

@@ -7,6 +7,8 @@ import { AdminAtendimentosPage } from '../pages/app/AdminAtendimentosPage';
 import { AdminDashboardPage } from '../pages/app/AdminDashboardPage';
 import { AdminOcorrenciaDetalhePage } from '../pages/app/AdminOcorrenciaDetalhePage';
 import { AdminOcorrenciasPage } from '../pages/app/AdminOcorrenciasPage';
+import { AdminPagamentoDetalhePage } from '../pages/app/AdminPagamentoDetalhePage';
+import { AdminPagamentosPage } from '../pages/app/AdminPagamentosPage';
 import { AdminProfissionaisPage } from '../pages/app/AdminProfissionaisPage';
 import { AdminVerificacaoDetalhePage } from '../pages/app/AdminVerificacaoDetalhePage';
 import { AdminVerificacoesPage } from '../pages/app/AdminVerificacoesPage';
@@ -89,6 +91,8 @@ export function App() {
               <Route path="ocorrencias/:id" element={<AdminOcorrenciaDetalhePage />} />
               <Route path="atendimentos" element={<AdminAtendimentosPage />} />
               <Route path="atendimentos/:id" element={<AdminAtendimentoDetalhePage />} />
+              <Route path="pagamentos" element={<AdminPagamentosPage />} />
+              <Route path="pagamentos/:id" element={<AdminPagamentoDetalhePage />} />
             </Route>
           </Route>
         </Route>

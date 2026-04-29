@@ -1,5 +1,7 @@
 package br.com.leidycleaner.pagamentos.service;
 
+import java.util.List;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -24,6 +26,8 @@ import br.com.leidycleaner.pagamentos.gateway.AsaasGatewayClient;
 import br.com.leidycleaner.pagamentos.gateway.AsaasPagamentoGatewayResponse;
 import br.com.leidycleaner.pagamentos.mapper.PagamentoMapper;
 import br.com.leidycleaner.pagamentos.repository.PagamentoRepository;
+import br.com.leidycleaner.usuarios.entity.TipoUsuario;
+import br.com.leidycleaner.usuarios.repository.UsuarioRepository;
 
 @Service
 public class PagamentoService {
@@ -31,15 +35,18 @@ public class PagamentoService {
     private final PagamentoRepository pagamentoRepository;
     private final AtendimentoFaxinaRepository atendimentoFaxinaRepository;
     private final AsaasGatewayClient asaasGatewayClient;
+    private final UsuarioRepository usuarioRepository;
 
     public PagamentoService(
             PagamentoRepository pagamentoRepository,
             AtendimentoFaxinaRepository atendimentoFaxinaRepository,
-            AsaasGatewayClient asaasGatewayClient
+            AsaasGatewayClient asaasGatewayClient,
+            UsuarioRepository usuarioRepository
     ) {
         this.pagamentoRepository = pagamentoRepository;
         this.atendimentoFaxinaRepository = atendimentoFaxinaRepository;
         this.asaasGatewayClient = asaasGatewayClient;
+        this.usuarioRepository = usuarioRepository;
     }
 
     @Transactional
@@ -76,7 +83,7 @@ public class PagamentoService {
     public PagamentoDto buscarPorId(Long usuarioId, Long pagamentoId) {
         Pagamento pagamento = pagamentoRepository.findById(pagamentoId)
                 .orElseThrow(() -> new BusinessException("PAGAMENTO_NOT_FOUND", "Pagamento nao encontrado", HttpStatus.NOT_FOUND));
-        validarClienteDoPagamento(usuarioId, pagamento);
+        validarClienteOuAdminDoPagamento(usuarioId, pagamento);
         return PagamentoMapper.paraDto(pagamento);
     }
 
@@ -84,8 +91,16 @@ public class PagamentoService {
     public PagamentoDto buscarPorAtendimento(Long usuarioId, Long atendimentoId) {
         Pagamento pagamento = pagamentoRepository.findByAtendimentoId(atendimentoId)
                 .orElseThrow(() -> new BusinessException("PAGAMENTO_NOT_FOUND", "Pagamento nao encontrado", HttpStatus.NOT_FOUND));
-        validarClienteDoPagamento(usuarioId, pagamento);
+        validarClienteOuAdminDoPagamento(usuarioId, pagamento);
         return PagamentoMapper.paraDto(pagamento);
+    }
+
+    @Transactional(readOnly = true)
+    public List<PagamentoDto> listarAdmin(StatusPagamento status, MetodoPagamento metodoPagamento, Long atendimentoId) {
+        return pagamentoRepository.findAdminList(status, metodoPagamento, atendimentoId)
+                .stream()
+                .map(PagamentoMapper::paraDto)
+                .toList();
     }
 
     @Transactional
@@ -161,6 +176,19 @@ public class PagamentoService {
         if (!pagamento.getAtendimento().getCliente().getUsuario().getId().equals(usuarioId)) {
             throw new AccessDeniedException("Usuario autenticado nao pode acessar este pagamento");
         }
+    }
+
+    private void validarClienteOuAdminDoPagamento(Long usuarioId, Pagamento pagamento) {
+        if (isAdmin(usuarioId)) {
+            return;
+        }
+        validarClienteDoPagamento(usuarioId, pagamento);
+    }
+
+    private boolean isAdmin(Long usuarioId) {
+        return usuarioRepository.findById(usuarioId)
+                .map(usuario -> usuario.getTipoUsuario() == TipoUsuario.ADMIN)
+                .orElse(false);
     }
 
     private StatusPagamento paraStatusM5A(String statusGateway) {
