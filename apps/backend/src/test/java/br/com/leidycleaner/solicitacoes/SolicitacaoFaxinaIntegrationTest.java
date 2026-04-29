@@ -168,6 +168,132 @@ class SolicitacaoFaxinaIntegrationTest {
     }
 
     @Test
+    void adminListaSolicitacoesComFiltros() throws Exception {
+        String tokenClienteA = criarClienteELogar("m3b.admin-lista-a@example.com");
+        Long regiaoA = primeiraRegiaoId();
+        Long solicitacaoA = criarSolicitacao(tokenClienteA, criarEndereco(tokenClienteA), regiaoA, "FAXINA_RESIDENCIAL");
+
+        String tokenClienteB = criarClienteELogar("m3b.admin-lista-b@example.com");
+        Long regiaoB = segundaRegiaoId();
+        Long solicitacaoB = criarSolicitacao(tokenClienteB, criarEndereco(tokenClienteB), regiaoB, "FAXINA_COMERCIAL");
+        mockMvc.perform(patch("/api/v1/solicitacoes/{id}/cancelar", solicitacaoB)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenClienteB))
+                .andExpect(status().isOk());
+
+        String tokenAdmin = login("admin@leidycleaner.local", "Admin123!local");
+
+        String response = mockMvc.perform(get("/api/v1/solicitacoes")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenAdmin))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data").isArray())
+                .andExpect(jsonPath("$.data[0].senhaHash").doesNotExist())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        JsonNode solicitacaoAdmin = encontrarSolicitacaoNaLista(response, solicitacaoA);
+        assertThat(solicitacaoAdmin).isNotNull();
+        assertThat(solicitacaoAdmin.path("status").asText()).isEqualTo("CRIADA");
+        assertThat(solicitacaoAdmin.path("tipoServico").asText()).isEqualTo("FAXINA_RESIDENCIAL");
+        assertThat(solicitacaoAdmin.path("regiaoId").asLong()).isEqualTo(regiaoA);
+
+        Long clienteAId = solicitacaoAdmin.path("clienteId").asLong();
+
+        String responseStatus = mockMvc.perform(get("/api/v1/solicitacoes")
+                        .param("status", "CRIADA")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenAdmin))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        assertThat(listaContemSolicitacao(responseStatus, solicitacaoA)).isTrue();
+        assertThat(listaContemSolicitacao(responseStatus, solicitacaoB)).isFalse();
+
+        String responseCliente = mockMvc.perform(get("/api/v1/solicitacoes")
+                        .param("clienteId", String.valueOf(clienteAId))
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenAdmin))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        assertThat(listaContemSolicitacao(responseCliente, solicitacaoA)).isTrue();
+        assertThat(listaContemSolicitacao(responseCliente, solicitacaoB)).isFalse();
+
+        String responseRegiao = mockMvc.perform(get("/api/v1/solicitacoes")
+                        .param("regiaoId", String.valueOf(regiaoB))
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenAdmin))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        assertThat(listaContemSolicitacao(responseRegiao, solicitacaoB)).isTrue();
+        assertThat(listaContemSolicitacao(responseRegiao, solicitacaoA)).isFalse();
+
+        String responseTipo = mockMvc.perform(get("/api/v1/solicitacoes")
+                        .param("tipoServico", "FAXINA_COMERCIAL")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenAdmin))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        assertThat(listaContemSolicitacao(responseTipo, solicitacaoB)).isTrue();
+        assertThat(listaContemSolicitacao(responseTipo, solicitacaoA)).isFalse();
+    }
+
+    @Test
+    void naoAdminNaoListaTodasSolicitacoes() throws Exception {
+        String tokenCliente = criarClienteELogar("m3b.admin-lista-negado@example.com");
+
+        mockMvc.perform(get("/api/v1/solicitacoes")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenCliente))
+                .andExpect(status().isForbidden())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("FORBIDDEN"))
+                .andExpect(jsonPath("$.errors").isArray());
+    }
+
+    @Test
+    void adminVisualizaDetalheMasNaoExecutaAcoesDeClienteNaSolicitacao() throws Exception {
+        String tokenCliente = criarClienteELogar("m3b.admin-detalhe@example.com");
+        Long solicitacaoId = criarSolicitacao(tokenCliente, criarEndereco(tokenCliente), primeiraRegiaoId(), "FAXINA_RESIDENCIAL");
+        String tokenAdmin = login("admin@leidycleaner.local", "Admin123!local");
+
+        mockMvc.perform(get("/api/v1/solicitacoes/{id}", solicitacaoId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenAdmin))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.id").value(solicitacaoId))
+                .andExpect(jsonPath("$.data.status").value("CRIADA"))
+                .andExpect(jsonPath("$.data.senhaHash").doesNotExist());
+
+        mockMvc.perform(patch("/api/v1/solicitacoes/{id}/cancelar", solicitacaoId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenAdmin))
+                .andExpect(status().isForbidden())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("FORBIDDEN"));
+
+        mockMvc.perform(post("/api/v1/solicitacoes/{id}/selecionados", solicitacaoId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenAdmin)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "profissionalIds": [1]
+                                }
+                                """))
+                .andExpect(status().isForbidden())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("FORBIDDEN"));
+    }
+
+    @Test
     void profissionalNaoCriaSolicitacaoComoCliente() throws Exception {
         String tokenProfissional = criarProfissionalELogar("m3a.profissional@example.com", "60122233344");
         Long enderecoId = criarEndereco(tokenProfissional);
@@ -204,6 +330,13 @@ class SolicitacaoFaxinaIntegrationTest {
     @Test
     void endpointsDeSolicitacaoExigemJwt() throws Exception {
         mockMvc.perform(get("/api/v1/solicitacoes/minhas"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(header().doesNotExist("WWW-Authenticate"))
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
+
+        mockMvc.perform(get("/api/v1/solicitacoes"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(header().doesNotExist("WWW-Authenticate"))
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
@@ -2796,6 +2929,20 @@ class SolicitacaoFaxinaIntegrationTest {
 
     private boolean listaContemPagamento(String response, Long pagamentoId) throws Exception {
         return encontrarPagamentoNaLista(response, pagamentoId) != null;
+    }
+
+    private JsonNode encontrarSolicitacaoNaLista(String response, Long solicitacaoId) throws Exception {
+        for (JsonNode item : objectMapper.readTree(response).path("data")) {
+            if (item.path("id").asLong() == solicitacaoId) {
+                return item;
+            }
+        }
+
+        return null;
+    }
+
+    private boolean listaContemSolicitacao(String response, Long solicitacaoId) throws Exception {
+        return encontrarSolicitacaoNaLista(response, solicitacaoId) != null;
     }
 
     private AtendimentoCriado criarAtendimentoAguardandoPagamentoComProfissional(

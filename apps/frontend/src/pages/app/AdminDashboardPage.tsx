@@ -20,7 +20,8 @@ const adminItems = [
   },
   {
     title: 'Solicitações',
-    description: 'Espaço reservado para supervisão das solicitações de faxina.',
+    description: 'Consulte solicitações de faxina em visão administrativa somente leitura.',
+    href: '/app/admin/solicitacoes',
   },
   {
     title: 'Pagamentos',

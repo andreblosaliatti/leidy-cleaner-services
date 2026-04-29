@@ -367,6 +367,7 @@ apps/frontend/src/
 ### Solicitações
 - `POST /api/v1/solicitacoes`
 - `GET /api/v1/solicitacoes/minhas`
+- `GET /api/v1/solicitacoes`
 - `GET /api/v1/solicitacoes/{id}`
 - `GET /api/v1/solicitacoes/{id}/profissionais-disponiveis`
 - `POST /api/v1/solicitacoes/{id}/selecionados`
@@ -562,7 +563,8 @@ Use esta seção como checklist viva de execução.
 - [x] Implementar fluxo de aprovação/rejeição
 - [x] Implementar listagem admin de atendimentos
 - [x] Implementar listagem admin de pagamentos
-- [ ] Implementar listagens admin de solicitações/clientes — Pendente: F13-C identificou gaps de backend para essas listagens.
+- [x] Implementar listagem admin de solicitações
+- [ ] Implementar listagem admin de clientes — Pendente: F13-C identificou gap de backend para essa listagem.
 
 ## M10 — Polimento
 - [ ] Adicionar validações UX no frontend — Parcial: formulários principais usam Zod, falta revisão global.

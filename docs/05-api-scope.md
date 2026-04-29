@@ -167,10 +167,16 @@ Cliente cria solicitação de faxina.
 Cliente lista suas solicitações.
 
 ### GET `/solicitacoes`
-Gap F13-C: não existe listagem administrativa no backend atual.
+Admin lista solicitações em modo somente leitura.
+
+Parametros opcionais:
+- `status`
+- `clienteId`
+- `regiaoId`
+- `tipoServico`
 
 ### GET `/solicitacoes/{id}`
-Detalhe da solicitação.
+Detalhe da solicitação para a cliente dona. Admin tambem pode consultar qualquer solicitação em modo somente leitura.
 
 ### PATCH `/solicitacoes/{id}/cancelar`
 Cancela solicitação.

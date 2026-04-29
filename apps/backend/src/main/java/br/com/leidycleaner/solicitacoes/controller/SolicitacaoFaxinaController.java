@@ -3,6 +3,7 @@ package br.com.leidycleaner.solicitacoes.controller;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -21,6 +23,8 @@ import br.com.leidycleaner.solicitacoes.dto.SelecaoProfissionaisDto;
 import br.com.leidycleaner.solicitacoes.dto.SelecionarProfissionaisRequest;
 import br.com.leidycleaner.solicitacoes.dto.SolicitacaoFaxinaDto;
 import br.com.leidycleaner.solicitacoes.dto.SolicitacaoFaxinaRequest;
+import br.com.leidycleaner.solicitacoes.entity.StatusSolicitacao;
+import br.com.leidycleaner.solicitacoes.entity.TipoServico;
 import br.com.leidycleaner.solicitacoes.service.SolicitacaoFaxinaService;
 import jakarta.validation.Valid;
 
@@ -46,6 +50,17 @@ public class SolicitacaoFaxinaController {
     @GetMapping("/minhas")
     public ApiResponse<List<SolicitacaoFaxinaDto>> listarMinhas(@AuthenticationPrincipal UsuarioPrincipal principal) {
         return ApiResponse.success(solicitacaoFaxinaService.listarMinhas(principal.getId()));
+    }
+
+    @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ApiResponse<List<SolicitacaoFaxinaDto>> listarAdmin(
+            @RequestParam(required = false) StatusSolicitacao status,
+            @RequestParam(required = false) Long clienteId,
+            @RequestParam(required = false) Long regiaoId,
+            @RequestParam(required = false) TipoServico tipoServico
+    ) {
+        return ApiResponse.success(solicitacaoFaxinaService.listarAdmin(status, clienteId, regiaoId, tipoServico));
     }
 
     @GetMapping("/{id}")

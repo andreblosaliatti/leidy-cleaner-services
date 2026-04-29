@@ -10,6 +10,8 @@ import { AdminOcorrenciasPage } from '../pages/app/AdminOcorrenciasPage';
 import { AdminPagamentoDetalhePage } from '../pages/app/AdminPagamentoDetalhePage';
 import { AdminPagamentosPage } from '../pages/app/AdminPagamentosPage';
 import { AdminProfissionaisPage } from '../pages/app/AdminProfissionaisPage';
+import { AdminSolicitacaoDetalhePage } from '../pages/app/AdminSolicitacaoDetalhePage';
+import { AdminSolicitacoesPage } from '../pages/app/AdminSolicitacoesPage';
 import { AdminVerificacaoDetalhePage } from '../pages/app/AdminVerificacaoDetalhePage';
 import { AdminVerificacoesPage } from '../pages/app/AdminVerificacoesPage';
 import { ClienteAtendimentoDetalhePage } from '../pages/app/ClienteAtendimentoDetalhePage';
@@ -93,6 +95,8 @@ export function App() {
               <Route path="atendimentos/:id" element={<AdminAtendimentoDetalhePage />} />
               <Route path="pagamentos" element={<AdminPagamentosPage />} />
               <Route path="pagamentos/:id" element={<AdminPagamentoDetalhePage />} />
+              <Route path="solicitacoes" element={<AdminSolicitacoesPage />} />
+              <Route path="solicitacoes/:id" element={<AdminSolicitacaoDetalhePage />} />
             </Route>
           </Route>
         </Route>

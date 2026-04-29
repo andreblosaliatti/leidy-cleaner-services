@@ -34,11 +34,14 @@ import br.com.leidycleaner.solicitacoes.dto.SolicitacaoFaxinaRequest;
 import br.com.leidycleaner.solicitacoes.entity.StatusSolicitacao;
 import br.com.leidycleaner.solicitacoes.entity.SolicitacaoFaxina;
 import br.com.leidycleaner.solicitacoes.entity.SolicitacaoProfissionalSelecionado;
+import br.com.leidycleaner.solicitacoes.entity.TipoServico;
 import br.com.leidycleaner.solicitacoes.mapper.SolicitacaoFaxinaMapper;
 import br.com.leidycleaner.solicitacoes.mapper.SolicitacaoProfissionalSelecionadoMapper;
 import br.com.leidycleaner.solicitacoes.repository.SolicitacaoFaxinaRepository;
 import br.com.leidycleaner.solicitacoes.repository.SolicitacaoProfissionalSelecionadoRepository;
 import br.com.leidycleaner.usuarios.entity.StatusConta;
+import br.com.leidycleaner.usuarios.entity.TipoUsuario;
+import br.com.leidycleaner.usuarios.repository.UsuarioRepository;
 import br.com.leidycleaner.verificacao.entity.StatusVerificacao;
 
 @Service
@@ -53,6 +56,7 @@ public class SolicitacaoFaxinaService {
     private final PerfilProfissionalRepository perfilProfissionalRepository;
     private final SolicitacaoProfissionalSelecionadoRepository solicitacaoProfissionalSelecionadoRepository;
     private final ConviteProfissionalService conviteProfissionalService;
+    private final UsuarioRepository usuarioRepository;
 
     public SolicitacaoFaxinaService(
             SolicitacaoFaxinaRepository solicitacaoFaxinaRepository,
@@ -61,7 +65,8 @@ public class SolicitacaoFaxinaService {
             RegiaoAtendimentoRepository regiaoAtendimentoRepository,
             PerfilProfissionalRepository perfilProfissionalRepository,
             SolicitacaoProfissionalSelecionadoRepository solicitacaoProfissionalSelecionadoRepository,
-            ConviteProfissionalService conviteProfissionalService
+            ConviteProfissionalService conviteProfissionalService,
+            UsuarioRepository usuarioRepository
     ) {
         this.solicitacaoFaxinaRepository = solicitacaoFaxinaRepository;
         this.perfilClienteRepository = perfilClienteRepository;
@@ -70,6 +75,7 @@ public class SolicitacaoFaxinaService {
         this.perfilProfissionalRepository = perfilProfissionalRepository;
         this.solicitacaoProfissionalSelecionadoRepository = solicitacaoProfissionalSelecionadoRepository;
         this.conviteProfissionalService = conviteProfissionalService;
+        this.usuarioRepository = usuarioRepository;
     }
 
     @Transactional
@@ -107,8 +113,20 @@ public class SolicitacaoFaxinaService {
 
     @Transactional(readOnly = true)
     public SolicitacaoFaxinaDto buscarMinha(Long usuarioId, Long solicitacaoId) {
-        buscarPerfilCliente(usuarioId);
-        return SolicitacaoFaxinaMapper.paraDto(buscarSolicitacaoDoCliente(usuarioId, solicitacaoId));
+        return SolicitacaoFaxinaMapper.paraDto(buscarSolicitacaoVisivel(usuarioId, solicitacaoId));
+    }
+
+    @Transactional(readOnly = true)
+    public List<SolicitacaoFaxinaDto> listarAdmin(
+            StatusSolicitacao status,
+            Long clienteId,
+            Long regiaoId,
+            TipoServico tipoServico
+    ) {
+        return solicitacaoFaxinaRepository.findAdminList(status, clienteId, regiaoId, tipoServico)
+                .stream()
+                .map(SolicitacaoFaxinaMapper::paraDto)
+                .toList();
     }
 
     @Transactional
@@ -193,6 +211,22 @@ public class SolicitacaoFaxinaService {
     private SolicitacaoFaxina buscarSolicitacaoDoCliente(Long usuarioId, Long solicitacaoId) {
         return solicitacaoFaxinaRepository.findByIdAndClienteUsuarioId(solicitacaoId, usuarioId)
                 .orElseThrow(() -> new BusinessException("SOLICITACAO_NOT_FOUND", "Solicitacao nao encontrada", HttpStatus.NOT_FOUND));
+    }
+
+    private SolicitacaoFaxina buscarSolicitacaoVisivel(Long usuarioId, Long solicitacaoId) {
+        if (isAdmin(usuarioId)) {
+            return solicitacaoFaxinaRepository.findById(solicitacaoId)
+                    .orElseThrow(() -> new BusinessException("SOLICITACAO_NOT_FOUND", "Solicitacao nao encontrada", HttpStatus.NOT_FOUND));
+        }
+
+        buscarPerfilCliente(usuarioId);
+        return buscarSolicitacaoDoCliente(usuarioId, solicitacaoId);
+    }
+
+    private boolean isAdmin(Long usuarioId) {
+        return usuarioRepository.findById(usuarioId)
+                .map(usuario -> usuario.getTipoUsuario() == TipoUsuario.ADMIN)
+                .orElse(false);
     }
 
     private void validarStatusParaElegibilidade(SolicitacaoFaxina solicitacao) {
