@@ -3,21 +3,12 @@ import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
-import type { DiaSemana, DisponibilidadeProfissional, DisponibilidadeProfissionalRequest } from '../perfil/types';
-
-const diasSemana: Array<{ value: DiaSemana; label: string }> = [
-  { value: 'SEGUNDA', label: 'Segunda-feira' },
-  { value: 'TERCA', label: 'Terça-feira' },
-  { value: 'QUARTA', label: 'Quarta-feira' },
-  { value: 'QUINTA', label: 'Quinta-feira' },
-  { value: 'SEXTA', label: 'Sexta-feira' },
-  { value: 'SABADO', label: 'Sábado' },
-  { value: 'DOMINGO', label: 'Domingo' },
-];
+import { DIA_SEMANA_OPTIONS, DIA_SEMANA_VALUES, formatDisponibilidadeTime } from './disponibilidadeDisplay';
+import type { DisponibilidadeProfissional, DisponibilidadeProfissionalRequest } from '../perfil/types';
 
 const disponibilidadeSchema = z
   .object({
-    diaSemana: z.enum(['SEGUNDA', 'TERCA', 'QUARTA', 'QUINTA', 'SEXTA', 'SABADO', 'DOMINGO'], {
+    diaSemana: z.enum(DIA_SEMANA_VALUES, {
       required_error: 'Informe o dia da semana.',
     }),
     horaInicio: z.string().min(1, 'Informe o horário inicial.'),
@@ -84,7 +75,7 @@ export function DisponibilidadeForm({
             className="mt-2 min-h-12 w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 outline-none transition focus:border-green-600 focus:ring-2 focus:ring-green-100"
             {...register('diaSemana')}
           >
-            {diasSemana.map((dia) => (
+            {DIA_SEMANA_OPTIONS.map((dia) => (
               <option key={dia.value} value={dia.value}>
                 {dia.label}
               </option>
@@ -153,15 +144,11 @@ export function DisponibilidadeForm({
   );
 }
 
-export function getDiaSemanaLabel(diaSemana: DiaSemana) {
-  return diasSemana.find((dia) => dia.value === diaSemana)?.label ?? diaSemana;
-}
-
 function toFormValues(disponibilidade: DisponibilidadeProfissional): DisponibilidadeFormValues {
   return {
     diaSemana: disponibilidade.diaSemana,
-    horaInicio: disponibilidade.horaInicio.slice(0, 5),
-    horaFim: disponibilidade.horaFim.slice(0, 5),
+    horaInicio: formatDisponibilidadeTime(disponibilidade.horaInicio),
+    horaFim: formatDisponibilidadeTime(disponibilidade.horaFim),
     ativo: disponibilidade.ativo,
   };
 }

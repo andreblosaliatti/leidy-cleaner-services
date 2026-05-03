@@ -1,4 +1,4 @@
-import { getDiaSemanaLabel } from './DisponibilidadeForm';
+import { formatDisponibilidadeLabel, sortDisponibilidades } from './disponibilidadeDisplay';
 import type { DisponibilidadeProfissional } from '../perfil/types';
 
 type DisponibilidadeListProps = {
@@ -9,14 +9,16 @@ type DisponibilidadeListProps = {
 };
 
 export function DisponibilidadeList({ disponibilidades, deletingId, onDelete, onEdit }: DisponibilidadeListProps) {
+  const orderedDisponibilidades = sortDisponibilidades(disponibilidades);
+
   return (
     <div className="grid gap-3">
-      {disponibilidades.map((disponibilidade) => (
+      {orderedDisponibilidades.map((disponibilidade) => (
         <article key={disponibilidade.id} className="rounded-lg border border-slate-100 bg-white p-4 shadow-sm">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <div className="flex flex-wrap items-center gap-2">
-                <h3 className="font-black text-slate-900">{getDiaSemanaLabel(disponibilidade.diaSemana)}</h3>
+                <h3 className="font-black text-slate-900">{formatDisponibilidadeLabel(disponibilidade)}</h3>
                 <span
                   className={[
                     'rounded-lg px-2.5 py-1 text-xs font-black uppercase tracking-[0.1em]',
@@ -26,9 +28,6 @@ export function DisponibilidadeList({ disponibilidades, deletingId, onDelete, on
                   {disponibilidade.ativo ? 'Ativa' : 'Inativa'}
                 </span>
               </div>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
-                {formatTime(disponibilidade.horaInicio)} às {formatTime(disponibilidade.horaFim)}
-              </p>
             </div>
 
             <div className="flex gap-2">
@@ -53,8 +52,4 @@ export function DisponibilidadeList({ disponibilidades, deletingId, onDelete, on
       ))}
     </div>
   );
-}
-
-function formatTime(value: string) {
-  return value.slice(0, 5);
 }
