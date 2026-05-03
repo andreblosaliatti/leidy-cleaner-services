@@ -40,6 +40,7 @@ import br.com.leidycleaner.pagamentos.gateway.AsaasGatewayClient;
 import br.com.leidycleaner.pagamentos.gateway.AsaasPagamentoGatewayResponse;
 import br.com.leidycleaner.pagamentos.repository.PagamentoRepository;
 import br.com.leidycleaner.ocorrencias.repository.OcorrenciaAtendimentoRepository;
+import br.com.leidycleaner.profissionais.repository.PerfilProfissionalRepository;
 import br.com.leidycleaner.regioes.repository.RegiaoAtendimentoRepository;
 import br.com.leidycleaner.solicitacoes.repository.SolicitacaoProfissionalSelecionadoRepository;
 
@@ -61,6 +62,7 @@ class SolicitacaoFaxinaIntegrationTest {
     private final AvaliacaoProfissionalRepository avaliacaoProfissionalRepository;
     private final OcorrenciaAtendimentoRepository ocorrenciaAtendimentoRepository;
     private final PagamentoRepository pagamentoRepository;
+    private final PerfilProfissionalRepository perfilProfissionalRepository;
 
     @MockBean
     private AsaasGatewayClient asaasGatewayClient;
@@ -83,7 +85,8 @@ class SolicitacaoFaxinaIntegrationTest {
             CheckpointServicoRepository checkpointServicoRepository,
             AvaliacaoProfissionalRepository avaliacaoProfissionalRepository,
             OcorrenciaAtendimentoRepository ocorrenciaAtendimentoRepository,
-            PagamentoRepository pagamentoRepository
+            PagamentoRepository pagamentoRepository,
+            PerfilProfissionalRepository perfilProfissionalRepository
     ) {
         this.mockMvc = mockMvc;
         this.objectMapper = objectMapper;
@@ -96,6 +99,7 @@ class SolicitacaoFaxinaIntegrationTest {
         this.avaliacaoProfissionalRepository = avaliacaoProfissionalRepository;
         this.ocorrenciaAtendimentoRepository = ocorrenciaAtendimentoRepository;
         this.pagamentoRepository = pagamentoRepository;
+        this.perfilProfissionalRepository = perfilProfissionalRepository;
     }
 
     @Test
@@ -563,6 +567,104 @@ class SolicitacaoFaxinaIntegrationTest {
                 .andExpect(jsonPath("$.data[0].experienciaAnos").value(3))
                 .andExpect(jsonPath("$.data[0].notaMedia").value(0))
                 .andExpect(jsonPath("$.data[0].totalAvaliacoes").value(0));
+    }
+
+    @Test
+    void clienteDonaListaProfissionaisElegiveisOrdenadasPorNotaTotalENome() throws Exception {
+        String tokenCliente = criarClienteELogar("m3b.ordenacao-avaliacoes-cliente@example.com");
+        Long regiaoSolicitacaoId = primeiraRegiaoId();
+        Long solicitacaoId = criarSolicitacao(tokenCliente, criarEndereco(tokenCliente), regiaoSolicitacaoId, "FAXINA_RESIDENCIAL");
+
+        Long melhorNotaId = criarProfissionalConfigurada(
+                "m3b.ordenacao-melhor-nota@example.com",
+                "76022233344",
+                "Zelia Melhor Nota",
+                "ATIVA",
+                "APROVADO",
+                true,
+                "APROVADO",
+                List.of(regiaoSolicitacaoId),
+                "QUINTA",
+                "08:00",
+                "12:00"
+        );
+        Long maiorTotalId = criarProfissionalConfigurada(
+                "m3b.ordenacao-maior-total@example.com",
+                "76122233344",
+                "Zelia Maior Total",
+                "ATIVA",
+                "APROVADO",
+                true,
+                "APROVADO",
+                List.of(regiaoSolicitacaoId),
+                "QUINTA",
+                "08:00",
+                "12:00"
+        );
+        Long empateNomeAId = criarProfissionalConfigurada(
+                "m3b.ordenacao-ana@example.com",
+                "76222233344",
+                "Ana Empate Nome",
+                "ATIVA",
+                "APROVADO",
+                true,
+                "APROVADO",
+                List.of(regiaoSolicitacaoId),
+                "QUINTA",
+                "08:00",
+                "12:00"
+        );
+        Long empateNomeBId = criarProfissionalConfigurada(
+                "m3b.ordenacao-bruna@example.com",
+                "76322233344",
+                "Bruna Empate Nome",
+                "ATIVA",
+                "APROVADO",
+                true,
+                "APROVADO",
+                List.of(regiaoSolicitacaoId),
+                "QUINTA",
+                "08:00",
+                "12:00"
+        );
+        Long semAvaliacoesId = criarProfissionalConfigurada(
+                "m3b.ordenacao-sem-avaliacoes@example.com",
+                "76422233344",
+                "Carla Sem Avaliacoes",
+                "ATIVA",
+                "APROVADO",
+                true,
+                "APROVADO",
+                List.of(regiaoSolicitacaoId),
+                "QUINTA",
+                "08:00",
+                "12:00"
+        );
+
+        atualizarAgregadosProfissional(melhorNotaId, "4.90", 2);
+        atualizarAgregadosProfissional(maiorTotalId, "4.50", 20);
+        atualizarAgregadosProfissional(empateNomeAId, "4.50", 3);
+        atualizarAgregadosProfissional(empateNomeBId, "4.50", 3);
+
+        String response = mockMvc.perform(get("/api/v1/solicitacoes/{id}/profissionais-disponiveis", solicitacaoId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenCliente))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        List<Long> idsDoTeste = List.of(melhorNotaId, maiorTotalId, empateNomeAId, empateNomeBId, semAvaliacoesId);
+        List<Long> idsOrdenadosDoTeste = objectMapper.readTree(response)
+                .path("data")
+                .findValues("profissionalId")
+                .stream()
+                .map(JsonNode::asLong)
+                .filter(idsDoTeste::contains)
+                .toList();
+
+        assertThat(idsOrdenadosDoTeste)
+                .containsExactly(melhorNotaId, maiorTotalId, empateNomeAId, empateNomeBId, semAvaliacoesId);
     }
 
     @Test
@@ -3161,6 +3263,12 @@ class SolicitacaoFaxinaIntegrationTest {
                         checkoutUrl,
                         "{\"id\":\"%s\"}".formatted(checkoutId)
                 ));
+    }
+
+    private void atualizarAgregadosProfissional(Long perfilId, String notaMedia, int totalAvaliacoes) {
+        var perfil = perfilProfissionalRepository.findById(perfilId).orElseThrow();
+        perfil.atualizarAgregadoAvaliacoes(new BigDecimal(notaMedia), totalAvaliacoes);
+        perfilProfissionalRepository.saveAndFlush(perfil);
     }
 
     private Long criarPagamento(String tokenCliente, Long atendimentoId, String metodoPagamento) throws Exception {

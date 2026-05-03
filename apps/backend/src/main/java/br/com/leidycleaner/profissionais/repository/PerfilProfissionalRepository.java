@@ -85,7 +85,10 @@ public interface PerfilProfissionalRepository extends JpaRepository<PerfilProfis
                           )
                     )
               )
-            order by perfil.nomeExibicao asc, perfil.id asc
+            order by coalesce(perfil.notaMedia, 0.00) desc,
+                     perfil.totalAvaliacoes desc,
+                     perfil.nomeExibicao asc,
+                     perfil.id asc
             """)
     List<PerfilProfissional> findElegiveisParaSolicitacao(
             @Param("regiaoId") Long regiaoId,

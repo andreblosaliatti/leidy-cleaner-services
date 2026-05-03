@@ -265,12 +265,16 @@ Isso é uma ordenação simples por avaliação, não um sistema avançado de ra
 
 ### Critérios de aceite
 
-- [ ] Lista de profissionais elegíveis aparece ordenada por média de avaliação.
-- [ ] Empate por nota considera maior número de avaliações.
-- [ ] Empate final considera nome.
-- [ ] Profissionais sem avaliação aparecem abaixo das avaliadas.
-- [ ] Backend continua validando elegibilidade.
-- [ ] Frontend não inventa profissionais nem altera disponibilidade.
+- [x] Lista de profissionais elegíveis aparece ordenada por média de avaliação.
+- [x] Empate por nota considera maior número de avaliações.
+- [x] Empate final considera nome.
+- [x] Profissionais sem avaliação aparecem abaixo das avaliadas.
+- [x] Backend continua validando elegibilidade.
+- [x] Frontend não inventa profissionais nem altera disponibilidade.
+
+### Nota de implementação
+
+2026-05-03 — A ordenação das profissionais elegíveis foi aplicada no backend, no endpoint `GET /api/v1/solicitacoes/{id}/profissionais-disponiveis`, mantendo os filtros de elegibilidade existentes. A regra é `notaMedia DESC`, `totalAvaliacoes DESC`, `nomeExibicao ASC`, com `id ASC` apenas como desempate técnico estável. Não foi criado ranking avançado.
 
 ---
 
@@ -679,7 +683,7 @@ Melhorar a decisão do cliente ao escolher profissionais.
 
 - [ ] Confirmar se `notaMedia` e `totalAvaliacoes` já retornam no endpoint de elegíveis.
 - [ ] Se não retornarem, adicionar ao DTO.
-- [ ] Preferencialmente ordenar no backend por:
+- [x] Preferencialmente ordenar no backend por:
   - `notaMedia DESC`
   - `totalAvaliacoes DESC`
   - `nomeExibicao ASC`
@@ -694,9 +698,9 @@ Melhorar a decisão do cliente ao escolher profissionais.
 
 ### Testes
 
-- [ ] Profissional com alta nota aparece antes.
-- [ ] Empate por nota usa total de avaliações.
-- [ ] Profissional sem avaliação aparece corretamente.
+- [x] Profissional com alta nota aparece antes.
+- [x] Empate por nota usa total de avaliações.
+- [x] Profissional sem avaliação aparece corretamente.
 - [ ] Seleção de até 3 continua funcionando.
 
 ### Critério de pronto
