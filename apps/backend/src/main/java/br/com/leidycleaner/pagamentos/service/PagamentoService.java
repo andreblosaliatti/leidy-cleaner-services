@@ -81,7 +81,7 @@ public class PagamentoService {
 
     @Transactional(readOnly = true)
     public PagamentoDto buscarPorId(Long usuarioId, Long pagamentoId) {
-        Pagamento pagamento = pagamentoRepository.findById(pagamentoId)
+        Pagamento pagamento = pagamentoRepository.findByIdWithAtendimentoCliente(pagamentoId)
                 .orElseThrow(() -> new BusinessException("PAGAMENTO_NOT_FOUND", "Pagamento nao encontrado", HttpStatus.NOT_FOUND));
         validarClienteOuAdminDoPagamento(usuarioId, pagamento);
         return PagamentoMapper.paraDto(pagamento);
@@ -105,7 +105,7 @@ public class PagamentoService {
 
     @Transactional
     public PagamentoDto consultarStatus(Long usuarioId, Long pagamentoId) {
-        Pagamento pagamento = pagamentoRepository.findById(pagamentoId)
+        Pagamento pagamento = pagamentoRepository.findByIdWithAtendimentoCliente(pagamentoId)
                 .orElseThrow(() -> new BusinessException("PAGAMENTO_NOT_FOUND", "Pagamento nao encontrado", HttpStatus.NOT_FOUND));
         validarClienteDoPagamento(usuarioId, pagamento);
 
@@ -158,7 +158,7 @@ public class PagamentoService {
     }
 
     private AtendimentoFaxina buscarAtendimentoDoCliente(Long usuarioId, Long atendimentoId) {
-        AtendimentoFaxina atendimento = atendimentoFaxinaRepository.findById(atendimentoId)
+        AtendimentoFaxina atendimento = atendimentoFaxinaRepository.findByIdWithResumo(atendimentoId)
                 .orElseThrow(() -> new BusinessException("ATENDIMENTO_NOT_FOUND", "Atendimento nao encontrado", HttpStatus.NOT_FOUND));
         if (!atendimento.getCliente().getUsuario().getId().equals(usuarioId)) {
             throw new BusinessException("ATENDIMENTO_NOT_FOUND", "Atendimento nao encontrado", HttpStatus.NOT_FOUND);

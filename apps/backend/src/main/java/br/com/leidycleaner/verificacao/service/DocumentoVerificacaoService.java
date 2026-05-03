@@ -62,7 +62,7 @@ public class DocumentoVerificacaoService {
 
     @Transactional(readOnly = true)
     public DocumentoVerificacaoDto buscarPorId(Long id) {
-        return documentoVerificacaoRepository.findById(id)
+        return documentoVerificacaoRepository.findByIdWithUsuarios(id)
                 .map(DocumentoVerificacaoMapper::paraDto)
                 .orElseThrow(() -> new BusinessException("VERIFICACAO_NOT_FOUND", "Verificacao nao encontrada", HttpStatus.NOT_FOUND));
     }

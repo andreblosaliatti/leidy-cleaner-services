@@ -15,9 +15,8 @@ export function OcorrenciaInfoPanel({ ocorrencia }: { ocorrencia: OcorrenciaAten
       </div>
 
       <dl className="mt-6 grid gap-4 text-sm md:grid-cols-2 xl:grid-cols-4">
-        <DetailItem label="Atendimento" value={`#${ocorrencia.atendimentoId}`} />
-        <DetailItem label="Aberta por usuário" value={`#${ocorrencia.abertoPorUsuarioId}`} />
-        <DetailItem label="Criada em" value={formatOcorrenciaDateTime(ocorrencia.criadoEm)} />
+        <DetailItem label="Atendimento" value={`ID ${ocorrencia.atendimentoId}`} />
+        <DetailItem label="Aberta por usuário" value={`ID ${ocorrencia.abertoPorUsuarioId}`} />
         <DetailItem label="Resolvida em" value={formatOcorrenciaDateTime(ocorrencia.resolvidoEm)} />
         <DetailItem label="Resolvida por usuário" value={formatOptionalId(ocorrencia.resolvidoPorUsuarioId)} />
       </dl>

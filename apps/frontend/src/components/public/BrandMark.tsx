@@ -11,7 +11,7 @@ export function BrandMark({ compact = false }: BrandMarkProps) {
         src={logoUrl}
         alt=""
         aria-hidden="true"
-        className={`${compact ? 'h-10 max-w-[130px]' : 'h-12 max-w-[150px]'} w-auto object-contain`}
+        className={`${compact ? 'h-14 max-w-[180px]' : 'h-[84px] max-w-[280px]'} w-auto object-contain`}
       />
     </a>
   );

@@ -1,4 +1,9 @@
 import { getTipoServicoLabel } from '../../cliente/solicitacoes/solicitacaoLabels';
+import {
+  getSolicitacaoClienteLabel,
+  getSolicitacaoEnderecoLabel,
+  getSolicitacaoRegiaoLabel,
+} from '../../cliente/solicitacoes/solicitacaoDisplay';
 import type { SolicitacaoFaxina } from '../../cliente/solicitacoes/types';
 import { formatCurrency, formatDateTime, formatOptionalText, formatPercent } from './solicitacaoAdminLabels';
 import { SolicitacaoAdminStatusBadge } from './SolicitacaoAdminStatusBadge';
@@ -12,17 +17,15 @@ export function AdminSolicitacaoInfoPanel({ solicitacao }: { solicitacao: Solici
       </div>
 
       <dl className="mt-6 grid gap-4 text-sm md:grid-cols-2 xl:grid-cols-3">
-        <DetailItem label="Cliente" value={`#${solicitacao.clienteId}`} />
-        <DetailItem label="Endereço" value={`#${solicitacao.enderecoId}`} />
-        <DetailItem label="Região" value={`#${solicitacao.regiaoId}`} />
+        <DetailItem label="Cliente" value={getSolicitacaoClienteLabel(solicitacao)} />
+        <DetailItem label="Endereço" value={getSolicitacaoEnderecoLabel(solicitacao)} />
+        <DetailItem label="Bairro/região" value={getSolicitacaoRegiaoLabel(solicitacao)} />
         <DetailItem label="Tipo" value={getTipoServicoLabel(solicitacao.tipoServico)} />
         <DetailItem label="Data desejada" value={formatDateTime(solicitacao.dataHoraDesejada)} />
         <DetailItem label="Duração estimada" value={`${solicitacao.duracaoEstimadaHoras} horas`} />
         <DetailItem label="Valor do serviço" value={formatCurrency(solicitacao.valorServico)} />
         <DetailItem label="Comissão agência" value={formatPercent(solicitacao.percentualComissaoAgencia)} />
         <DetailItem label="Valor profissional" value={formatCurrency(solicitacao.valorEstimadoProfissional)} />
-        <DetailItem label="Criada em" value={formatDateTime(solicitacao.criadoEm)} />
-        <DetailItem label="Atualizada em" value={formatDateTime(solicitacao.atualizadoEm)} />
       </dl>
 
       <div className="mt-6 rounded-lg border border-slate-100 bg-slate-50 p-4">

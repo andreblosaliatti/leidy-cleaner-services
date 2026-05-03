@@ -14,6 +14,10 @@ public final class SolicitacaoFaxinaMapper {
                 solicitacao.getCliente().getId(),
                 solicitacao.getEndereco().getId(),
                 solicitacao.getRegiao().getId(),
+                solicitacao.getCliente().getUsuario().getNomeCompleto(),
+                formatarEndereco(solicitacao),
+                solicitacao.getEndereco().getBairro(),
+                solicitacao.getRegiao().getNome(),
                 solicitacao.getDataHoraDesejada(),
                 solicitacao.getDuracaoEstimadaHoras(),
                 solicitacao.getTipoServico(),
@@ -24,6 +28,21 @@ public final class SolicitacaoFaxinaMapper {
                 solicitacao.getStatus(),
                 solicitacao.getCriadoEm(),
                 solicitacao.getAtualizadoEm()
+        );
+    }
+
+    private static String formatarEndereco(SolicitacaoFaxina solicitacao) {
+        var endereco = solicitacao.getEndereco();
+        String complemento = endereco.getComplemento() == null || endereco.getComplemento().isBlank()
+                ? ""
+                : ", " + endereco.getComplemento();
+        return "%s, %s%s - %s, %s/%s".formatted(
+                endereco.getLogradouro(),
+                endereco.getNumero(),
+                complemento,
+                endereco.getBairro(),
+                endereco.getCidade(),
+                endereco.getEstado()
         );
     }
 }

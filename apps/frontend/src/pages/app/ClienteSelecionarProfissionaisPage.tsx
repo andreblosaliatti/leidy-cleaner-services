@@ -14,6 +14,7 @@ import {
 } from '../../features/cliente/profissionais/profissionaisApi';
 import type { ProfissionalDisponivel } from '../../features/cliente/profissionais/types';
 import { formatDateTime } from '../../features/cliente/solicitacoes/SolicitacaoCard';
+import { getSolicitacaoEnderecoLabel, getSolicitacaoRegiaoLabel } from '../../features/cliente/solicitacoes/solicitacaoDisplay';
 import {
   canSelectProfessionals,
   getStatusSolicitacaoInfo,
@@ -188,7 +189,7 @@ export function ClienteSelecionarProfissionaisPage() {
       )}
 
       {selectionAllowed && (
-        <div className="grid gap-5 xl:grid-cols-[1fr_360px]">
+        <div className="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
           <section className="grid gap-4">
             <div>
               <h2 className="text-2xl font-black text-slate-900">Profissionais elegíveis</h2>
@@ -270,8 +271,8 @@ function RequestContextSection({
         <DetailItem label="Tipo" value={getTipoServicoLabel(solicitacao.tipoServico)} />
         <DetailItem label="Data desejada" value={formatDateTime(solicitacao.dataHoraDesejada)} />
         <DetailItem label="Duração" value={`${solicitacao.duracaoEstimadaHoras} horas`} />
-        <DetailItem label="Endereço" value={`#${solicitacao.enderecoId}`} />
-        <DetailItem label="Região" value={`#${solicitacao.regiaoId}`} />
+        <DetailItem label="Endereço" value={getSolicitacaoEnderecoLabel(solicitacao)} />
+        <DetailItem label="Bairro/região" value={getSolicitacaoRegiaoLabel(solicitacao)} />
       </dl>
     </section>
   );

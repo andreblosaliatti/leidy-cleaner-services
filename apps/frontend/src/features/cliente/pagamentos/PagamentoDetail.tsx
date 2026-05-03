@@ -41,14 +41,9 @@ export function PagamentoDetail({ isRechecking, onRecheck, pagamento }: Pagament
       </div>
 
       <dl className="mt-6 grid gap-4 text-sm md:grid-cols-2 xl:grid-cols-3">
-        <DetailItem label="Atendimento" value={`#${pagamento.atendimentoId}`} />
-        <DetailItem label="Gateway" value={pagamento.gateway} />
+        <DetailItem label="Atendimento" value={`ID ${pagamento.atendimentoId}`} />
         <DetailItem label="Método" value={getMetodoPagamentoLabel(pagamento.metodoPagamento)} />
-        <DetailItem label="Valor bruto" value={formatCurrency(pagamento.valorBruto)} />
-        <DetailItem label="Taxa do gateway" value={formatCurrency(pagamento.valorTaxaGateway)} />
-        <DetailItem label="Valor líquido" value={formatCurrency(pagamento.valorLiquidoRecebido)} />
-        <DetailItem label="Criado em" value={formatDateTime(pagamento.criadoEm)} />
-        <DetailItem label="Atualizado em" value={formatDateTime(pagamento.atualizadoEm)} />
+        <DetailItem label="Valor total" value={formatCurrency(pagamento.valorBruto)} />
         <DetailItem label="Recebido em" value={formatDateTime(pagamento.recebidoEm)} />
       </dl>
 

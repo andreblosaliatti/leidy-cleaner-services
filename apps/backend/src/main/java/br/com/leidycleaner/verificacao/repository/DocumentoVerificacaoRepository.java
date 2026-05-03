@@ -17,6 +17,8 @@ public interface DocumentoVerificacaoRepository extends JpaRepository<DocumentoV
     @Query("""
             select documento
             from DocumentoVerificacao documento
+            join fetch documento.usuario
+            left join fetch documento.analisadoPorUsuario
             where documento.usuario.id = :usuarioId
             order by coalesce(documento.analisadoEm, documento.criadoEm) desc, documento.id desc
             """)
@@ -39,5 +41,21 @@ public interface DocumentoVerificacaoRepository extends JpaRepository<DocumentoV
                 .orElse(false);
     }
 
+    @Query("""
+            select documento
+            from DocumentoVerificacao documento
+            join fetch documento.usuario
+            left join fetch documento.analisadoPorUsuario
+            order by documento.criadoEm desc
+            """)
     List<DocumentoVerificacao> findByOrderByCriadoEmDesc();
+
+    @Query("""
+            select documento
+            from DocumentoVerificacao documento
+            join fetch documento.usuario
+            left join fetch documento.analisadoPorUsuario
+            where documento.id = :id
+            """)
+    Optional<DocumentoVerificacao> findByIdWithUsuarios(@Param("id") Long id);
 }

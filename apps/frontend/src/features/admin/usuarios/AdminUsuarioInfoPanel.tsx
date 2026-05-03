@@ -22,8 +22,6 @@ export function AdminUsuarioInfoPanel({ usuario }: { usuario: AdminUsuario }) {
         <DetailItem label="E-mail verificado" value={formatBoolean(usuario.emailVerificado)} />
         <DetailItem label="Telefone verificado" value={formatBoolean(usuario.telefoneVerificado)} />
         <DetailItem label="Último login" value={formatDateTime(usuario.ultimoLoginEm)} />
-        <DetailItem label="Criado em" value={formatDateTime(usuario.criadoEm)} />
-        <DetailItem label="Atualizado em" value={formatDateTime(usuario.atualizadoEm)} />
       </dl>
     </section>
   );

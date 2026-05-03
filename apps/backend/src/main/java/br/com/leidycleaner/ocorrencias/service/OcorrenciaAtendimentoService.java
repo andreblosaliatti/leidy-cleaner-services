@@ -115,7 +115,7 @@ public class OcorrenciaAtendimentoService {
     }
 
     private OcorrenciaAtendimento buscarOcorrencia(Long ocorrenciaId) {
-        return ocorrenciaAtendimentoRepository.findById(ocorrenciaId)
+        return ocorrenciaAtendimentoRepository.findByIdWithRelations(ocorrenciaId)
                 .orElseThrow(() -> new BusinessException(
                         "OCORRENCIA_NOT_FOUND",
                         "Ocorrencia nao encontrada",

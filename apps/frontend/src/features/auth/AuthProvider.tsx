@@ -1,4 +1,5 @@
-import { createContext, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 
 import { ApiError } from '../../services/apiClient';
 import {
@@ -7,7 +8,7 @@ import {
   registerClienteRequest,
   registerProfissionalRequest,
 } from './authApi';
-import { authStorage } from './authStorage';
+import { AUTH_STORAGE_KEYS, authStorage } from './authStorage';
 import type {
   AuthLoginRequest,
   CadastroClienteRequest,
@@ -33,15 +34,38 @@ type AuthContextValue = {
 export const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const queryClient = useQueryClient();
+  const sessionRequestRef = useRef<{ token: string; promise: Promise<UsuarioAutenticado> } | null>(null);
+  const sessionRevisionRef = useRef(0);
   const [token, setToken] = useState<string | null>(() => authStorage.getToken());
   const [user, setUser] = useState<UsuarioAutenticado | null>(null);
   const [status, setStatus] = useState<AuthStatus>(() => (authStorage.getToken() ? 'loading' : 'anonymous'));
 
   const clearSession = useCallback(() => {
+    sessionRevisionRef.current += 1;
+    sessionRequestRef.current = null;
     authStorage.clearToken();
+    queryClient.clear();
     setToken(null);
     setUser(null);
     setStatus('anonymous');
+  }, [queryClient]);
+
+  const loadCurrentUser = useCallback((activeToken: string) => {
+    if (sessionRequestRef.current?.token === activeToken) {
+      return sessionRequestRef.current.promise;
+    }
+
+    const request = getCurrentUserRequest(activeToken);
+    sessionRequestRef.current = { token: activeToken, promise: request };
+
+    void request.finally(() => {
+      if (sessionRequestRef.current?.promise === request) {
+        sessionRequestRef.current = null;
+      }
+    }).catch(() => undefined);
+
+    return request;
   }, []);
 
   const hydrateUser = useCallback(
@@ -51,24 +75,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return null;
       }
 
+      const requestRevision = sessionRevisionRef.current;
       setStatus('loading');
 
       try {
-        const currentUser = await getCurrentUserRequest(activeToken);
+        const currentUser = await loadCurrentUser(activeToken);
+
+        if (sessionRevisionRef.current !== requestRevision || authStorage.getToken() !== activeToken) {
+          return null;
+        }
+
+        setToken(activeToken);
         setUser(currentUser);
         setStatus('authenticated');
         return currentUser;
       } catch (error) {
-        if (error instanceof ApiError && error.status === 401) {
+        if (sessionRevisionRef.current !== requestRevision || authStorage.getToken() !== activeToken) {
+          return null;
+        }
+
+        if (isUnauthorized(error)) {
           clearSession();
           return null;
         }
 
-        clearSession();
+        setStatus((currentStatus) =>
+          currentStatus === 'loading' ? (token === activeToken && user ? 'authenticated' : 'anonymous') : currentStatus,
+        );
         throw error;
       }
     },
-    [clearSession],
+    [clearSession, loadCurrentUser, token, user],
   );
 
   useEffect(() => {
@@ -76,6 +113,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     async function loadSession() {
       const storedToken = authStorage.getToken();
+      const requestRevision = sessionRevisionRef.current;
 
       if (!storedToken) {
         if (isActive) {
@@ -85,16 +123,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       try {
-        const currentUser = await getCurrentUserRequest(storedToken);
+        const currentUser = await loadCurrentUser(storedToken);
 
-        if (isActive) {
+        if (isActive && sessionRevisionRef.current === requestRevision && authStorage.getToken() === storedToken) {
           setToken(storedToken);
           setUser(currentUser);
           setStatus('authenticated');
         }
-      } catch {
-        if (isActive) {
-          clearSession();
+      } catch (error) {
+        if (isActive && sessionRevisionRef.current === requestRevision && authStorage.getToken() === storedToken) {
+          if (isUnauthorized(error)) {
+            clearSession();
+          } else {
+            setStatus((currentStatus) => (currentStatus === 'loading' ? 'anonymous' : currentStatus));
+          }
         }
       }
     }
@@ -104,10 +146,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       isActive = false;
     };
-  }, [clearSession]);
+  }, [clearSession, loadCurrentUser]);
+
+  useEffect(() => {
+    function handleStorage(event: StorageEvent) {
+      if (event.storageArea !== window.localStorage || (event.key && !AUTH_STORAGE_KEYS.includes(event.key))) {
+        return;
+      }
+
+      const storedToken = authStorage.getToken();
+
+      if (!storedToken) {
+        clearSession();
+        return;
+      }
+
+      if (storedToken !== token) {
+        sessionRevisionRef.current += 1;
+        sessionRequestRef.current = null;
+        queryClient.clear();
+        setToken(storedToken);
+        setUser(null);
+        setStatus('loading');
+        void hydrateUser(storedToken).catch(() => undefined);
+      }
+    }
+
+    window.addEventListener('storage', handleStorage);
+
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+    };
+  }, [clearSession, hydrateUser, queryClient, token]);
 
   const login = useCallback(async (payload: AuthLoginRequest) => {
     const response = await loginRequest(payload);
+
+    sessionRevisionRef.current += 1;
+    sessionRequestRef.current = null;
+    queryClient.clear();
 
     authStorage.setToken(response.accessToken);
     setToken(response.accessToken);
@@ -115,7 +192,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setStatus('authenticated');
 
     return response.usuario;
-  }, []);
+  }, [queryClient]);
 
   const refreshUser = useCallback(() => hydrateUser(token), [hydrateUser, token]);
 
@@ -135,4 +212,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
+
+function isUnauthorized(error: unknown) {
+  return error instanceof ApiError && error.status === 401;
 }

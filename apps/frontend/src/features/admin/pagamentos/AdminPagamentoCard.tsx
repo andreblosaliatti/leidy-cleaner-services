@@ -18,8 +18,7 @@ export function AdminPagamentoCard({ pagamento }: { pagamento: PagamentoAdmin })
             <h2 className="text-lg font-black text-slate-900">Pagamento #{pagamento.id}</h2>
             <PagamentoAdminStatusBadge status={pagamento.status} />
           </div>
-          <p className="mt-2 text-sm font-semibold text-slate-700">Atendimento #{pagamento.atendimentoId}</p>
-          <p className="mt-2 text-sm leading-6 text-slate-600">Criado em {formatDateTime(pagamento.criadoEm)}</p>
+          <p className="mt-2 text-sm font-semibold text-slate-700">Atendimento ID {pagamento.atendimentoId}</p>
         </div>
 
         <Link
@@ -38,7 +37,6 @@ export function AdminPagamentoCard({ pagamento }: { pagamento: PagamentoAdmin })
         <DetailItem label="Valor líquido" value={formatCurrency(pagamento.valorLiquidoRecebido)} />
         <DetailItem label="Recebido em" value={formatDateTime(pagamento.recebidoEm)} />
         <DetailItem label="Webhook" value={getWebhookLabel(pagamento.webhookProcessado)} />
-        <DetailItem label="Atualizado em" value={formatDateTime(pagamento.atualizadoEm)} />
       </dl>
     </article>
   );

@@ -17,9 +17,6 @@ export function CheckpointsList({ checkpoints }: { checkpoints: CheckpointServic
         <article key={checkpoint.id} className="rounded-lg border border-slate-100 bg-white p-5 shadow-sm">
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="text-lg font-black text-slate-900">{getTipoCheckpointLabel(checkpoint.tipo)}</h3>
-            <span className="rounded-lg bg-slate-100 px-3 py-1 text-xs font-black uppercase tracking-[0.1em] text-slate-700">
-              #{checkpoint.id}
-            </span>
           </div>
           <dl className="mt-4 grid gap-4 text-sm md:grid-cols-2 xl:grid-cols-4">
             <DetailItem label="Registrado em" value={formatDateTime(checkpoint.registradoEm)} />

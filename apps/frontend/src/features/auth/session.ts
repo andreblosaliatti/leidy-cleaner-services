@@ -24,8 +24,8 @@ export function canAccessProfile(user: Pick<UsuarioAutenticado, 'tipoUsuario' | 
   return user.tipoUsuario === profile;
 }
 
-export function getFirstName(nomeCompleto: string) {
-  return nomeCompleto.trim().split(/\s+/)[0] || 'usuário';
+export function getFirstName(nomeCompleto?: string) {
+  return nomeCompleto?.trim().split(/\s+/)[0] ?? '';
 }
 
 export function getProfileLabel(tipoUsuario: TipoUsuario) {

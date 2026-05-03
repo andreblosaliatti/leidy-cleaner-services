@@ -19,6 +19,10 @@ export type SolicitacaoFaxina = {
   clienteId: number;
   enderecoId: number;
   regiaoId: number;
+  clienteNome?: string | null;
+  enderecoResumo?: string | null;
+  bairro?: string | null;
+  regiaoNome?: string | null;
   dataHoraDesejada: string;
   duracaoEstimadaHoras: number;
   tipoServico: TipoServico;
@@ -38,9 +42,9 @@ export type SolicitacaoFaxinaRequest = {
   duracaoEstimadaHoras: number;
   tipoServico: TipoServico;
   observacoes?: string | null;
-  valorServico: number;
-  percentualComissaoAgencia: number;
-  valorEstimadoProfissional: number;
+  valorServico?: number;
+  percentualComissaoAgencia?: number;
+  valorEstimadoProfissional?: number;
 };
 
 export type TipoRegiaoAtendimento = 'BAIRRO';

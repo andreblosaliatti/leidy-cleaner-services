@@ -102,10 +102,10 @@ export function AdminSolicitacoesPage() {
       </section>
 
       <form
-        className="grid gap-3 rounded-lg border border-slate-100 bg-white p-4 shadow-sm xl:grid-cols-[220px_220px_1fr_1fr_auto_auto]"
+        className="flex min-w-0 flex-wrap items-end gap-3 rounded-lg border border-slate-100 bg-white p-4 shadow-sm"
         onSubmit={handleFilterSubmit}
       >
-        <label className="grid gap-2 text-sm font-bold text-slate-700">
+        <label className="grid min-w-[min(100%,13rem)] flex-1 gap-2 text-sm font-bold text-slate-700">
           Status
           <select
             className="min-h-11 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-700"
@@ -123,7 +123,7 @@ export function AdminSolicitacoesPage() {
           </select>
         </label>
 
-        <label className="grid gap-2 text-sm font-bold text-slate-700">
+        <label className="grid min-w-[min(100%,13rem)] flex-1 gap-2 text-sm font-bold text-slate-700">
           Tipo
           <select
             className="min-h-11 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-700"
@@ -153,14 +153,14 @@ export function AdminSolicitacoesPage() {
         />
 
         <button
-          className="min-h-11 self-end rounded-lg bg-green-700 px-5 text-sm font-black text-white transition hover:bg-green-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-700"
+          className="min-h-11 w-full rounded-lg bg-green-700 px-5 text-sm font-black text-white transition hover:bg-green-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-700 sm:w-auto"
           type="submit"
         >
           Filtrar
         </button>
 
         <button
-          className="min-h-11 self-end rounded-lg border border-slate-200 px-5 text-sm font-black text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-700"
+          className="min-h-11 w-full rounded-lg border border-slate-200 px-5 text-sm font-black text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-700 sm:w-auto"
           type="button"
           onClick={handleClearFilters}
         >
@@ -196,7 +196,7 @@ export function AdminSolicitacoesPage() {
 
 function FilterInput({ label, onChange, value }: { label: string; onChange: (value: string) => void; value: string }) {
   return (
-    <label className="grid gap-2 text-sm font-bold text-slate-700">
+    <label className="grid min-w-[min(100%,13rem)] flex-1 gap-2 text-sm font-bold text-slate-700">
       {label}
       <input
         className="min-h-11 rounded-lg border border-slate-200 px-3 text-sm font-semibold text-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-700"

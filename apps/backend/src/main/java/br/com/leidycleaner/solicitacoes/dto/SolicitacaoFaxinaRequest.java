@@ -11,13 +11,13 @@ import jakarta.validation.constraints.PositiveOrZero;
 
 public record SolicitacaoFaxinaRequest(
         @NotNull Long enderecoId,
-        @NotNull Long regiaoId,
+        Long regiaoId,
         @NotNull @Future OffsetDateTime dataHoraDesejada,
         @Positive int duracaoEstimadaHoras,
         @NotNull TipoServico tipoServico,
         String observacoes,
-        @NotNull @PositiveOrZero BigDecimal valorServico,
-        @NotNull @PositiveOrZero BigDecimal percentualComissaoAgencia,
-        @NotNull @PositiveOrZero BigDecimal valorEstimadoProfissional
+        @PositiveOrZero BigDecimal valorServico,
+        @PositiveOrZero BigDecimal percentualComissaoAgencia,
+        @PositiveOrZero BigDecimal valorEstimadoProfissional
 ) {
 }

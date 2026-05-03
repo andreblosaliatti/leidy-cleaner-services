@@ -16,7 +16,7 @@ export function AdminPagamentoInfoPanel({ pagamento }: { pagamento: PagamentoAdm
       </div>
 
       <dl className="mt-6 grid gap-4 text-sm md:grid-cols-2 xl:grid-cols-3">
-        <DetailItem label="Atendimento" value={`#${pagamento.atendimentoId}`} />
+        <DetailItem label="Atendimento" value={`ID ${pagamento.atendimentoId}`} />
         <DetailItem label="Gateway" value={pagamento.gateway} />
         <DetailItem label="ID gateway" value={pagamento.gatewayPaymentId} />
         <DetailItem label="Método" value={getMetodoPagamentoLabel(pagamento.metodoPagamento)} />
@@ -25,8 +25,6 @@ export function AdminPagamentoInfoPanel({ pagamento }: { pagamento: PagamentoAdm
         <DetailItem label="Valor líquido" value={formatCurrency(pagamento.valorLiquidoRecebido)} />
         <DetailItem label="Recebido em" value={formatDateTime(pagamento.recebidoEm)} />
         <DetailItem label="Webhook" value={getWebhookLabel(pagamento.webhookProcessado)} />
-        <DetailItem label="Criado em" value={formatDateTime(pagamento.criadoEm)} />
-        <DetailItem label="Atualizado em" value={formatDateTime(pagamento.atualizadoEm)} />
       </dl>
 
       {(pagamento.urlPagamento || pagamento.pixCopiaECola) && (

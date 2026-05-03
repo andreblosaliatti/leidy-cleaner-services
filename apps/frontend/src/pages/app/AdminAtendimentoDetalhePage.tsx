@@ -99,7 +99,7 @@ export function AdminAtendimentoDetalhePage() {
         />
       )}
 
-      {atendimentoQuery.data && <AtendimentoInfoPanel atendimento={atendimentoQuery.data} />}
+      {atendimentoQuery.data && <AtendimentoInfoPanel atendimento={atendimentoQuery.data} financialView="admin" />}
 
       <section className="grid gap-4">
         <div>

@@ -34,6 +34,11 @@ const adminItems = [
     href: '/app/admin/pagamentos',
   },
   {
+    title: 'Preços',
+    description: 'Configure valor da hora e comissão da agência usados nas próximas solicitações.',
+    href: '/app/admin/configuracoes/precos',
+  },
+  {
     title: 'Ocorrências',
     description: 'Acompanhe registros abertos e atualize status pelo contrato administrativo.',
     href: '/app/admin/ocorrencias',
@@ -46,7 +51,7 @@ export function AdminDashboardPage() {
   return (
     <div className="grid gap-5">
       <DashboardHeader
-        title={`Administração, ${getFirstName(user?.nomeCompleto ?? '')}.`}
+        title={`Administração, ${getFirstName(user?.nomeCompleto) || 'Administrador'}.`}
         description="Acompanhe verificações, aprovações profissionais e ocorrências sem simular dados ou indicadores."
       />
       <DashboardCards items={adminItems} />

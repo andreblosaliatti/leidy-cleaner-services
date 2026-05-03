@@ -34,6 +34,7 @@ import br.com.leidycleaner.atendimentos.repository.AtendimentoFaxinaRepository;
 import br.com.leidycleaner.atendimentos.repository.CheckpointServicoRepository;
 import br.com.leidycleaner.avaliacoes.repository.AvaliacaoProfissionalRepository;
 import br.com.leidycleaner.convites.repository.ConviteProfissionalRepository;
+import br.com.leidycleaner.enderecos.repository.EnderecoRepository;
 import br.com.leidycleaner.pagamentos.gateway.AsaasCheckoutGatewayResponse;
 import br.com.leidycleaner.pagamentos.gateway.AsaasGatewayClient;
 import br.com.leidycleaner.pagamentos.gateway.AsaasPagamentoGatewayResponse;
@@ -52,6 +53,7 @@ class SolicitacaoFaxinaIntegrationTest {
     private final MockMvc mockMvc;
     private final ObjectMapper objectMapper;
     private final RegiaoAtendimentoRepository regiaoAtendimentoRepository;
+    private final EnderecoRepository enderecoRepository;
     private final SolicitacaoProfissionalSelecionadoRepository solicitacaoProfissionalSelecionadoRepository;
     private final ConviteProfissionalRepository conviteProfissionalRepository;
     private final AtendimentoFaxinaRepository atendimentoFaxinaRepository;
@@ -74,6 +76,7 @@ class SolicitacaoFaxinaIntegrationTest {
             MockMvc mockMvc,
             ObjectMapper objectMapper,
             RegiaoAtendimentoRepository regiaoAtendimentoRepository,
+            EnderecoRepository enderecoRepository,
             SolicitacaoProfissionalSelecionadoRepository solicitacaoProfissionalSelecionadoRepository,
             ConviteProfissionalRepository conviteProfissionalRepository,
             AtendimentoFaxinaRepository atendimentoFaxinaRepository,
@@ -85,6 +88,7 @@ class SolicitacaoFaxinaIntegrationTest {
         this.mockMvc = mockMvc;
         this.objectMapper = objectMapper;
         this.regiaoAtendimentoRepository = regiaoAtendimentoRepository;
+        this.enderecoRepository = enderecoRepository;
         this.solicitacaoProfissionalSelecionadoRepository = solicitacaoProfissionalSelecionadoRepository;
         this.conviteProfissionalRepository = conviteProfissionalRepository;
         this.atendimentoFaxinaRepository = atendimentoFaxinaRepository;
@@ -325,6 +329,85 @@ class SolicitacaoFaxinaIntegrationTest {
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.code").value("ENDERECO_NOT_FOUND"))
                 .andExpect(jsonPath("$.errors").isArray());
+    }
+
+    @Test
+    void criacaoDerivaRegiaoDoBairroDoEnderecoMesmoSemRegiaoEnviada() throws Exception {
+        String token = criarClienteELogar("m3a.regiao-derivada@example.com");
+        Long enderecoId = criarEnderecoComBairro(token, "Centro Historico");
+        Long regiaoCentroHistoricoId = regiaoIdPorNome("Centro Histórico");
+
+        mockMvc.perform(post("/api/v1/solicitacoes")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(solicitacaoJsonSemRegiao(enderecoId, "FAXINA_RESIDENCIAL")))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.enderecoId").value(enderecoId))
+                .andExpect(jsonPath("$.data.regiaoId").value(regiaoCentroHistoricoId))
+                .andExpect(jsonPath("$.data.regiaoNome").value("Centro Histórico"))
+                .andExpect(jsonPath("$.data.bairro").value("Centro Historico"));
+    }
+
+    @Test
+    void criacaoRejeitaRegiaoEnviadaDiferenteDoBairroDoEndereco() throws Exception {
+        String token = criarClienteELogar("m3a.regiao-forjada@example.com");
+        Long enderecoId = criarEnderecoComBairro(token, "Centro Histórico");
+        Long regiaoCidadeBaixaId = regiaoIdPorNome("Cidade Baixa");
+
+        mockMvc.perform(post("/api/v1/solicitacoes")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(solicitacaoJson(enderecoId, regiaoCidadeBaixaId, "FAXINA_RESIDENCIAL")))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("REGIAO_ENDERECO_INCOMPATIVEL"));
+    }
+
+    @Test
+    void criacaoRejeitaBairroSemRegiaoAtiva() throws Exception {
+        String token = criarClienteELogar("m3a.bairro-sem-atendimento@example.com");
+        Long enderecoId = criarEnderecoComBairro(token, "Bairro Fora da Cobertura");
+
+        mockMvc.perform(post("/api/v1/solicitacoes")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(solicitacaoJsonSemRegiao(enderecoId, "FAXINA_RESIDENCIAL")))
+                .andExpect(status().isConflict())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("REGIAO_BAIRRO_NAO_ATENDIDA"))
+                .andExpect(jsonPath("$.message").value("Ainda nao atendemos este bairro."));
+    }
+
+    @Test
+    void clienteNaoControlaCamposFinanceirosDaSolicitacao() throws Exception {
+        String token = criarClienteELogar("m3a.financeiro-interno@example.com");
+        Long enderecoId = criarEnderecoComBairro(token, "Centro Histórico");
+        Long regiaoId = regiaoIdPorNome("Centro Histórico");
+
+        mockMvc.perform(post("/api/v1/solicitacoes")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "enderecoId": %d,
+                                  "regiaoId": %d,
+                                  "dataHoraDesejada": "2035-05-10T10:00:00-03:00",
+                                  "duracaoEstimadaHoras": 4,
+                                  "tipoServico": "FAXINA_RESIDENCIAL",
+                                  "observacoes": "Tentativa de controlar valores internos",
+                                  "valorServico": 1.00,
+                                  "percentualComissaoAgencia": 0.00,
+                                  "valorEstimadoProfissional": 1.00
+                                }
+                                """.formatted(enderecoId, regiaoId)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.valorServico").value(180.00))
+                .andExpect(jsonPath("$.data.percentualComissaoAgencia").value(20.00))
+                .andExpect(jsonPath("$.data.valorEstimadoProfissional").value(144.00));
     }
 
     @Test
@@ -700,7 +783,7 @@ class SolicitacaoFaxinaIntegrationTest {
     @Test
     void selecaoValidaGeraConvitesEnviadosSemDuplicarAoRegerar() throws Exception {
         String tokenCliente = criarClienteELogar("m4a.gera-convite-cliente@example.com");
-        Long regiaoId = primeiraRegiaoId();
+        Long regiaoId = regiaoIdPorNome("Centro Histórico");
         Long solicitacaoId = criarSolicitacao(tokenCliente, criarEndereco(tokenCliente), regiaoId, "FAXINA_RESIDENCIAL");
         ProfissionalConfigurada profissional = criarProfissionalConfiguradaComToken(
                 "m4a.gera-convite-profissional@example.com",
@@ -2588,6 +2671,7 @@ class SolicitacaoFaxinaIntegrationTest {
     }
 
     private Long criarSolicitacao(String token, Long enderecoId, Long regiaoId, String tipoServico) throws Exception {
+        ajustarEnderecoParaRegiao(enderecoId, regiaoId);
         String response = mockMvc.perform(post("/api/v1/solicitacoes")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -2603,6 +2687,10 @@ class SolicitacaoFaxinaIntegrationTest {
     }
 
     private Long criarEndereco(String token) throws Exception {
+        return criarEnderecoComBairro(token, "Centro Histórico");
+    }
+
+    private Long criarEnderecoComBairro(String token, String bairro) throws Exception {
         String response = mockMvc.perform(post("/api/v1/enderecos")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -2611,17 +2699,34 @@ class SolicitacaoFaxinaIntegrationTest {
                                   "cep": "90010-000",
                                   "logradouro": "Rua da Solicitacao",
                                   "numero": "123",
-                                  "bairro": "Centro Histórico",
+                                  "bairro": "%s",
                                   "cidade": "Porto Alegre",
                                   "estado": "RS",
                                   "principal": true
                                 }
-                                """))
+                                """.formatted(bairro)))
                 .andExpect(status().isCreated())
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
         return objectMapper.readTree(response).path("data").path("id").asLong();
+    }
+
+    private void ajustarEnderecoParaRegiao(Long enderecoId, Long regiaoId) {
+        var endereco = enderecoRepository.findById(enderecoId).orElseThrow();
+        var regiao = regiaoAtendimentoRepository.findById(regiaoId).orElseThrow();
+        endereco.atualizarDados(
+                endereco.getCep(),
+                endereco.getLogradouro(),
+                endereco.getNumero(),
+                endereco.getComplemento(),
+                regiao.getNome(),
+                endereco.getCidade(),
+                endereco.getEstado(),
+                endereco.getLatitude(),
+                endereco.getLongitude()
+        );
+        enderecoRepository.saveAndFlush(endereco);
     }
 
     private String criarClienteELogar(String email) throws Exception {
@@ -3201,6 +3306,15 @@ class SolicitacaoFaxinaIntegrationTest {
         return regioes.get(regioes.size() - 1).getId();
     }
 
+    private Long regiaoIdPorNome(String nome) {
+        return regiaoAtendimentoRepository.findByAtivoTrueOrderByNomeAsc()
+                .stream()
+                .filter(regiao -> regiao.getNome().equals(nome))
+                .findFirst()
+                .orElseThrow()
+                .getId();
+    }
+
     private String solicitacaoJson(Long enderecoId, Long regiaoId, String tipoServico) {
         return """
                 {
@@ -3215,5 +3329,17 @@ class SolicitacaoFaxinaIntegrationTest {
                   "valorEstimadoProfissional": 144.00
                 }
                 """.formatted(enderecoId, regiaoId, tipoServico);
+    }
+
+    private String solicitacaoJsonSemRegiao(Long enderecoId, String tipoServico) {
+        return """
+                {
+                  "enderecoId": %d,
+                  "dataHoraDesejada": "2035-05-10T10:00:00-03:00",
+                  "duracaoEstimadaHoras": 4,
+                  "tipoServico": "%s",
+                  "observacoes": "Limpeza solicitada pela cliente"
+                }
+                """.formatted(enderecoId, tipoServico);
     }
 }

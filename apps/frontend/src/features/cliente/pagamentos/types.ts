@@ -23,6 +23,11 @@ export type AtendimentoPagamento = {
   solicitacaoId: number;
   clienteId: number;
   profissionalId: number;
+  clienteNome?: string | null;
+  profissionalNome?: string | null;
+  enderecoResumo?: string | null;
+  bairro?: string | null;
+  regiaoNome?: string | null;
   status: StatusAtendimentoPagamento;
   tipoServico: TipoServicoPagamento;
   valorServico: number;

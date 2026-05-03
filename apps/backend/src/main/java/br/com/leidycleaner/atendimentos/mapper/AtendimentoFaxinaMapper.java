@@ -16,6 +16,11 @@ public final class AtendimentoFaxinaMapper {
                 atendimento.getSolicitacao().getId(),
                 atendimento.getCliente().getId(),
                 atendimento.getProfissional().getId(),
+                atendimento.getCliente().getUsuario().getNomeCompleto(),
+                atendimento.getProfissional().getNomeExibicao(),
+                formatarEndereco(atendimento),
+                atendimento.getSolicitacao().getEndereco().getBairro(),
+                atendimento.getSolicitacao().getRegiao().getNome(),
                 atendimento.getStatus(),
                 atendimento.getSolicitacao().getTipoServico(),
                 atendimento.getValorServico(),
@@ -26,6 +31,21 @@ public final class AtendimentoFaxinaMapper {
                 atendimento.getFimRealEm(),
                 atendimento.getCriadoEm(),
                 atendimento.getAtualizadoEm()
+        );
+    }
+
+    private static String formatarEndereco(AtendimentoFaxina atendimento) {
+        var endereco = atendimento.getSolicitacao().getEndereco();
+        String complemento = endereco.getComplemento() == null || endereco.getComplemento().isBlank()
+                ? ""
+                : ", " + endereco.getComplemento();
+        return "%s, %s%s - %s, %s/%s".formatted(
+                endereco.getLogradouro(),
+                endereco.getNumero(),
+                complemento,
+                endereco.getBairro(),
+                endereco.getCidade(),
+                endereco.getEstado()
         );
     }
 

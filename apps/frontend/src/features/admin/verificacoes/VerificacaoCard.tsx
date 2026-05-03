@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 
-import { formatAdminDateTime } from './verificacaoLabels';
+import { formatAdminDateTime, formatOptionalText } from './verificacaoLabels';
 import { VerificacaoStatusBadge } from './VerificacaoStatusBadge';
 import type { DocumentoVerificacaoAdmin } from './types';
 
@@ -14,8 +14,7 @@ export function VerificacaoCard({ verificacao }: { verificacao: DocumentoVerific
             <VerificacaoStatusBadge status={verificacao.statusVerificacao} />
           </div>
           <p className="mt-2 text-sm font-semibold text-slate-700">{verificacao.tipoDocumento}</p>
-          <p className="mt-2 text-sm leading-6 text-slate-600">Usuário #{verificacao.usuarioId}</p>
-          <p className="mt-1 text-sm leading-6 text-slate-600">Criada em {formatAdminDateTime(verificacao.criadoEm)}</p>
+          <p className="mt-2 text-sm leading-6 text-slate-600">{formatOptionalText(verificacao.usuarioNome)}</p>
           {verificacao.analisadoEm && (
             <p className="mt-1 text-sm leading-6 text-slate-600">Analisada em {formatAdminDateTime(verificacao.analisadoEm)}</p>
           )}

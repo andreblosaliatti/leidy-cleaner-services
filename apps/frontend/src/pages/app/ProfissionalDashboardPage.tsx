@@ -10,15 +10,18 @@ const profissionalItems = [
   },
   {
     title: 'Regiões',
-    description: 'Área futura para regiões de atendimento habilitadas.',
+    description: 'Selecione os bairros/regiões onde você atende.',
+    href: '/app/profissional/regioes',
   },
   {
     title: 'Disponibilidade',
-    description: 'Espaço reservado para agenda semanal e horários disponíveis.',
+    description: 'Gerencie sua agenda semanal e horários disponíveis.',
+    href: '/app/profissional/disponibilidade',
   },
   {
     title: 'Verificações',
-    description: 'Acompanhamento futuro de documentos, selfie e aprovação operacional.',
+    description: 'Acompanhe seu status documental e envie dados de verificação.',
+    href: '/app/profissional/verificacoes',
   },
   {
     title: 'Convites',
@@ -43,7 +46,7 @@ export function ProfissionalDashboardPage() {
   return (
     <div className="grid gap-5">
       <DashboardHeader
-        title={`Olá, ${getFirstName(user?.nomeCompleto ?? '')}.`}
+        title={`Olá, ${getFirstName(user?.nomeCompleto) || 'Profissional'}.`}
         description="Sua área profissional reúne perfil, regiões, disponibilidade, convites e atendimentos operacionais."
       />
       <DashboardCards items={profissionalItems} />

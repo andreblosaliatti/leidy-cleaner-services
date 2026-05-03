@@ -30,7 +30,25 @@ public interface PagamentoRepository extends JpaRepository<Pagamento, Long> {
             @Param("atendimentoId") Long atendimentoId
     );
 
-    Optional<Pagamento> findByAtendimentoId(Long atendimentoId);
+    @Query("""
+            select p
+            from Pagamento p
+            join fetch p.atendimento a
+            join fetch a.cliente c
+            join fetch c.usuario
+            where a.id = :atendimentoId
+            """)
+    Optional<Pagamento> findByAtendimentoId(@Param("atendimentoId") Long atendimentoId);
+
+    @Query("""
+            select p
+            from Pagamento p
+            join fetch p.atendimento a
+            join fetch a.cliente c
+            join fetch c.usuario
+            where p.id = :id
+            """)
+    Optional<Pagamento> findByIdWithAtendimentoCliente(@Param("id") Long id);
 
     Optional<Pagamento> findByGatewayPaymentId(String gatewayPaymentId);
 

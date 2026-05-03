@@ -10,6 +10,7 @@ import type { Endereco } from '../../features/cliente/enderecos/types';
 import { SolicitacaoForm } from '../../features/cliente/solicitacoes/SolicitacaoForm';
 import { SolicitacaoList } from '../../features/cliente/solicitacoes/SolicitacaoList';
 import { formatDateTime } from '../../features/cliente/solicitacoes/SolicitacaoCard';
+import { getSolicitacaoEnderecoLabel, getSolicitacaoRegiaoLabel } from '../../features/cliente/solicitacoes/solicitacaoDisplay';
 import {
   canSelectProfessionals,
   getStatusSolicitacaoInfo,
@@ -45,17 +46,18 @@ type Feedback = {
 };
 
 export function ClienteSolicitacoesPage() {
-  const { token, logout } = useAuth();
+  const { token, logout, status } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [cancellingId, setCancellingId] = useState<number | null>(null);
+  const sessionReady = status === 'authenticated' && Boolean(token);
 
   const enderecosQuery = useQuery({
     queryKey: queryKeys.enderecos,
     queryFn: () => listarMeusEnderecos(requireToken(token)),
-    enabled: Boolean(token),
+    enabled: sessionReady,
   });
 
   const regioesQuery = useQuery({
@@ -66,13 +68,13 @@ export function ClienteSolicitacoesPage() {
   const solicitacoesQuery = useQuery({
     queryKey: queryKeys.solicitacoes,
     queryFn: () => listarMinhasSolicitacoes(requireToken(token)),
-    enabled: Boolean(token),
+    enabled: sessionReady,
   });
 
   const detalheQuery = useQuery({
     queryKey: queryKeys.detalhe(selectedId),
     queryFn: () => buscarSolicitacao(requireToken(token), requireSelectedId(selectedId)),
-    enabled: Boolean(token && selectedId),
+    enabled: Boolean(sessionReady && selectedId),
   });
 
   const protectedError = useMemo(
@@ -181,7 +183,7 @@ export function ClienteSolicitacoesPage() {
         <div className="mb-5">
           <h2 className="text-2xl font-black text-slate-900">Nova solicitação</h2>
           <p className="mt-2 text-sm leading-6 text-slate-600">
-            Os campos de região e valores aparecem porque são obrigatórios no contrato atual da API.
+            Escolha um endereço cadastrado. O bairro do endereço define a região operacional da solicitação.
           </p>
         </div>
 
@@ -245,7 +247,7 @@ export function ClienteSolicitacoesPage() {
         )}
 
         {solicitacoes.length > 0 && (
-          <div className="grid gap-5 xl:grid-cols-[1fr_380px]">
+          <div className="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
             <SolicitacaoList
               cancellingId={cancellingId}
               getContexto={getContexto}
@@ -323,16 +325,10 @@ function SolicitacaoDetailPanel({
         <DetailItem label="Duração estimada" value={`${solicitacao.duracaoEstimadaHoras} horas`} />
         <DetailItem
           label="Endereço"
-          value={
-            contexto?.endereco
-              ? `${contexto.endereco.logradouro}, ${contexto.endereco.numero} - ${contexto.endereco.bairro}`
-              : `#${solicitacao.enderecoId}`
-          }
+          value={getSolicitacaoEnderecoLabel(solicitacao, contexto)}
         />
-        <DetailItem label="Região" value={contexto?.regiao?.nome ?? `#${solicitacao.regiaoId}`} />
-        <DetailItem label="Valor do serviço" value={formatCurrency(solicitacao.valorServico)} />
-        <DetailItem label="Comissão" value={`${solicitacao.percentualComissaoAgencia}%`} />
-        <DetailItem label="Valor profissional" value={formatCurrency(solicitacao.valorEstimadoProfissional)} />
+        <DetailItem label="Bairro/região" value={getSolicitacaoRegiaoLabel(solicitacao, contexto)} />
+        <DetailItem label="Valor do serviço" value={formatServiceValue(solicitacao.valorServico)} />
         {solicitacao.observacoes && <DetailItem label="Observações" value={solicitacao.observacoes} />}
       </dl>
 
@@ -375,6 +371,12 @@ function formatCurrency(value: number) {
     style: 'currency',
     currency: 'BRL',
   }).format(value);
+}
+
+function formatServiceValue(value: number | null | undefined) {
+  return value === null || value === undefined
+    ? 'Valor será calculado conforme a duração informada.'
+    : formatCurrency(value);
 }
 
 function requireToken(token: string | null) {

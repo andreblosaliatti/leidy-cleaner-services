@@ -3,6 +3,7 @@ export type StatusVerificacao = 'PENDENTE' | 'EM_ANALISE' | 'APROVADO' | 'REJEIT
 export type DocumentoVerificacaoAdmin = {
   id: number;
   usuarioId: number;
+  usuarioNome?: string | null;
   tipoDocumento: string;
   numeroDocumento: string;
   documentoFrenteUrl: string | null;
@@ -12,6 +13,7 @@ export type DocumentoVerificacaoAdmin = {
   statusVerificacao: StatusVerificacao;
   observacaoAnalise: string | null;
   analisadoPorUsuarioId: number | null;
+  analisadoPorNome?: string | null;
   analisadoEm: string | null;
   criadoEm: string;
 };

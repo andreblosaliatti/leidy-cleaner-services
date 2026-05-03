@@ -10,7 +10,7 @@ const clienteItems = [
   },
   {
     title: 'Solicitações',
-    description: 'Espaço reservado para criação e acompanhamento de pedidos de faxina.',
+    description: 'Crie e acompanhe pedidos de faxina com região derivada do endereço.',
     href: '/app/cliente/solicitacoes',
   },
   {
@@ -36,7 +36,7 @@ export function ClienteDashboardPage() {
   return (
     <div className="grid gap-5">
       <DashboardHeader
-        title={`Bem-vindo, ${getFirstName(user?.nomeCompleto ?? '')}.`}
+        title={`Bem-vindo, ${getFirstName(user?.nomeCompleto) || 'Cliente'}.`}
         description="Sua área de cliente está pronta para receber os próximos fluxos operacionais, mantendo contratação, pagamentos e histórico separados por etapa."
       />
       <DashboardCards items={clienteItems} />

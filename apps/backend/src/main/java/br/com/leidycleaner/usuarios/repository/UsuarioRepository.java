@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import br.com.leidycleaner.usuarios.dto.AdminUsuarioResponse;
 import br.com.leidycleaner.usuarios.entity.StatusConta;
 import br.com.leidycleaner.usuarios.entity.TipoUsuario;
 import br.com.leidycleaner.usuarios.entity.Usuario;
@@ -20,8 +21,24 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     Optional<Usuario> findByEmail(String email);
 
     @Query("""
-            select usuario
+            select new br.com.leidycleaner.usuarios.dto.AdminUsuarioResponse(
+                usuario.id,
+                cliente.id,
+                profissional.id,
+                usuario.nomeCompleto,
+                usuario.email,
+                usuario.telefone,
+                usuario.tipoUsuario,
+                usuario.statusConta,
+                usuario.emailVerificado,
+                usuario.telefoneVerificado,
+                usuario.ultimoLoginEm,
+                usuario.criadoEm,
+                usuario.atualizadoEm
+            )
             from Usuario usuario
+            left join PerfilCliente cliente on cliente.usuario = usuario
+            left join PerfilProfissional profissional on profissional.usuario = usuario
             where (:tipoUsuario is null or usuario.tipoUsuario = :tipoUsuario)
               and (:statusConta is null or usuario.statusConta = :statusConta)
               and (
@@ -32,9 +49,32 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
               )
             order by usuario.criadoEm desc, usuario.id desc
             """)
-    List<Usuario> findAdminList(
+    List<AdminUsuarioResponse> findAdminResponses(
             @Param("tipoUsuario") TipoUsuario tipoUsuario,
             @Param("statusConta") StatusConta statusConta,
             @Param("searchTerm") String searchTerm
     );
+
+    @Query("""
+            select new br.com.leidycleaner.usuarios.dto.AdminUsuarioResponse(
+                usuario.id,
+                cliente.id,
+                profissional.id,
+                usuario.nomeCompleto,
+                usuario.email,
+                usuario.telefone,
+                usuario.tipoUsuario,
+                usuario.statusConta,
+                usuario.emailVerificado,
+                usuario.telefoneVerificado,
+                usuario.ultimoLoginEm,
+                usuario.criadoEm,
+                usuario.atualizadoEm
+            )
+            from Usuario usuario
+            left join PerfilCliente cliente on cliente.usuario = usuario
+            left join PerfilProfissional profissional on profissional.usuario = usuario
+            where usuario.id = :usuarioId
+            """)
+    Optional<AdminUsuarioResponse> findAdminResponseById(@Param("usuarioId") Long usuarioId);
 }

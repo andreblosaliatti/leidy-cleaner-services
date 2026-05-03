@@ -19,8 +19,15 @@ public interface AtendimentoFaxinaRepository extends JpaRepository<AtendimentoFa
     @Query("""
             select a
             from AtendimentoFaxina a
-            where a.cliente.usuario.id = :usuarioId
-               or a.profissional.usuario.id = :usuarioId
+            join fetch a.solicitacao s
+            join fetch s.endereco
+            join fetch s.regiao
+            join fetch a.cliente c
+            join fetch c.usuario cu
+            join fetch a.profissional p
+            join fetch p.usuario pu
+            where cu.id = :usuarioId
+               or pu.id = :usuarioId
             order by a.inicioPrevistoEm desc, a.id desc
             """)
     List<AtendimentoFaxina> findRelacionadosByUsuarioId(@Param("usuarioId") Long usuarioId);
@@ -29,8 +36,12 @@ public interface AtendimentoFaxinaRepository extends JpaRepository<AtendimentoFa
             select a
             from AtendimentoFaxina a
             join fetch a.solicitacao s
+            join fetch s.endereco
+            join fetch s.regiao
             join fetch a.cliente c
+            join fetch c.usuario
             join fetch a.profissional p
+            join fetch p.usuario
             where (:status is null or a.status = :status)
               and (:clienteId is null or c.id = :clienteId)
               and (:profissionalId is null or p.id = :profissionalId)
@@ -45,10 +56,31 @@ public interface AtendimentoFaxinaRepository extends JpaRepository<AtendimentoFa
     @Query("""
             select a
             from AtendimentoFaxina a
+            join fetch a.solicitacao s
+            join fetch s.endereco
+            join fetch s.regiao
+            join fetch a.cliente c
+            join fetch c.usuario
+            join fetch a.profissional p
+            join fetch p.usuario
+            where a.id = :id
+            """)
+    Optional<AtendimentoFaxina> findByIdWithResumo(@Param("id") Long id);
+
+    @Query("""
+            select a
+            from AtendimentoFaxina a
+            join fetch a.solicitacao s
+            join fetch s.endereco
+            join fetch s.regiao
+            join fetch a.cliente c
+            join fetch c.usuario cu
+            join fetch a.profissional p
+            join fetch p.usuario pu
             where a.id = :id
               and (
-                  a.cliente.usuario.id = :usuarioId
-                  or a.profissional.usuario.id = :usuarioId
+                  cu.id = :usuarioId
+                  or pu.id = :usuarioId
               )
             """)
     Optional<AtendimentoFaxina> findRelacionadoByIdAndUsuarioId(

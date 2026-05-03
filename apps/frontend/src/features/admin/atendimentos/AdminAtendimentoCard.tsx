@@ -5,6 +5,11 @@ import {
   formatDateTime,
   getTipoServicoAtendimentoLabel,
 } from '../../atendimentos/atendimentoLabels';
+import {
+  getAtendimentoClienteLabel,
+  getAtendimentoProfissionalLabel,
+  getAtendimentoRegiaoLabel,
+} from '../../atendimentos/atendimentoDisplay';
 import { AtendimentoStatusBadge } from '../../atendimentos/AtendimentoStatusBadge';
 import type { AtendimentoFaxina } from '../../atendimentos/types';
 
@@ -30,14 +35,13 @@ export function AdminAtendimentoCard({ atendimento }: { atendimento: Atendimento
       </div>
 
       <dl className="mt-5 grid gap-3 text-sm md:grid-cols-2 xl:grid-cols-4">
-        <DetailItem label="Solicitação" value={`#${atendimento.solicitacaoId}`} />
-        <DetailItem label="Cliente" value={`#${atendimento.clienteId}`} />
-        <DetailItem label="Profissional" value={`#${atendimento.profissionalId}`} />
+        <DetailItem label="Solicitação" value={`ID ${atendimento.solicitacaoId}`} />
+        <DetailItem label="Cliente" value={getAtendimentoClienteLabel(atendimento)} />
+        <DetailItem label="Profissional" value={getAtendimentoProfissionalLabel(atendimento)} />
+        <DetailItem label="Bairro/região" value={getAtendimentoRegiaoLabel(atendimento)} />
         <DetailItem label="Valor" value={formatCurrency(atendimento.valorServico)} />
         <DetailItem label="Comissão" value={`${Number(atendimento.percentualComissaoAgencia).toLocaleString('pt-BR')}%`} />
         <DetailItem label="Valor profissional" value={formatCurrency(atendimento.valorEstimadoProfissional)} />
-        <DetailItem label="Criado em" value={formatDateTime(atendimento.criadoEm)} />
-        <DetailItem label="Atualizado em" value={formatDateTime(atendimento.atualizadoEm)} />
       </dl>
     </article>
   );

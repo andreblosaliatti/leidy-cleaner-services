@@ -10,6 +10,7 @@ import type {
 
 export function loginRequest(payload: AuthLoginRequest) {
   return apiRequest<AuthLoginResponse>('/auth/login', {
+    auth: false,
     method: 'POST',
     body: JSON.stringify(payload),
   });
@@ -24,6 +25,7 @@ export function getCurrentUserRequest(token: string) {
 
 export function registerClienteRequest(payload: CadastroClienteRequest) {
   return apiRequest<CadastroUsuarioResponse>('/usuarios/clientes', {
+    auth: false,
     method: 'POST',
     body: JSON.stringify(payload),
   });
@@ -31,6 +33,7 @@ export function registerClienteRequest(payload: CadastroClienteRequest) {
 
 export function registerProfissionalRequest(payload: CadastroProfissionalRequest) {
   return apiRequest<CadastroUsuarioResponse>('/usuarios/profissionais', {
+    auth: false,
     method: 'POST',
     body: JSON.stringify(payload),
   });

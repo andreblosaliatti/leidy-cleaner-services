@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 
 import { formatCurrency, formatDateTime, getTipoServicoAtendimentoLabel } from './atendimentoLabels';
+import { getAtendimentoRegiaoLabel } from './atendimentoDisplay';
 import { AtendimentoStatusBadge } from './AtendimentoStatusBadge';
 import type { AtendimentoFaxina, AtendimentosProfile } from './types';
 
@@ -24,7 +25,7 @@ export function AtendimentoCard({ atendimento, profile }: AtendimentoCardProps) 
           <p className="mt-2 text-sm leading-6 text-slate-600">Previsto para {formatDateTime(atendimento.inicioPrevistoEm)}</p>
           <p className="mt-1 text-sm font-semibold text-slate-700">{formatCurrency(atendimento.valorServico)}</p>
           <p className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
-            Solicitação #{atendimento.solicitacaoId}
+            {getAtendimentoRegiaoLabel(atendimento)}
           </p>
         </div>
 

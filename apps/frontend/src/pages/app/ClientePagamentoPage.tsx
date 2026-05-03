@@ -4,6 +4,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 
 import { FormAlert } from '../../components/ui/FormAlert';
 import { StateBox } from '../../components/ui/PageState';
+import { getAtendimentoEnderecoLabel, getAtendimentoRegiaoLabel } from '../../features/atendimentos/atendimentoDisplay';
 import { useAuth } from '../../features/auth/useAuth';
 import { PagamentoDetail } from '../../features/cliente/pagamentos/PagamentoDetail';
 import {
@@ -286,7 +287,8 @@ function AtendimentoContext({
         <DetailItem label="Tipo" value={getTipoServicoPagamentoLabel(atendimento.tipoServico)} />
         <DetailItem label="Início previsto" value={formatDateTime(atendimento.inicioPrevistoEm)} />
         <DetailItem label="Valor do serviço" value={formatCurrency(atendimento.valorServico)} />
-        <DetailItem label="Solicitação" value={`#${atendimento.solicitacaoId}`} />
+        <DetailItem label="Endereço" value={getAtendimentoEnderecoLabel(atendimento)} />
+        <DetailItem label="Bairro/região" value={getAtendimentoRegiaoLabel(atendimento)} />
       </dl>
     </section>
   );

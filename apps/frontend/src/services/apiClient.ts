@@ -1,4 +1,5 @@
 import { apiBaseUrl } from '../lib/env';
+import { authStorage } from '../features/auth/authStorage';
 
 type ApiEnvelope<T> =
   | {
@@ -13,6 +14,7 @@ type ApiEnvelope<T> =
     };
 
 type ApiRequestOptions = RequestInit & {
+  auth?: boolean;
   token?: string | null;
 };
 
@@ -31,8 +33,9 @@ export class ApiError extends Error {
 }
 
 export async function apiRequest<T>(path: string, options: ApiRequestOptions = {}): Promise<T> {
-  const { token, headers, body, ...init } = options;
+  const { auth = true, token, headers, body, ...init } = options;
   const requestHeaders = new Headers(headers);
+  const authorizationToken = auth ? token ?? authStorage.getToken() : null;
 
   requestHeaders.set('Accept', 'application/json');
 
@@ -40,10 +43,11 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
     requestHeaders.set('Content-Type', 'application/json');
   }
 
-  if (token) {
-    requestHeaders.set('Authorization', `Bearer ${token}`);
+  if (authorizationToken) {
+    requestHeaders.set('Authorization', `Bearer ${authorizationToken}`);
   }
 
+  const startedAt = now();
   const response = await fetch(`${apiBaseUrl}${path}`, {
     ...init,
     body,
@@ -51,6 +55,7 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
   });
 
   const parsedBody = await parseJsonResponse<T>(response);
+  logSlowRequest(path, startedAt);
 
   if (!response.ok) {
     throw buildApiError(response.status, parsedBody);
@@ -116,4 +121,19 @@ function buildApiError<T>(status: number, body: ApiEnvelope<T> | T | null): ApiE
 
 function isApiEnvelope<T>(value: unknown): value is ApiEnvelope<T> {
   return Boolean(value && typeof value === 'object' && 'success' in value);
+}
+
+function logSlowRequest(path: string, startedAt: number) {
+  if (!import.meta.env.DEV) {
+    return;
+  }
+
+  const elapsedMs = Math.round(now() - startedAt);
+  if (elapsedMs >= 1200) {
+    console.warn(`[api] slow request ${elapsedMs}ms ${path}`);
+  }
+}
+
+function now() {
+  return typeof performance === 'undefined' ? Date.now() : performance.now();
 }

@@ -6,15 +6,12 @@ import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import br.com.leidycleaner.clientes.repository.PerfilClienteRepository;
 import br.com.leidycleaner.core.exception.BusinessException;
-import br.com.leidycleaner.profissionais.repository.PerfilProfissionalRepository;
 import br.com.leidycleaner.usuarios.dto.AdminUsuarioResponse;
 import br.com.leidycleaner.usuarios.dto.AlterarStatusUsuarioRequest;
 import br.com.leidycleaner.usuarios.dto.UsuarioResumoDto;
 import br.com.leidycleaner.usuarios.entity.StatusConta;
 import br.com.leidycleaner.usuarios.entity.TipoUsuario;
-import br.com.leidycleaner.usuarios.entity.Usuario;
 import br.com.leidycleaner.usuarios.mapper.UsuarioMapper;
 import br.com.leidycleaner.usuarios.repository.UsuarioRepository;
 
@@ -22,17 +19,9 @@ import br.com.leidycleaner.usuarios.repository.UsuarioRepository;
 public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
-    private final PerfilClienteRepository perfilClienteRepository;
-    private final PerfilProfissionalRepository perfilProfissionalRepository;
 
-    public UsuarioService(
-            UsuarioRepository usuarioRepository,
-            PerfilClienteRepository perfilClienteRepository,
-            PerfilProfissionalRepository perfilProfissionalRepository
-    ) {
+    public UsuarioService(UsuarioRepository usuarioRepository) {
         this.usuarioRepository = usuarioRepository;
-        this.perfilClienteRepository = perfilClienteRepository;
-        this.perfilProfissionalRepository = perfilProfissionalRepository;
     }
 
     @Transactional(readOnly = true)
@@ -54,16 +43,12 @@ public class UsuarioService {
     ) {
         String searchTerm = normalizarBusca(search);
 
-        return usuarioRepository.findAdminList(tipoUsuario, statusConta, searchTerm)
-                .stream()
-                .map(this::paraAdminResponse)
-                .toList();
+        return usuarioRepository.findAdminResponses(tipoUsuario, statusConta, searchTerm);
     }
 
     @Transactional(readOnly = true)
     public AdminUsuarioResponse buscarAdmin(Long usuarioId) {
-        return usuarioRepository.findById(usuarioId)
-                .map(this::paraAdminResponse)
+        return usuarioRepository.findAdminResponseById(usuarioId)
                 .orElseThrow(() -> new BusinessException("USUARIO_NOT_FOUND", "Usuario nao encontrado"));
     }
 
@@ -75,17 +60,6 @@ public class UsuarioService {
                     return UsuarioMapper.paraResumo(usuario);
                 })
                 .orElseThrow(() -> new BusinessException("USUARIO_NOT_FOUND", "Usuario nao encontrado"));
-    }
-
-    private AdminUsuarioResponse paraAdminResponse(Usuario usuario) {
-        Long perfilClienteId = perfilClienteRepository.findByUsuarioId(usuario.getId())
-                .map(perfil -> perfil.getId())
-                .orElse(null);
-        Long perfilProfissionalId = perfilProfissionalRepository.findByUsuarioId(usuario.getId())
-                .map(perfil -> perfil.getId())
-                .orElse(null);
-
-        return UsuarioMapper.paraAdminResponse(usuario, perfilClienteId, perfilProfissionalId);
     }
 
     private String normalizarBusca(String search) {

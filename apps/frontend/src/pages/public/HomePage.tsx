@@ -59,60 +59,53 @@ const benefits = [
 export function HomePage() {
   return (
     <main id="inicio">
-      <section className="mx-auto grid max-w-[980px] items-center gap-8 px-5 pb-8 pt-8 md:grid-cols-[0.86fr_1.14fr] md:px-8 md:pb-4 md:pt-10">
-        <div className="z-10">
-          <div className="inline-flex items-center gap-2 rounded-lg bg-green-50 px-4 py-3 text-sm font-bold text-green-700">
-            <ShieldCheckIcon className="h-5 w-5" />
-            Profissionais verificadas
-          </div>
+      <section className="mx-auto grid max-w-[1180px] items-center gap-8 px-6 pb-8 pt-6 md:grid-cols-[1fr_1.08fr] md:px-10 md:pb-4 md:pt-8">
+  <div className="z-10">
+    <div className="inline-flex items-center gap-2 rounded-2xl bg-green-50 px-4 py-3 text-sm font-bold text-green-700">
+      <ShieldCheckIcon className="h-5 w-5" />
+      Profissionais verificadas
+    </div>
 
-          <h1 className="mt-7 max-w-xl text-5xl font-black leading-[1.04] tracking-normal text-slate-900 md:text-6xl">
-            Sua casa limpa, <span className="text-green-700">seu tempo leve.</span>
-          </h1>
-          <p className="mt-5 max-w-lg text-xl leading-8 text-slate-600">
-            Faxina residencial com praticidade, confiança e cuidado em cada detalhe.
-          </p>
+    <h1 className="mt-7 max-w-[620px] text-5xl font-bold leading-[1.08] tracking-[-0.02em] text-slate-900 md:text-[60px]">
+      Sua casa limpa, <span className="text-green-700">seu tempo leve.</span>
+    </h1>
 
-          <div id="solicitar" className="mt-7 flex flex-col gap-4 sm:flex-row">
-            <PublicButton href="/cadastro/cliente">
-              Solicitar faxina
-              <SparkleIcon />
-            </PublicButton>
-            <PublicButton href="/cadastro/profissional" variant="secondary">
-              <UserIcon className="h-5 w-5" />
-              Quero ser profissional
-            </PublicButton>
-          </div>
+    <p className="mt-5 max-w-[560px] text-xl leading-8 text-slate-600">
+      Faxina residencial com praticidade, confiança e cuidado em cada detalhe.
+    </p>
 
-          <div className="mt-8 grid gap-4 sm:grid-cols-3">
-            {trustItems.map((item) => (
-              <div key={item.label} className="flex items-center gap-3">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-green-50 text-green-700">
-                  <item.icon className="h-6 w-6" />
-                </span>
-                <span className="text-sm font-semibold leading-5 text-slate-600">{item.label}</span>
-              </div>
-            ))}
-          </div>
+    <div id="solicitar" className="mt-7 flex flex-col gap-4 sm:flex-row">
+      <PublicButton href="/cadastro/cliente">
+        Solicitar faxina
+        <SparkleIcon />
+      </PublicButton>
+
+      <PublicButton href="/cadastro/profissional" variant="secondary">
+        <UserIcon className="h-5 w-5" />
+        Quero ser profissional
+      </PublicButton>
+    </div>
+
+    <div className="mt-8 grid gap-5 sm:grid-cols-3">
+      {trustItems.map((item) => (
+        <div key={item.label} className="flex items-center gap-3">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-green-50 text-green-700">
+            <item.icon className="h-6 w-6" />
+          </span>
+          <span className="text-sm font-semibold leading-5 text-slate-600">{item.label}</span>
         </div>
+      ))}
+    </div>
+  </div>
 
-        <div className="relative min-h-[340px] overflow-hidden rounded-bl-[64px] bg-green-50 md:min-h-[470px]">
-          <img
-            src={faxineiraHeroUrl}
-            alt="Profissional de limpeza Leidy Cleaner Services com materiais de faxina"
-            className="absolute bottom-0 right-0 h-full w-full object-contain object-bottom"
-          />
-        </div>
-      </section>
-
-      <section id="como-funciona" className="mx-auto max-w-[980px] px-5 py-4 md:px-8">
-        <h2 className="text-center text-2xl font-black text-slate-900">Como funciona</h2>
-        <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_auto_1fr_auto_1fr]">
-          {steps.map((step, index) => (
-            <StepCard key={step.title} index={index + 1} {...step} />
-          ))}
-        </div>
-      </section>
+  <div className="relative min-h-[550px] overflow-hidden rounded-bl-[72px] md:-mt-8 md:min-h-[450px]">
+  <img
+    src={faxineiraHeroUrl}
+    alt="Profissional de limpeza Leidy Cleaner Services com materiais de faxina"
+    className="absolute bottom-0 right-[-38px] h-[125%] w-[125%] object-contain object-bottom"
+  />
+</div>
+</section>
 
       <section className="mx-auto max-w-[980px] px-5 py-3 md:px-8">
         <div className="grid gap-4 rounded-lg border border-slate-100 bg-white p-5 shadow-[0_10px_28px_rgba(15,23,42,0.04)] md:grid-cols-3 md:p-6">

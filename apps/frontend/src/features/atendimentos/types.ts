@@ -19,6 +19,11 @@ export type AtendimentoFaxina = {
   solicitacaoId: number;
   clienteId: number;
   profissionalId: number;
+  clienteNome?: string | null;
+  profissionalNome?: string | null;
+  enderecoResumo?: string | null;
+  bairro?: string | null;
+  regiaoNome?: string | null;
   status: StatusAtendimento;
   tipoServico: TipoServicoAtendimento;
   valorServico: number;

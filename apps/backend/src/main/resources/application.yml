@@ -37,6 +37,9 @@ app:
     checkout-success-url: ${ASAAS_CHECKOUT_SUCCESS_URL:http://localhost:5173/pagamento/sucesso}
     checkout-cancel-url: ${ASAAS_CHECKOUT_CANCEL_URL:http://localhost:5173/pagamento/cancelado}
     checkout-expired-url: ${ASAAS_CHECKOUT_EXPIRED_URL:http://localhost:5173/pagamento/expirado}
+  pricing:
+    hourly-rate: ${APP_PRICING_HOURLY_RATE:45.00}
+    agency-commission-percent: ${APP_PRICING_AGENCY_COMMISSION_PERCENT:20.00}
 
 logging:
   level:

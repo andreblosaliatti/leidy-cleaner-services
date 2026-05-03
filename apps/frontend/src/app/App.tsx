@@ -4,6 +4,7 @@ import { AuthenticatedLayout } from '../layouts/AuthenticatedLayout';
 import { PublicLayout } from '../layouts/PublicLayout';
 import { AdminAtendimentoDetalhePage } from '../pages/app/AdminAtendimentoDetalhePage';
 import { AdminAtendimentosPage } from '../pages/app/AdminAtendimentosPage';
+import { AdminConfiguracaoPrecosPage } from '../pages/app/AdminConfiguracaoPrecosPage';
 import { AdminDashboardPage } from '../pages/app/AdminDashboardPage';
 import { AdminOcorrenciaDetalhePage } from '../pages/app/AdminOcorrenciaDetalhePage';
 import { AdminOcorrenciasPage } from '../pages/app/AdminOcorrenciasPage';
@@ -33,7 +34,10 @@ import { ProfissionalAtendimentosPage } from '../pages/app/ProfissionalAtendimen
 import { ProfissionalConviteDetalhePage } from '../pages/app/ProfissionalConviteDetalhePage';
 import { ProfissionalConvitesPage } from '../pages/app/ProfissionalConvitesPage';
 import { ProfissionalDashboardPage } from '../pages/app/ProfissionalDashboardPage';
+import { ProfissionalDisponibilidadePage } from '../pages/app/ProfissionalDisponibilidadePage';
 import { ProfissionalOnboardingPage } from '../pages/app/ProfissionalOnboardingPage';
+import { ProfissionalRegioesPage } from '../pages/app/ProfissionalRegioesPage';
+import { ProfissionalVerificacaoPage } from '../pages/app/ProfissionalVerificacaoPage';
 import { ClientRegistrationPage } from '../pages/public/ClientRegistrationPage';
 import { HomePage } from '../pages/public/HomePage';
 import { LoginPage } from '../pages/public/LoginPage';
@@ -80,6 +84,9 @@ export function App() {
             <Route path="profissional">
               <Route index element={<ProfissionalDashboardPage />} />
               <Route path="perfil" element={<ProfissionalOnboardingPage />} />
+              <Route path="regioes" element={<ProfissionalRegioesPage />} />
+              <Route path="disponibilidade" element={<ProfissionalDisponibilidadePage />} />
+              <Route path="verificacoes" element={<ProfissionalVerificacaoPage />} />
               <Route path="convites" element={<ProfissionalConvitesPage />} />
               <Route path="convites/:id" element={<ProfissionalConviteDetalhePage />} />
               <Route path="atendimentos" element={<ProfissionalAtendimentosPage />} />
@@ -98,6 +105,7 @@ export function App() {
               <Route path="atendimentos/:id" element={<AdminAtendimentoDetalhePage />} />
               <Route path="pagamentos" element={<AdminPagamentosPage />} />
               <Route path="pagamentos/:id" element={<AdminPagamentoDetalhePage />} />
+              <Route path="configuracoes/precos" element={<AdminConfiguracaoPrecosPage />} />
               <Route path="solicitacoes" element={<AdminSolicitacoesPage />} />
               <Route path="solicitacoes/:id" element={<AdminSolicitacaoDetalhePage />} />
               <Route path="usuarios" element={<AdminUsuariosPage />} />

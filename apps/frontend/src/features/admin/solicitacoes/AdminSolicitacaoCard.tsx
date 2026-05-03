@@ -1,6 +1,11 @@
 import { Link } from 'react-router-dom';
 
 import { getTipoServicoLabel } from '../../cliente/solicitacoes/solicitacaoLabels';
+import {
+  getSolicitacaoClienteLabel,
+  getSolicitacaoEnderecoLabel,
+  getSolicitacaoRegiaoLabel,
+} from '../../cliente/solicitacoes/solicitacaoDisplay';
 import type { SolicitacaoFaxina } from '../../cliente/solicitacoes/types';
 import { formatCurrency, formatDateTime, formatPercent } from './solicitacaoAdminLabels';
 import { SolicitacaoAdminStatusBadge } from './SolicitacaoAdminStatusBadge';
@@ -29,14 +34,12 @@ export function AdminSolicitacaoCard({ solicitacao }: { solicitacao: Solicitacao
       </div>
 
       <dl className="mt-5 grid gap-3 text-sm md:grid-cols-2 xl:grid-cols-4">
-        <DetailItem label="Cliente" value={`#${solicitacao.clienteId}`} />
-        <DetailItem label="Endereço" value={`#${solicitacao.enderecoId}`} />
-        <DetailItem label="Região" value={`#${solicitacao.regiaoId}`} />
+        <DetailItem label="Cliente" value={getSolicitacaoClienteLabel(solicitacao)} />
+        <DetailItem label="Endereço" value={getSolicitacaoEnderecoLabel(solicitacao)} />
+        <DetailItem label="Bairro/região" value={getSolicitacaoRegiaoLabel(solicitacao)} />
         <DetailItem label="Valor" value={formatCurrency(solicitacao.valorServico)} />
         <DetailItem label="Comissão" value={formatPercent(solicitacao.percentualComissaoAgencia)} />
         <DetailItem label="Valor profissional" value={formatCurrency(solicitacao.valorEstimadoProfissional)} />
-        <DetailItem label="Criada em" value={formatDateTime(solicitacao.criadoEm)} />
-        <DetailItem label="Atualizada em" value={formatDateTime(solicitacao.atualizadoEm)} />
       </dl>
     </article>
   );

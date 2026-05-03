@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 
-import { formatOcorrenciaDateTime, formatOptionalId } from './ocorrenciaLabels';
+import { formatOptionalId } from './ocorrenciaLabels';
 import { OcorrenciaStatusBadge } from './OcorrenciaStatusBadge';
 import { OcorrenciaTipoBadge } from './OcorrenciaTipoBadge';
 import type { OcorrenciaAtendimento } from './types';
@@ -31,9 +31,8 @@ export function OcorrenciaCard({ detailBasePath, ocorrencia }: OcorrenciaCardPro
       </div>
 
       <dl className="mt-5 grid gap-3 text-sm md:grid-cols-2 xl:grid-cols-4">
-        <DetailItem label="Atendimento" value={`#${ocorrencia.atendimentoId}`} />
-        <DetailItem label="Aberta por" value={`#${ocorrencia.abertoPorUsuarioId}`} />
-        <DetailItem label="Criada em" value={formatOcorrenciaDateTime(ocorrencia.criadoEm)} />
+        <DetailItem label="Atendimento" value={`ID ${ocorrencia.atendimentoId}`} />
+        <DetailItem label="Aberta por" value={`Usuário ID ${ocorrencia.abertoPorUsuarioId}`} />
         <DetailItem label="Resolvida por" value={formatOptionalId(ocorrencia.resolvidoPorUsuarioId)} />
       </dl>
     </article>

@@ -6,6 +6,7 @@ import {
   getStatusSolicitacaoInfo,
   getTipoServicoLabel,
 } from './solicitacaoLabels';
+import { getSolicitacaoEnderecoLabel, getSolicitacaoRegiaoLabel } from './solicitacaoDisplay';
 import type { SolicitacaoContexto, SolicitacaoFaxina } from './types';
 
 type SolicitacaoCardProps = {
@@ -46,10 +47,9 @@ export function SolicitacaoCard({
           <p className="mt-2 text-sm leading-6 text-slate-600">
             {formatDateTime(solicitacao.dataHoraDesejada)} · {solicitacao.duracaoEstimadaHoras}h estimadas
           </p>
-          <p className="mt-1 text-sm leading-6 text-slate-500">
-            {contexto?.endereco
-              ? `${contexto.endereco.logradouro}, ${contexto.endereco.numero} - ${contexto.endereco.bairro}`
-              : `Endereço #${solicitacao.enderecoId}`}
+          <p className="mt-1 text-sm leading-6 text-slate-500">{getSolicitacaoEnderecoLabel(solicitacao, contexto)}</p>
+          <p className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
+            {getSolicitacaoRegiaoLabel(solicitacao, contexto)}
           </p>
         </div>
 

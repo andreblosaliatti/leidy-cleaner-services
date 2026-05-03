@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 
+import { getAtendimentoRegiaoLabel } from '../../atendimentos/atendimentoDisplay';
 import {
   formatCurrency,
   formatDateTime,
@@ -25,6 +26,9 @@ export function AtendimentoPagamentoCard({ atendimento }: { atendimento: Atendim
           <p className="mt-2 text-sm font-semibold text-slate-700">{getTipoServicoPagamentoLabel(atendimento.tipoServico)}</p>
           <p className="mt-2 text-sm leading-6 text-slate-600">Previsto para {formatDateTime(atendimento.inicioPrevistoEm)}</p>
           <p className="mt-1 text-sm font-semibold text-slate-700">{formatCurrency(atendimento.valorServico)}</p>
+          <p className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
+            {getAtendimentoRegiaoLabel(atendimento)}
+          </p>
         </div>
 
         <Link

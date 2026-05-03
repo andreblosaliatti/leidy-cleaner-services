@@ -1,11 +1,13 @@
 package br.com.leidycleaner.solicitacoes.service;
 
+import java.text.Normalizer;
 import java.time.DayOfWeek;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -16,6 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import br.com.leidycleaner.clientes.entity.PerfilCliente;
 import br.com.leidycleaner.clientes.repository.PerfilClienteRepository;
+import br.com.leidycleaner.configuracoes.service.ConfiguracaoPrecoService;
+import br.com.leidycleaner.configuracoes.service.ConfiguracaoPrecoService.ValoresCalculadosPreco;
 import br.com.leidycleaner.convites.service.ConviteProfissionalService;
 import br.com.leidycleaner.core.exception.BusinessException;
 import br.com.leidycleaner.enderecos.entity.Endereco;
@@ -57,6 +61,7 @@ public class SolicitacaoFaxinaService {
     private final SolicitacaoProfissionalSelecionadoRepository solicitacaoProfissionalSelecionadoRepository;
     private final ConviteProfissionalService conviteProfissionalService;
     private final UsuarioRepository usuarioRepository;
+    private final ConfiguracaoPrecoService configuracaoPrecoService;
 
     public SolicitacaoFaxinaService(
             SolicitacaoFaxinaRepository solicitacaoFaxinaRepository,
@@ -66,7 +71,8 @@ public class SolicitacaoFaxinaService {
             PerfilProfissionalRepository perfilProfissionalRepository,
             SolicitacaoProfissionalSelecionadoRepository solicitacaoProfissionalSelecionadoRepository,
             ConviteProfissionalService conviteProfissionalService,
-            UsuarioRepository usuarioRepository
+            UsuarioRepository usuarioRepository,
+            ConfiguracaoPrecoService configuracaoPrecoService
     ) {
         this.solicitacaoFaxinaRepository = solicitacaoFaxinaRepository;
         this.perfilClienteRepository = perfilClienteRepository;
@@ -76,6 +82,7 @@ public class SolicitacaoFaxinaService {
         this.solicitacaoProfissionalSelecionadoRepository = solicitacaoProfissionalSelecionadoRepository;
         this.conviteProfissionalService = conviteProfissionalService;
         this.usuarioRepository = usuarioRepository;
+        this.configuracaoPrecoService = configuracaoPrecoService;
     }
 
     @Transactional
@@ -83,8 +90,8 @@ public class SolicitacaoFaxinaService {
         PerfilCliente cliente = buscarPerfilCliente(usuarioId);
         Endereco endereco = enderecoRepository.findByIdAndUsuarioId(request.enderecoId(), usuarioId)
                 .orElseThrow(() -> new BusinessException("ENDERECO_NOT_FOUND", "Endereco nao encontrado", HttpStatus.NOT_FOUND));
-        RegiaoAtendimento regiao = regiaoAtendimentoRepository.findByIdAndAtivoTrue(request.regiaoId())
-                .orElseThrow(() -> new BusinessException("REGIAO_NOT_FOUND", "Regiao de atendimento nao encontrada", HttpStatus.NOT_FOUND));
+        RegiaoAtendimento regiao = resolverRegiaoDoEndereco(endereco, request.regiaoId());
+        ValoresCalculadosPreco valores = configuracaoPrecoService.calcularValores(request.duracaoEstimadaHoras());
 
         SolicitacaoFaxina solicitacao = new SolicitacaoFaxina(
                 cliente,
@@ -94,9 +101,9 @@ public class SolicitacaoFaxinaService {
                 request.duracaoEstimadaHoras(),
                 request.tipoServico(),
                 request.observacoes(),
-                request.valorServico(),
-                request.percentualComissaoAgencia(),
-                request.valorEstimadoProfissional()
+                valores.valorServico(),
+                valores.percentualComissaoAgencia(),
+                valores.valorEstimadoProfissional()
         );
 
         return SolicitacaoFaxinaMapper.paraDto(solicitacaoFaxinaRepository.save(solicitacao));
@@ -215,7 +222,7 @@ public class SolicitacaoFaxinaService {
 
     private SolicitacaoFaxina buscarSolicitacaoVisivel(Long usuarioId, Long solicitacaoId) {
         if (isAdmin(usuarioId)) {
-            return solicitacaoFaxinaRepository.findById(solicitacaoId)
+            return solicitacaoFaxinaRepository.findByIdWithResumo(solicitacaoId)
                     .orElseThrow(() -> new BusinessException("SOLICITACAO_NOT_FOUND", "Solicitacao nao encontrada", HttpStatus.NOT_FOUND));
         }
 
@@ -227,6 +234,35 @@ public class SolicitacaoFaxinaService {
         return usuarioRepository.findById(usuarioId)
                 .map(usuario -> usuario.getTipoUsuario() == TipoUsuario.ADMIN)
                 .orElse(false);
+    }
+
+    private RegiaoAtendimento resolverRegiaoDoEndereco(Endereco endereco, Long regiaoIdEnviada) {
+        String bairroNormalizado = normalizarTexto(endereco.getBairro());
+        RegiaoAtendimento regiaoDerivada = regiaoAtendimentoRepository.findByAtivoTrueOrderByNomeAsc()
+                .stream()
+                .filter(regiao -> normalizarTexto(regiao.getNome()).equals(bairroNormalizado))
+                .findFirst()
+                .orElseThrow(() -> new BusinessException(
+                        "REGIAO_BAIRRO_NAO_ATENDIDA",
+                        "Ainda nao atendemos este bairro.",
+                        HttpStatus.CONFLICT
+                ));
+
+        if (regiaoIdEnviada != null && !regiaoDerivada.getId().equals(regiaoIdEnviada)) {
+            throw new BusinessException(
+                    "REGIAO_ENDERECO_INCOMPATIVEL",
+                    "Regiao enviada nao corresponde ao bairro do endereco selecionado",
+                    HttpStatus.BAD_REQUEST
+            );
+        }
+
+        return regiaoDerivada;
+    }
+
+    private String normalizarTexto(String valor) {
+        String semAcentos = Normalizer.normalize(valor == null ? "" : valor.trim(), Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "");
+        return semAcentos.toLowerCase(Locale.ROOT);
     }
 
     private void validarStatusParaElegibilidade(SolicitacaoFaxina solicitacao) {

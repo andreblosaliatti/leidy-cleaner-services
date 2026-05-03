@@ -109,7 +109,7 @@ public class AtendimentoFaxinaService {
 
     private AtendimentoFaxina buscarAtendimentoVisivel(Long usuarioId, Long atendimentoId) {
         if (isAdmin(usuarioId)) {
-            return atendimentoFaxinaRepository.findById(atendimentoId)
+            return atendimentoFaxinaRepository.findByIdWithResumo(atendimentoId)
                     .orElseThrow(() -> new BusinessException(
                             "ATENDIMENTO_NOT_FOUND",
                             "Atendimento nao encontrado",
@@ -121,7 +121,7 @@ public class AtendimentoFaxinaService {
     }
 
     private AtendimentoFaxina buscarAtendimentoParaExecucao(Long usuarioId, Long atendimentoId) {
-        AtendimentoFaxina atendimento = atendimentoFaxinaRepository.findById(atendimentoId)
+        AtendimentoFaxina atendimento = atendimentoFaxinaRepository.findByIdWithResumo(atendimentoId)
                 .orElseThrow(() -> new BusinessException(
                         "ATENDIMENTO_NOT_FOUND",
                         "Atendimento nao encontrado",

@@ -48,6 +48,7 @@ export function LoginPage() {
       const redirectTo = new URLSearchParams(location.search).get('redirectTo');
       const destination = redirectTo?.startsWith('/app') ? redirectTo : getDashboardPath(authenticatedUser);
 
+      blurActiveElement();
       navigate(destination, { replace: true });
     } catch (error) {
       setSubmitError({
@@ -113,4 +114,12 @@ export function LoginPage() {
       </div>
     </AuthPageLayout>
   );
+}
+
+function blurActiveElement() {
+  const activeElement = document.activeElement;
+
+  if (activeElement instanceof HTMLElement) {
+    activeElement.blur();
+  }
 }

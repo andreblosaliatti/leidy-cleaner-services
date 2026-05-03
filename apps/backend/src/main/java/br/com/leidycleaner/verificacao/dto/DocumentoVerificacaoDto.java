@@ -7,6 +7,7 @@ import br.com.leidycleaner.verificacao.entity.StatusVerificacao;
 public record DocumentoVerificacaoDto(
         Long id,
         Long usuarioId,
+        String usuarioNome,
         String tipoDocumento,
         String numeroDocumento,
         String documentoFrenteUrl,
@@ -16,6 +17,7 @@ public record DocumentoVerificacaoDto(
         StatusVerificacao statusVerificacao,
         String observacaoAnalise,
         Long analisadoPorUsuarioId,
+        String analisadoPorNome,
         OffsetDateTime analisadoEm,
         OffsetDateTime criadoEm
 ) {

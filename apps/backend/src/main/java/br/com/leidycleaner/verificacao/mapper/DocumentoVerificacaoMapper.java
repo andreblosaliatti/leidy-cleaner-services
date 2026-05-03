@@ -10,9 +10,13 @@ public final class DocumentoVerificacaoMapper {
 
     public static DocumentoVerificacaoDto paraDto(DocumentoVerificacao documento) {
         Long analisadoPorId = documento.getAnalisadoPorUsuario() == null ? null : documento.getAnalisadoPorUsuario().getId();
+        String analisadoPorNome = documento.getAnalisadoPorUsuario() == null
+                ? null
+                : documento.getAnalisadoPorUsuario().getNomeCompleto();
         return new DocumentoVerificacaoDto(
                 documento.getId(),
                 documento.getUsuario().getId(),
+                documento.getUsuario().getNomeCompleto(),
                 documento.getTipoDocumento(),
                 documento.getNumeroDocumento(),
                 documento.getDocumentoFrenteUrl(),
@@ -22,6 +26,7 @@ public final class DocumentoVerificacaoMapper {
                 documento.getStatusVerificacao(),
                 documento.getObservacaoAnalise(),
                 analisadoPorId,
+                analisadoPorNome,
                 documento.getAnalisadoEm(),
                 documento.getCriadoEm()
         );

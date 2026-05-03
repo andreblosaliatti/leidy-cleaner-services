@@ -13,9 +13,32 @@ import jakarta.persistence.LockModeType;
 
 public interface ConviteProfissionalRepository extends JpaRepository<ConviteProfissional, Long> {
 
-    List<ConviteProfissional> findByProfissionalUsuarioIdOrderByEnviadoEmDescIdDesc(Long usuarioId);
+    @Query("""
+            select convite
+            from ConviteProfissional convite
+            join fetch convite.solicitacao solicitacao
+            join fetch solicitacao.endereco
+            join fetch convite.profissional profissional
+            join profissional.usuario usuario
+            where usuario.id = :usuarioId
+            order by convite.enviadoEm desc, convite.id desc
+            """)
+    List<ConviteProfissional> findByProfissionalUsuarioIdOrderByEnviadoEmDescIdDesc(@Param("usuarioId") Long usuarioId);
 
-    Optional<ConviteProfissional> findByIdAndProfissionalUsuarioId(Long id, Long usuarioId);
+    @Query("""
+            select convite
+            from ConviteProfissional convite
+            join fetch convite.solicitacao solicitacao
+            join fetch solicitacao.endereco
+            join fetch convite.profissional profissional
+            join profissional.usuario usuario
+            where convite.id = :id
+              and usuario.id = :usuarioId
+            """)
+    Optional<ConviteProfissional> findByIdAndProfissionalUsuarioId(
+            @Param("id") Long id,
+            @Param("usuarioId") Long usuarioId
+    );
 
     @Query("""
             select convite.solicitacao.id

@@ -62,7 +62,7 @@ export function OcorrenciaForm({ atendimentos, isSubmitting = false, onSubmit }:
             const statusInfo = getStatusAtendimentoInfo(atendimento.status);
             return (
               <option key={atendimento.id} value={atendimento.id}>
-                #{atendimento.id} - {statusInfo.label} - {getTipoServicoAtendimentoLabel(atendimento.tipoServico)} -{' '}
+                Atendimento - {statusInfo.label} - {getTipoServicoAtendimentoLabel(atendimento.tipoServico)} -{' '}
                 {formatDateTime(atendimento.inicioPrevistoEm)} - {formatCurrency(atendimento.valorServico)}
               </option>
             );

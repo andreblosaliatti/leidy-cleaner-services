@@ -158,11 +158,10 @@ function VerificacaoInfoPanel({ verificacao }: { verificacao: DocumentoVerificac
       </div>
 
       <dl className="mt-6 grid gap-4 text-sm md:grid-cols-2 xl:grid-cols-4">
-        <DetailItem label="Usuário" value={`#${verificacao.usuarioId}`} />
+        <DetailItem label="Usuário" value={formatOptionalText(verificacao.usuarioNome)} />
         <DetailItem label="Tipo de documento" value={verificacao.tipoDocumento} />
         <DetailItem label="Número" value={verificacao.numeroDocumento} />
-        <DetailItem label="Criado em" value={formatAdminDateTime(verificacao.criadoEm)} />
-        <DetailItem label="Analisado por" value={formatOptionalText(verificacao.analisadoPorUsuarioId)} />
+        <DetailItem label="Analisado por" value={formatOptionalText(verificacao.analisadoPorNome ?? verificacao.analisadoPorUsuarioId)} />
         <DetailItem label="Analisado em" value={formatAdminDateTime(verificacao.analisadoEm)} />
         <DetailItem label="Observação" value={formatOptionalText(verificacao.observacaoAnalise)} />
       </dl>

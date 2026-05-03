@@ -1,7 +1,6 @@
 import { AprovacaoProfissionalForm } from './AprovacaoProfissionalForm';
 import {
   formatAdminDate,
-  formatAdminDateTime,
   formatRating,
   getStatusContaLabel,
   getTipoUsuarioLabel,
@@ -38,7 +37,6 @@ export function ProfissionalAdminCard({ isSubmitting, profissional, onSubmitApro
             <DetailItem label="Tipo" value={getTipoUsuarioLabel(profissional.tipoUsuario)} />
             <DetailItem label="Nota média" value={formatRating(profissional.notaMedia)} />
             <DetailItem label="Avaliações" value={String(profissional.totalAvaliacoes)} />
-            <DetailItem label="Atualizado em" value={formatAdminDateTime(profissional.atualizadoEm)} />
           </dl>
         </div>
       </div>
