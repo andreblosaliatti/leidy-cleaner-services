@@ -33,7 +33,7 @@ public class AtendimentoFaxinaController {
     }
 
     @GetMapping("/meus")
-    public ApiResponse<List<AtendimentoFaxinaDto>> listarMeus(@AuthenticationPrincipal UsuarioPrincipal principal) {
+    public ApiResponse<List<?>> listarMeus(@AuthenticationPrincipal UsuarioPrincipal principal) {
         return ApiResponse.success(atendimentoFaxinaService.listarMeus(principal.getId()));
     }
 
@@ -48,7 +48,7 @@ public class AtendimentoFaxinaController {
     }
 
     @GetMapping("/{id}")
-    public ApiResponse<AtendimentoFaxinaDto> buscar(
+    public ApiResponse<Object> buscar(
             @AuthenticationPrincipal UsuarioPrincipal principal,
             @PathVariable Long id
     ) {
@@ -64,7 +64,7 @@ public class AtendimentoFaxinaController {
     }
 
     @PostMapping("/{id}/iniciar")
-    public ApiResponse<AtendimentoFaxinaDto> iniciar(
+    public ApiResponse<Object> iniciar(
             @AuthenticationPrincipal UsuarioPrincipal principal,
             @PathVariable Long id,
             @Valid @RequestBody CheckpointServicoRequest request
@@ -73,7 +73,7 @@ public class AtendimentoFaxinaController {
     }
 
     @PostMapping("/{id}/finalizar")
-    public ApiResponse<AtendimentoFaxinaDto> finalizar(
+    public ApiResponse<Object> finalizar(
             @AuthenticationPrincipal UsuarioPrincipal principal,
             @PathVariable Long id,
             @Valid @RequestBody CheckpointServicoRequest request

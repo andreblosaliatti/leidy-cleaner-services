@@ -131,7 +131,7 @@ export function ProfissionalConviteDetalhePage() {
             <p className="text-xs font-black uppercase tracking-[0.16em] text-green-700">Profissional</p>
             <h1 className="mt-3 text-3xl font-black tracking-normal text-slate-900 md:text-4xl">Detalhe do convite</h1>
             <p className="mt-3 max-w-3xl text-base leading-7 text-slate-600">
-              Confira data, local, prazo e valor antes de aceitar ou recusar.
+              Confira data, local, prazo e o valor para você antes de aceitar ou recusar.
             </p>
           </div>
           <Link
@@ -201,7 +201,7 @@ function ConviteDetail({
             estado: convite.estado,
           })}
         />
-        <DetailItem label="Valor do serviço" value={formatCurrency(Number(convite.valorServico))} />
+        <DetailItem label="Valor para você" value={formatCurrency(Number(convite.valorEstimadoProfissional))} />
         <DetailItem label="Enviado em" value={formatDateTime(convite.enviadoEm)} />
         <DetailItem label="Expira em" value={formatDateTime(convite.expiraEm)} />
       </dl>

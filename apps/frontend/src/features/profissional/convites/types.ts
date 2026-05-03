@@ -34,7 +34,7 @@ export type ConviteProfissional = {
   bairro: string;
   cidade: string;
   estado: string;
-  valorServico: number;
+  valorEstimadoProfissional: number;
 };
 
 export type ConviteResposta = {

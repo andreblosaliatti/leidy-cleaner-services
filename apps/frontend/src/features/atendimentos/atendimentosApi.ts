@@ -1,15 +1,15 @@
 import { apiRequest } from '../../services/apiClient';
-import type { AtendimentoFaxina, CheckpointServico, CheckpointServicoRequest } from './types';
+import type { AtendimentoFaxinaProfissional, AtendimentoVisivel, CheckpointServico, CheckpointServicoRequest } from './types';
 
 export function listarMeusAtendimentos(token: string) {
-  return apiRequest<AtendimentoFaxina[]>('/atendimentos/meus', {
+  return apiRequest<AtendimentoVisivel[]>('/atendimentos/meus', {
     method: 'GET',
     token,
   });
 }
 
 export function buscarAtendimento(token: string, atendimentoId: number) {
-  return apiRequest<AtendimentoFaxina>(`/atendimentos/${atendimentoId}`, {
+  return apiRequest<AtendimentoVisivel>(`/atendimentos/${atendimentoId}`, {
     method: 'GET',
     token,
   });
@@ -23,7 +23,7 @@ export function listarCheckpointsAtendimento(token: string, atendimentoId: numbe
 }
 
 export function iniciarAtendimento(token: string, atendimentoId: number, payload: CheckpointServicoRequest) {
-  return apiRequest<AtendimentoFaxina>(`/atendimentos/${atendimentoId}/iniciar`, {
+  return apiRequest<AtendimentoFaxinaProfissional>(`/atendimentos/${atendimentoId}/iniciar`, {
     method: 'POST',
     token,
     body: JSON.stringify(payload),
@@ -31,7 +31,7 @@ export function iniciarAtendimento(token: string, atendimentoId: number, payload
 }
 
 export function finalizarAtendimento(token: string, atendimentoId: number, payload: CheckpointServicoRequest) {
-  return apiRequest<AtendimentoFaxina>(`/atendimentos/${atendimentoId}/finalizar`, {
+  return apiRequest<AtendimentoFaxinaProfissional>(`/atendimentos/${atendimentoId}/finalizar`, {
     method: 'POST',
     token,
     body: JSON.stringify(payload),

@@ -11,15 +11,22 @@ import {
   getAtendimentoRegiaoLabel,
 } from './atendimentoDisplay';
 import { AtendimentoStatusBadge } from './AtendimentoStatusBadge';
-import type { AtendimentoFaxina } from './types';
+import type { AtendimentoVisivel } from './types';
 
 type AtendimentoInfoPanelProps = {
-  atendimento: AtendimentoFaxina;
-  financialView?: 'service-only' | 'admin';
+  atendimento: AtendimentoVisivel;
+  financialView?: 'service-only' | 'professional' | 'admin';
 };
 
 export function AtendimentoInfoPanel({ atendimento, financialView = 'service-only' }: AtendimentoInfoPanelProps) {
   const showInternalFinancials = financialView === 'admin';
+  const primaryFinancialLabel = financialView === 'professional' ? 'Você recebe' : 'Valor do serviço';
+  const primaryFinancialValue =
+    financialView === 'professional'
+      ? atendimento.valorEstimadoProfissional
+      : 'valorServico' in atendimento
+        ? atendimento.valorServico
+        : null;
 
   return (
     <section className="rounded-lg border border-slate-100 bg-white p-5 shadow-sm md:p-6">
@@ -31,7 +38,10 @@ export function AtendimentoInfoPanel({ atendimento, financialView = 'service-onl
       <dl className="mt-6 grid gap-4 text-sm md:grid-cols-2 xl:grid-cols-3">
         <DetailItem label="Tipo" value={getTipoServicoAtendimentoLabel(atendimento.tipoServico)} />
         <DetailItem label="Início previsto" value={formatDateTime(atendimento.inicioPrevistoEm)} />
-        <DetailItem label="Valor do serviço" value={formatCurrency(atendimento.valorServico)} />
+        <DetailItem
+          label={primaryFinancialLabel}
+          value={primaryFinancialValue == null ? 'Valor indisponível' : formatCurrency(primaryFinancialValue)}
+        />
         <DetailItem label="Cliente" value={getAtendimentoClienteLabel(atendimento)} />
         <DetailItem label="Profissional" value={getAtendimentoProfissionalLabel(atendimento)} />
         <DetailItem label="Endereço" value={getAtendimentoEnderecoLabel(atendimento)} />
@@ -39,7 +49,7 @@ export function AtendimentoInfoPanel({ atendimento, financialView = 'service-onl
         <DetailItem label="Relação com pagamento" value={getPaymentRelationLabel(atendimento.status)} />
         <DetailItem label="Início real" value={formatDateTime(atendimento.inicioRealEm)} />
         <DetailItem label="Fim real" value={formatDateTime(atendimento.fimRealEm)} />
-        {showInternalFinancials && (
+        {showInternalFinancials && 'percentualComissaoAgencia' in atendimento && (
           <>
             <DetailItem label="Solicitação" value={`ID ${atendimento.solicitacaoId}`} />
             <DetailItem label="Comissão agência" value={`${Number(atendimento.percentualComissaoAgencia).toLocaleString('pt-BR')}%`} />

@@ -170,7 +170,7 @@ export function ProfissionalAtendimentoDetalhePage() {
         />
       )}
 
-      {atendimento && <AtendimentoInfoPanel atendimento={atendimento} />}
+      {atendimento && <AtendimentoInfoPanel atendimento={atendimento} financialView="professional" />}
 
       {atendimento && (
         <section className="grid gap-4">

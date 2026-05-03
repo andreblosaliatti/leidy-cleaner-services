@@ -1,6 +1,7 @@
 package br.com.leidycleaner.atendimentos.mapper;
 
 import br.com.leidycleaner.atendimentos.dto.AtendimentoFaxinaDto;
+import br.com.leidycleaner.atendimentos.dto.AtendimentoFaxinaProfissionalDto;
 import br.com.leidycleaner.atendimentos.dto.CheckpointServicoDto;
 import br.com.leidycleaner.atendimentos.entity.AtendimentoFaxina;
 import br.com.leidycleaner.atendimentos.entity.CheckpointServico;
@@ -25,6 +26,28 @@ public final class AtendimentoFaxinaMapper {
                 atendimento.getSolicitacao().getTipoServico(),
                 atendimento.getValorServico(),
                 atendimento.getPercentualComissaoAgencia(),
+                atendimento.getValorEstimadoProfissional(),
+                atendimento.getInicioPrevistoEm(),
+                atendimento.getInicioRealEm(),
+                atendimento.getFimRealEm(),
+                atendimento.getCriadoEm(),
+                atendimento.getAtualizadoEm()
+        );
+    }
+
+    public static AtendimentoFaxinaProfissionalDto paraProfissionalDto(AtendimentoFaxina atendimento) {
+        return new AtendimentoFaxinaProfissionalDto(
+                atendimento.getId(),
+                atendimento.getSolicitacao().getId(),
+                atendimento.getCliente().getId(),
+                atendimento.getProfissional().getId(),
+                atendimento.getCliente().getUsuario().getNomeCompleto(),
+                atendimento.getProfissional().getNomeExibicao(),
+                formatarEndereco(atendimento),
+                atendimento.getSolicitacao().getEndereco().getBairro(),
+                atendimento.getSolicitacao().getRegiao().getNome(),
+                atendimento.getStatus(),
+                atendimento.getSolicitacao().getTipoServico(),
                 atendimento.getValorEstimadoProfissional(),
                 atendimento.getInicioPrevistoEm(),
                 atendimento.getInicioRealEm(),

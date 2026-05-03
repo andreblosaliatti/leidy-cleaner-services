@@ -25,7 +25,7 @@ public final class ConviteProfissionalMapper {
                 endereco.getBairro(),
                 endereco.getCidade(),
                 endereco.getEstado(),
-                solicitacao.getValorServico()
+                solicitacao.getValorEstimadoProfissional()
         );
     }
 }

@@ -811,6 +811,9 @@ class SolicitacaoFaxinaIntegrationTest {
                 .andExpect(jsonPath("$.data[0].status").value("ENVIADO"))
                 .andExpect(jsonPath("$.data[0].tipoServico").value("FAXINA_RESIDENCIAL"))
                 .andExpect(jsonPath("$.data[0].bairro").value("Centro Histórico"))
+                .andExpect(jsonPath("$.data[0].valorEstimadoProfissional").value(144.00))
+                .andExpect(jsonPath("$.data[0].valorServico").doesNotExist())
+                .andExpect(jsonPath("$.data[0].percentualComissaoAgencia").doesNotExist())
                 .andExpect(jsonPath("$.data[0].expiraEm").exists());
 
         mockMvc.perform(get("/api/v1/solicitacoes/{id}", solicitacaoId)
@@ -861,7 +864,10 @@ class SolicitacaoFaxinaIntegrationTest {
                 .andExpect(jsonPath("$.data.conviteId").value(conviteId))
                 .andExpect(jsonPath("$.data.solicitacaoId").value(solicitacaoId))
                 .andExpect(jsonPath("$.data.status").value("ENVIADO"))
-                .andExpect(jsonPath("$.data.dataHoraDesejada").exists());
+                .andExpect(jsonPath("$.data.dataHoraDesejada").exists())
+                .andExpect(jsonPath("$.data.valorEstimadoProfissional").value(144.00))
+                .andExpect(jsonPath("$.data.valorServico").doesNotExist())
+                .andExpect(jsonPath("$.data.percentualComissaoAgencia").doesNotExist());
 
         mockMvc.perform(get("/api/v1/convites/{id}", conviteId)
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + outra.tokenProfissional()))
@@ -1417,6 +1423,9 @@ class SolicitacaoFaxinaIntegrationTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.id").value(atendimento.atendimentoId()))
                 .andExpect(jsonPath("$.data.status").value("EM_EXECUCAO"))
+                .andExpect(jsonPath("$.data.valorEstimadoProfissional").value(144.00))
+                .andExpect(jsonPath("$.data.valorServico").doesNotExist())
+                .andExpect(jsonPath("$.data.percentualComissaoAgencia").doesNotExist())
                 .andExpect(jsonPath("$.data.inicioRealEm").isNotEmpty());
 
         assertThat(checkpointServicoRepository.findByAtendimentoIdOrderByRegistradoEmAscIdAsc(atendimento.atendimentoId()))
@@ -1497,6 +1506,9 @@ class SolicitacaoFaxinaIntegrationTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.id").value(atendimento.atendimentoId()))
                 .andExpect(jsonPath("$.data.status").value("FINALIZADO"))
+                .andExpect(jsonPath("$.data.valorEstimadoProfissional").value(144.00))
+                .andExpect(jsonPath("$.data.valorServico").doesNotExist())
+                .andExpect(jsonPath("$.data.percentualComissaoAgencia").doesNotExist())
                 .andExpect(jsonPath("$.data.fimRealEm").isNotEmpty());
 
         assertThat(checkpointServicoRepository.findByAtendimentoIdOrderByRegistradoEmAscIdAsc(atendimento.atendimentoId()))
@@ -1596,7 +1608,10 @@ class SolicitacaoFaxinaIntegrationTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.length()").value(1))
                 .andExpect(jsonPath("$.data[0].id").value(atendimento.atendimentoId()))
-                .andExpect(jsonPath("$.data[0].status").value("CONFIRMADO"));
+                .andExpect(jsonPath("$.data[0].status").value("CONFIRMADO"))
+                .andExpect(jsonPath("$.data[0].valorEstimadoProfissional").value(144.00))
+                .andExpect(jsonPath("$.data[0].valorServico").doesNotExist())
+                .andExpect(jsonPath("$.data[0].percentualComissaoAgencia").doesNotExist());
 
         mockMvc.perform(get("/api/v1/atendimentos/{id}", atendimento.atendimentoId())
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + atendimento.tokenProfissional()))
@@ -1604,7 +1619,10 @@ class SolicitacaoFaxinaIntegrationTest {
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.id").value(atendimento.atendimentoId()))
-                .andExpect(jsonPath("$.data.status").value("CONFIRMADO"));
+                .andExpect(jsonPath("$.data.status").value("CONFIRMADO"))
+                .andExpect(jsonPath("$.data.valorEstimadoProfissional").value(144.00))
+                .andExpect(jsonPath("$.data.valorServico").doesNotExist())
+                .andExpect(jsonPath("$.data.percentualComissaoAgencia").doesNotExist());
     }
 
     @Test

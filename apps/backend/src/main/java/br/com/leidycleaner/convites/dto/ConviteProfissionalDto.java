@@ -18,6 +18,6 @@ public record ConviteProfissionalDto(
         String bairro,
         String cidade,
         String estado,
-        BigDecimal valorServico
+        BigDecimal valorEstimadoProfissional
 ) {
 }

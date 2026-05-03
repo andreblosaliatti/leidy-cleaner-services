@@ -3,15 +3,17 @@ import { Link } from 'react-router-dom';
 import { formatCurrency, formatDateTime, getTipoServicoAtendimentoLabel } from './atendimentoLabels';
 import { getAtendimentoRegiaoLabel } from './atendimentoDisplay';
 import { AtendimentoStatusBadge } from './AtendimentoStatusBadge';
-import type { AtendimentoFaxina, AtendimentosProfile } from './types';
+import type { AtendimentoVisivel, AtendimentosProfile } from './types';
 
 type AtendimentoCardProps = {
-  atendimento: AtendimentoFaxina;
+  atendimento: AtendimentoVisivel;
   profile: AtendimentosProfile;
 };
 
 export function AtendimentoCard({ atendimento, profile }: AtendimentoCardProps) {
   const basePath = profile === 'CLIENTE' ? '/app/cliente/atendimentos' : '/app/profissional/atendimentos';
+  const amountLabel = profile === 'PROFISSIONAL' ? 'Você recebe' : 'Valor do serviço';
+  const amount = profile === 'PROFISSIONAL' ? atendimento.valorEstimadoProfissional : 'valorServico' in atendimento ? atendimento.valorServico : null;
 
   return (
     <article className="rounded-lg border border-slate-100 bg-white p-5 shadow-sm transition hover:border-green-100">
@@ -23,7 +25,12 @@ export function AtendimentoCard({ atendimento, profile }: AtendimentoCardProps) 
           </div>
           <p className="mt-2 text-sm font-semibold text-slate-700">{getTipoServicoAtendimentoLabel(atendimento.tipoServico)}</p>
           <p className="mt-2 text-sm leading-6 text-slate-600">Previsto para {formatDateTime(atendimento.inicioPrevistoEm)}</p>
-          <p className="mt-1 text-sm font-semibold text-slate-700">{formatCurrency(atendimento.valorServico)}</p>
+          <div className="mt-2">
+            <p className="text-xs font-black uppercase tracking-[0.12em] text-green-700">{amountLabel}</p>
+            <p className="mt-1 text-sm font-semibold text-slate-700">
+              {amount == null ? 'Valor indisponível' : formatCurrency(amount)}
+            </p>
+          </div>
           <p className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
             {getAtendimentoRegiaoLabel(atendimento)}
           </p>

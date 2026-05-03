@@ -41,10 +41,11 @@ public class AtendimentoFaxinaService {
     }
 
     @Transactional(readOnly = true)
-    public List<AtendimentoFaxinaDto> listarMeus(Long usuarioId) {
+    public List<?> listarMeus(Long usuarioId) {
+        Usuario usuario = buscarUsuario(usuarioId);
         return atendimentoFaxinaRepository.findRelacionadosByUsuarioId(usuarioId)
                 .stream()
-                .map(AtendimentoFaxinaMapper::paraDto)
+                .map(atendimento -> paraDtoPorPerfil(atendimento, usuario))
                 .toList();
     }
 
@@ -61,13 +62,14 @@ public class AtendimentoFaxinaService {
     }
 
     @Transactional(readOnly = true)
-    public AtendimentoFaxinaDto buscarRelacionado(Long usuarioId, Long atendimentoId) {
-        return AtendimentoFaxinaMapper.paraDto(buscarAtendimentoVisivel(usuarioId, atendimentoId));
+    public Object buscarRelacionado(Long usuarioId, Long atendimentoId) {
+        Usuario usuario = buscarUsuario(usuarioId);
+        return paraDtoPorPerfil(buscarAtendimentoVisivel(usuario, atendimentoId), usuario);
     }
 
     @Transactional(readOnly = true)
     public List<CheckpointServicoDto> listarCheckpoints(Long usuarioId, Long atendimentoId) {
-        AtendimentoFaxina atendimento = buscarAtendimentoVisivel(usuarioId, atendimentoId);
+        AtendimentoFaxina atendimento = buscarAtendimentoVisivel(buscarUsuario(usuarioId), atendimentoId);
         return checkpointServicoRepository.findByAtendimentoIdOrderByRegistradoEmAscIdAsc(atendimento.getId())
                 .stream()
                 .map(AtendimentoFaxinaMapper::paraDto)
@@ -75,7 +77,7 @@ public class AtendimentoFaxinaService {
     }
 
     @Transactional
-    public AtendimentoFaxinaDto iniciar(Long usuarioId, Long atendimentoId, CheckpointServicoRequest request) {
+    public Object iniciar(Long usuarioId, Long atendimentoId, CheckpointServicoRequest request) {
         AtendimentoFaxina atendimento = buscarAtendimentoParaExecucao(usuarioId, atendimentoId);
         validarPodeIniciar(atendimento);
 
@@ -83,11 +85,11 @@ public class AtendimentoFaxinaService {
         atendimento.iniciarServico(agora);
         registrarCheckpoint(atendimento, usuarioId, TipoCheckpointServico.INICIO, request, agora);
 
-        return AtendimentoFaxinaMapper.paraDto(atendimento);
+        return AtendimentoFaxinaMapper.paraProfissionalDto(atendimento);
     }
 
     @Transactional
-    public AtendimentoFaxinaDto finalizar(Long usuarioId, Long atendimentoId, CheckpointServicoRequest request) {
+    public Object finalizar(Long usuarioId, Long atendimentoId, CheckpointServicoRequest request) {
         AtendimentoFaxina atendimento = buscarAtendimentoParaExecucao(usuarioId, atendimentoId);
         validarPodeFinalizar(atendimento);
 
@@ -95,7 +97,7 @@ public class AtendimentoFaxinaService {
         atendimento.finalizarServico(agora);
         registrarCheckpoint(atendimento, usuarioId, TipoCheckpointServico.FIM, request, agora);
 
-        return AtendimentoFaxinaMapper.paraDto(atendimento);
+        return AtendimentoFaxinaMapper.paraProfissionalDto(atendimento);
     }
 
     private AtendimentoFaxina buscarAtendimentoRelacionado(Long usuarioId, Long atendimentoId) {
@@ -107,8 +109,8 @@ public class AtendimentoFaxinaService {
                 ));
     }
 
-    private AtendimentoFaxina buscarAtendimentoVisivel(Long usuarioId, Long atendimentoId) {
-        if (isAdmin(usuarioId)) {
+    private AtendimentoFaxina buscarAtendimentoVisivel(Usuario usuario, Long atendimentoId) {
+        if (isAdmin(usuario)) {
             return atendimentoFaxinaRepository.findByIdWithResumo(atendimentoId)
                     .orElseThrow(() -> new BusinessException(
                             "ATENDIMENTO_NOT_FOUND",
@@ -117,7 +119,7 @@ public class AtendimentoFaxinaService {
                     ));
         }
 
-        return buscarAtendimentoRelacionado(usuarioId, atendimentoId);
+        return buscarAtendimentoRelacionado(usuario.getId(), atendimentoId);
     }
 
     private AtendimentoFaxina buscarAtendimentoParaExecucao(Long usuarioId, Long atendimentoId) {
@@ -188,9 +190,20 @@ public class AtendimentoFaxinaService {
         ));
     }
 
-    private boolean isAdmin(Long usuarioId) {
+    private Usuario buscarUsuario(Long usuarioId) {
         return usuarioRepository.findById(usuarioId)
-                .map(usuario -> usuario.getTipoUsuario() == TipoUsuario.ADMIN)
-                .orElse(false);
+                .orElseThrow(() -> new BusinessException("USUARIO_NOT_FOUND", "Usuario nao encontrado", HttpStatus.NOT_FOUND));
+    }
+
+    private Object paraDtoPorPerfil(AtendimentoFaxina atendimento, Usuario usuario) {
+        if (usuario.getTipoUsuario() == TipoUsuario.PROFISSIONAL) {
+            return AtendimentoFaxinaMapper.paraProfissionalDto(atendimento);
+        }
+
+        return AtendimentoFaxinaMapper.paraDto(atendimento);
+    }
+
+    private boolean isAdmin(Usuario usuario) {
+        return usuario.getTipoUsuario() == TipoUsuario.ADMIN;
     }
 }

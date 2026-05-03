@@ -30,7 +30,12 @@ export function ConviteCard({ convite }: { convite: ConviteProfissional }) {
               estado: convite.estado,
             })}
           </p>
-          <p className="mt-1 text-sm font-semibold text-slate-700">{formatCurrency(Number(convite.valorServico))}</p>
+          <div className="mt-2">
+            <p className="text-xs font-black uppercase tracking-[0.12em] text-green-700">Você recebe</p>
+            <p className="mt-1 text-sm font-semibold text-slate-700">
+              {formatCurrency(Number(convite.valorEstimadoProfissional))}
+            </p>
+          </div>
           <p className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
             Expira em {formatDateTime(convite.expiraEm)}
           </p>

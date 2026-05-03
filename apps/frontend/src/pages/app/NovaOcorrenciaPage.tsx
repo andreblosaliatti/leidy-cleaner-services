@@ -24,7 +24,7 @@ type Feedback = {
 };
 
 export function NovaOcorrenciaPage() {
-  const { token, logout } = useAuth();
+  const { token, user, logout } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [feedback, setFeedback] = useState<Feedback | null>(null);
@@ -124,7 +124,12 @@ export function NovaOcorrenciaPage() {
       )}
 
       {atendimentosQuery.isSuccess && (
-        <OcorrenciaForm atendimentos={atendimentos} isSubmitting={createMutation.isPending} onSubmit={handleSubmit} />
+        <OcorrenciaForm
+          atendimentos={atendimentos}
+          isSubmitting={createMutation.isPending}
+          profile={user?.tipoUsuario === 'PROFISSIONAL' ? 'PROFISSIONAL' : 'CLIENTE'}
+          onSubmit={handleSubmit}
+        />
       )}
     </div>
   );

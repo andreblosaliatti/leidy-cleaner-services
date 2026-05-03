@@ -4,7 +4,7 @@ import { z } from 'zod';
 
 import { TextArea } from '../../components/ui/FormField';
 import { formatCurrency, formatDateTime, getStatusAtendimentoInfo, getTipoServicoAtendimentoLabel } from '../atendimentos/atendimentoLabels';
-import type { AtendimentoFaxina } from '../atendimentos/types';
+import type { AtendimentoVisivel, AtendimentosProfile } from '../atendimentos/types';
 import { tipoOcorrenciaOptions } from './ocorrenciaLabels';
 import type { CriarOcorrenciaRequest } from './types';
 import { tipoOcorrenciaValues } from './types';
@@ -20,12 +20,13 @@ const ocorrenciaSchema = z.object({
 type OcorrenciaFormValues = z.infer<typeof ocorrenciaSchema>;
 
 type OcorrenciaFormProps = {
-  atendimentos: AtendimentoFaxina[];
+  atendimentos: AtendimentoVisivel[];
+  profile?: AtendimentosProfile;
   isSubmitting?: boolean;
   onSubmit: (payload: CriarOcorrenciaRequest) => void | Promise<void>;
 };
 
-export function OcorrenciaForm({ atendimentos, isSubmitting = false, onSubmit }: OcorrenciaFormProps) {
+export function OcorrenciaForm({ atendimentos, profile = 'CLIENTE', isSubmitting = false, onSubmit }: OcorrenciaFormProps) {
   const {
     register,
     handleSubmit,
@@ -60,10 +61,18 @@ export function OcorrenciaForm({ atendimentos, isSubmitting = false, onSubmit }:
           <option value={0}>Selecione um atendimento</option>
           {atendimentos.map((atendimento) => {
             const statusInfo = getStatusAtendimentoInfo(atendimento.status);
+            const amountLabel = profile === 'PROFISSIONAL' ? 'Você recebe' : 'Valor';
+            const amount =
+              profile === 'PROFISSIONAL'
+                ? atendimento.valorEstimadoProfissional
+                : 'valorServico' in atendimento
+                  ? atendimento.valorServico
+                  : null;
             return (
               <option key={atendimento.id} value={atendimento.id}>
                 Atendimento - {statusInfo.label} - {getTipoServicoAtendimentoLabel(atendimento.tipoServico)} -{' '}
-                {formatDateTime(atendimento.inicioPrevistoEm)} - {formatCurrency(atendimento.valorServico)}
+                {formatDateTime(atendimento.inicioPrevistoEm)} - {amountLabel}:{' '}
+                {amount == null ? 'valor indisponível' : formatCurrency(amount)}
               </option>
             );
           })}

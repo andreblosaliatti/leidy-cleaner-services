@@ -14,7 +14,7 @@ export type TipoServicoAtendimento =
 
 export type TipoCheckpointServico = 'INICIO' | 'FIM';
 
-export type AtendimentoFaxina = {
+export type AtendimentoBase = {
   id: number;
   solicitacaoId: number;
   clienteId: number;
@@ -26,15 +26,24 @@ export type AtendimentoFaxina = {
   regiaoNome?: string | null;
   status: StatusAtendimento;
   tipoServico: TipoServicoAtendimento;
-  valorServico: number;
-  percentualComissaoAgencia: number;
-  valorEstimadoProfissional: number;
   inicioPrevistoEm: string;
   inicioRealEm: string | null;
   fimRealEm: string | null;
   criadoEm: string;
   atualizadoEm: string;
 };
+
+export type AtendimentoFaxina = AtendimentoBase & {
+  valorServico: number;
+  percentualComissaoAgencia: number;
+  valorEstimadoProfissional: number;
+};
+
+export type AtendimentoFaxinaProfissional = AtendimentoBase & {
+  valorEstimadoProfissional: number;
+};
+
+export type AtendimentoVisivel = AtendimentoFaxina | AtendimentoFaxinaProfissional;
 
 export type CheckpointServico = {
   id: number;
