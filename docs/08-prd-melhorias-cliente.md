@@ -228,12 +228,14 @@ No painel admin, exibir um bloco ou card com:
 
 ### Critérios de aceite
 
-- [ ] Admin visualiza simulação para 4h, 6h e 8h.
-- [ ] A tela deixa claro que são valores simulados.
-- [ ] Nenhum pagamento é criado.
-- [ ] Nenhum atendimento é criado.
-- [ ] Nenhum status de solicitação é alterado.
-- [ ] Fórmula de cálculo fica centralizada em helper/service claro.
+- [x] Admin visualiza simulação para 4h, 6h e 8h.
+- [x] A tela deixa claro que são valores simulados.
+- [x] Nenhum pagamento é criado.
+- [x] Nenhum atendimento é criado.
+- [x] Nenhum status de solicitação é alterado.
+- [x] Fórmula de cálculo fica centralizada em helper/service claro.
+
+> Nota: Implementado em 2026-05-04. Adicionado bloco de referência no painel admin de preços com simulação de 4h/6h/8h baseada na configuração de preço ativa; apenas visual, sem cobrança ou reserva.
 
 ---
 

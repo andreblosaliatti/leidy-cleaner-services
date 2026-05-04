@@ -36,7 +36,7 @@ type Feedback = {
   details?: string[];
 };
 
-const previewDurations = [2, 4, 6];
+const previewDurations = [4, 6, 8];
 
 export function AdminConfiguracaoPrecosPage() {
   const { token, logout } = useAuth();
@@ -208,7 +208,10 @@ export function AdminConfiguracaoPrecosPage() {
         </form>
 
         <div className="grid min-w-0 gap-3 rounded-lg border border-blue-100 bg-blue-50 p-4 text-sm leading-6 text-blue-900">
-          <p className="font-black">Prévia operacional</p>
+          <p className="font-black">Valores de referência</p>
+          <p className="text-xs leading-5 text-blue-700">
+            Simulação administrativa apenas. Não são cobranças, nem reservas de profissional, nem criam atendimentos.
+          </p>
           <div className="grid min-w-0 gap-3 md:grid-cols-3">
             {previewDurations.map((duration) => (
               <PreviewCard
