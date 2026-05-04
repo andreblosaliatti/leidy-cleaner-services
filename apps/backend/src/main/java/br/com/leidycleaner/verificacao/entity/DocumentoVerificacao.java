@@ -34,16 +34,16 @@ public class DocumentoVerificacao {
     @Column(name = "numero_documento", nullable = false, length = 80)
     private String numeroDocumento;
 
-    @Column(name = "documento_frente_url", length = 500)
+    @Column(name = "documento_frente_url")
     private String documentoFrenteUrl;
 
-    @Column(name = "documento_verso_url", length = 500)
+    @Column(name = "documento_verso_url")
     private String documentoVersoUrl;
 
-    @Column(name = "selfie_url", length = 500)
+    @Column(name = "selfie_url")
     private String selfieUrl;
 
-    @Column(name = "comprovante_residencia_url", length = 500)
+    @Column(name = "comprovante_residencia_url")
     private String comprovanteResidenciaUrl;
 
     @Enumerated(EnumType.STRING)

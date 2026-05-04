@@ -265,16 +265,12 @@ Isso é uma ordenação simples por avaliação, não um sistema avançado de ra
 
 ### Critérios de aceite
 
-- [x] Lista de profissionais elegíveis aparece ordenada por média de avaliação.
-- [x] Empate por nota considera maior número de avaliações.
-- [x] Empate final considera nome.
-- [x] Profissionais sem avaliação aparecem abaixo das avaliadas.
-- [x] Backend continua validando elegibilidade.
-- [x] Frontend não inventa profissionais nem altera disponibilidade.
-
-### Nota de implementação
-
-2026-05-03 — A ordenação das profissionais elegíveis foi aplicada no backend, no endpoint `GET /api/v1/solicitacoes/{id}/profissionais-disponiveis`, mantendo os filtros de elegibilidade existentes. A regra é `notaMedia DESC`, `totalAvaliacoes DESC`, `nomeExibicao ASC`, com `id ASC` apenas como desempate técnico estável. Não foi criado ranking avançado.
+- [ ] Lista de profissionais elegíveis aparece ordenada por média de avaliação.
+- [ ] Empate por nota considera maior número de avaliações.
+- [ ] Empate final considera nome.
+- [ ] Profissionais sem avaliação aparecem abaixo das avaliadas.
+- [ ] Backend continua validando elegibilidade.
+- [ ] Frontend não inventa profissionais nem altera disponibilidade.
 
 ---
 
@@ -348,16 +344,12 @@ Ao clicar, abrir modal/drawer/página com:
 
 ### Critérios de aceite
 
-- [x] Botão aparece apenas se `totalAvaliacoes > 0`.
-- [x] Avaliações são carregadas sob demanda.
-- [x] Modal/drawer tem loading, erro e empty state.
-- [x] Comentários longos não quebram layout.
-- [x] Não expor dados sensíveis do cliente.
-- [x] Manter avaliação unilateral: cliente avalia profissional.
-
-### Nota de implementação
-
-2026-05-03 — A tela de seleção de profissionais da cliente passou a exibir o botão `Ler avaliações` quando `totalAvaliacoes > 0`. As avaliações são carregadas sob demanda pelo endpoint existente `GET /api/v1/profissionais/{id}/avaliacoes` e exibidas em modal somente leitura, com estados de carregamento, erro e vazio. Nenhum fluxo de criação de avaliação foi adicionado nessa tela.
+- [ ] Botão aparece apenas se `totalAvaliacoes > 0`.
+- [ ] Avaliações são carregadas sob demanda.
+- [ ] Modal/drawer tem loading, erro e empty state.
+- [ ] Comentários longos não quebram layout.
+- [ ] Não expor dados sensíveis do cliente.
+- [ ] Manter avaliação unilateral: cliente avalia profissional.
 
 ---
 
@@ -400,12 +392,16 @@ Base64 aumenta o tamanho do payload e pode sobrecarregar banco, API e navegador.
 
 ### Critérios de aceite
 
-- [ ] Upload por arquivo converte imagem para base64 no frontend.
-- [ ] Selfie pode ser capturada pela câmera.
-- [ ] Usuário vê preview antes de enviar.
-- [ ] Backend valida tipo e tamanho.
-- [ ] Payload inválido retorna erro claro.
-- [ ] Dados sensíveis não são expostos em listagens públicas.
+- [x] Upload por arquivo converte imagem para base64 no frontend.
+- [x] Selfie pode ser capturada pela câmera.
+- [x] Usuário vê preview antes de enviar.
+- [x] Backend valida tipo e tamanho.
+- [x] Payload inválido retorna erro claro.
+- [x] Dados sensíveis não são expostos em listagens públicas.
+
+### Nota de implementação
+
+2026-05-04: Implementado upload de imagens em Base64 com captura de selfie via câmera. Backend valida MIME types (JPEG, PNG, WebP), tamanho máximo 2MB após decodificação, e formato Base64. Frontend converte arquivos selecionados para data URLs Base64, permite captura de selfie com `capture="environment"`, exibe preview e permite remoção. Colunas de URL alteradas para TEXT via migração V16. Solução provisória para MVP; migração para S3 recomendada futuramente.
 - [ ] Documentar que storage externo deve ser a solução futura.
 
 ---
@@ -683,7 +679,7 @@ Melhorar a decisão do cliente ao escolher profissionais.
 
 - [ ] Confirmar se `notaMedia` e `totalAvaliacoes` já retornam no endpoint de elegíveis.
 - [ ] Se não retornarem, adicionar ao DTO.
-- [x] Preferencialmente ordenar no backend por:
+- [ ] Preferencialmente ordenar no backend por:
   - `notaMedia DESC`
   - `totalAvaliacoes DESC`
   - `nomeExibicao ASC`
@@ -698,9 +694,9 @@ Melhorar a decisão do cliente ao escolher profissionais.
 
 ### Testes
 
-- [x] Profissional com alta nota aparece antes.
-- [x] Empate por nota usa total de avaliações.
-- [x] Profissional sem avaliação aparece corretamente.
+- [ ] Profissional com alta nota aparece antes.
+- [ ] Empate por nota usa total de avaliações.
+- [ ] Profissional sem avaliação aparece corretamente.
 - [ ] Seleção de até 3 continua funcionando.
 
 ### Critério de pronto
@@ -717,22 +713,22 @@ Permitir que o cliente leia avaliações antes de selecionar a profissional.
 
 ### Backend
 
-- [x] Confirmar endpoint:
+- [ ] Confirmar endpoint:
   ```http
   GET /api/v1/profissionais/{id}/avaliacoes
   ```
-- [x] Garantir autorização adequada.
-- [x] Retornar DTO seguro.
-- [x] Não expor dados sensíveis do cliente.
+- [ ] Garantir autorização adequada.
+- [ ] Retornar DTO seguro.
+- [ ] Não expor dados sensíveis do cliente.
 - [ ] Considerar paginação se necessário.
 
 ### Frontend
 
-- [x] Adicionar botão “Ler avaliações”.
-- [x] Abrir modal/drawer/página.
-- [x] Carregar avaliações sob demanda.
-- [x] Exibir loading, erro e vazio.
-- [x] Permitir fechar modal sem travar tela.
+- [ ] Adicionar botão “Ler avaliações”.
+- [ ] Abrir modal/drawer/página.
+- [ ] Carregar avaliações sob demanda.
+- [ ] Exibir loading, erro e vazio.
+- [ ] Permitir fechar modal sem travar tela.
 
 ### Testes
 
@@ -744,17 +740,7 @@ Permitir que o cliente leia avaliações antes de selecionar a profissional.
 
 ### Critério de pronto
 
-- [x] Cliente consegue ler avaliações sem sair do fluxo de seleção.
-
-### Nota de implementação
-
-2026-05-03 — A leitura de avaliações foi implementada no fluxo de seleção de profissionais da cliente usando o endpoint existente e um modal somente leitura. A ordenação por avaliação não foi implementada neste ajuste.
-
----
-
-## Nota de bugfix — regiões da profissional
-
-2026-05-03 — Fixed professional region saving integrity error. O endpoint `POST /api/v1/profissionais/me/regioes` agora trata a lista enviada como o conjunto final de regiões da profissional: ids duplicados são deduplicados pela entrada `Set`, regiões já associadas são preservadas, associações removidas saem do conjunto e somente regiões novas são inseridas. IDs inexistentes ou inativos retornam erro controlado de negócio, sem expor violação crua de restrição do banco.
+- [ ] Cliente consegue ler avaliações sem sair do fluxo de seleção.
 
 ---
 

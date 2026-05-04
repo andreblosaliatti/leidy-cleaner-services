@@ -12,16 +12,16 @@ public record DocumentoVerificacaoRequest(
         @Size(max = 80, message = "numeroDocumento deve ter no maximo 80 caracteres")
         String numeroDocumento,
 
-        @Size(max = 500, message = "documentoFrenteUrl deve ter no maximo 500 caracteres")
+        @Size(max = 4000000, message = "documentoFrenteUrl deve ter no maximo 4MB")
         String documentoFrenteUrl,
 
-        @Size(max = 500, message = "documentoVersoUrl deve ter no maximo 500 caracteres")
+        @Size(max = 4000000, message = "documentoVersoUrl deve ter no maximo 4MB")
         String documentoVersoUrl,
 
-        @Size(max = 500, message = "selfieUrl deve ter no maximo 500 caracteres")
+        @Size(max = 4000000, message = "selfieUrl deve ter no maximo 4MB")
         String selfieUrl,
 
-        @Size(max = 500, message = "comprovanteResidenciaUrl deve ter no maximo 500 caracteres")
+        @Size(max = 4000000, message = "comprovanteResidenciaUrl deve ter no maximo 4MB")
         String comprovanteResidenciaUrl
 ) {
 }

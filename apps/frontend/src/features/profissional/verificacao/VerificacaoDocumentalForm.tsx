@@ -1,29 +1,15 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
+import { useState } from 'react';
 import { z } from 'zod';
 
 import { TextInput } from '../../../components/ui/FormField';
+import { ImageUploadField } from '../../../components/ui/ImageUploadField';
 import type { DocumentoVerificacaoRequest } from '../perfil/types';
-
-const optionalUrlMetadata = z.preprocess(
-  (value) => {
-    if (typeof value !== 'string') {
-      return value;
-    }
-
-    const trimmed = value.trim();
-    return trimmed.length > 0 ? trimmed : undefined;
-  },
-  z.string().max(500, 'Use no máximo 500 caracteres.').optional(),
-);
 
 const verificacaoSchema = z.object({
   tipoDocumento: z.string().trim().min(1, 'Informe o tipo de documento.').max(40, 'Use no máximo 40 caracteres.'),
   numeroDocumento: z.string().trim().min(1, 'Informe o número do documento.').max(80, 'Use no máximo 80 caracteres.'),
-  documentoFrenteUrl: optionalUrlMetadata,
-  documentoVersoUrl: optionalUrlMetadata,
-  selfieUrl: optionalUrlMetadata,
-  comprovanteResidenciaUrl: optionalUrlMetadata,
 });
 
 type VerificacaoFormValues = z.infer<typeof verificacaoSchema>;
@@ -34,6 +20,11 @@ type VerificacaoDocumentalFormProps = {
 };
 
 export function VerificacaoDocumentalForm({ isSubmitting = false, onSubmit }: VerificacaoDocumentalFormProps) {
+  const [documentoFrente, setDocumentoFrente] = useState<string | null>(null);
+  const [documentoVerso, setDocumentoVerso] = useState<string | null>(null);
+  const [selfie, setSelfie] = useState<string | null>(null);
+  const [comprovanteResidencia, setComprovanteResidencia] = useState<string | null>(null);
+
   const {
     register,
     handleSubmit,
@@ -44,10 +35,6 @@ export function VerificacaoDocumentalForm({ isSubmitting = false, onSubmit }: Ve
     defaultValues: {
       tipoDocumento: '',
       numeroDocumento: '',
-      documentoFrenteUrl: undefined,
-      documentoVersoUrl: undefined,
-      selfieUrl: undefined,
-      comprovanteResidenciaUrl: undefined,
     },
   });
 
@@ -55,12 +42,16 @@ export function VerificacaoDocumentalForm({ isSubmitting = false, onSubmit }: Ve
     await onSubmit({
       tipoDocumento: values.tipoDocumento.trim(),
       numeroDocumento: values.numeroDocumento.trim(),
-      documentoFrenteUrl: values.documentoFrenteUrl ?? null,
-      documentoVersoUrl: values.documentoVersoUrl ?? null,
-      selfieUrl: values.selfieUrl ?? null,
-      comprovanteResidenciaUrl: values.comprovanteResidenciaUrl ?? null,
+      documentoFrenteUrl: documentoFrente,
+      documentoVersoUrl: documentoVerso,
+      selfieUrl: selfie,
+      comprovanteResidenciaUrl: comprovanteResidencia,
     });
     reset();
+    setDocumentoFrente(null);
+    setDocumentoVerso(null);
+    setSelfie(null);
+    setComprovanteResidencia(null);
   }
 
   return (
@@ -83,40 +74,40 @@ export function VerificacaoDocumentalForm({ isSubmitting = false, onSubmit }: Ve
       </div>
 
       <div className="grid gap-5 md:grid-cols-2">
-        <TextInput
-          error={errors.documentoFrenteUrl?.message}
-          helperText="Opcional. Informe URL ou caminho já disponível."
+        <ImageUploadField
           label="Documento frente"
-          placeholder="URL ou caminho"
-          registration={register('documentoFrenteUrl')}
-          type="text"
+          helperText="Selecione uma imagem ou tire uma foto."
+          allowCamera
+          capture="environment"
+          onChange={setDocumentoFrente}
+          value={documentoFrente}
         />
-        <TextInput
-          error={errors.documentoVersoUrl?.message}
-          helperText="Opcional. Informe URL ou caminho já disponível."
+        <ImageUploadField
           label="Documento verso"
-          placeholder="URL ou caminho"
-          registration={register('documentoVersoUrl')}
-          type="text"
+          helperText="Selecione uma imagem ou tire uma foto."
+          allowCamera
+          capture="environment"
+          onChange={setDocumentoVerso}
+          value={documentoVerso}
         />
       </div>
 
       <div className="grid gap-5 md:grid-cols-2">
-        <TextInput
-          error={errors.selfieUrl?.message}
-          helperText="Opcional. O backend atual recebe metadados em JSON."
+        <ImageUploadField
           label="Selfie"
-          placeholder="URL ou caminho"
-          registration={register('selfieUrl')}
-          type="text"
+          helperText="Tire uma selfie para verificação."
+          allowCamera
+          capture="user"
+          onChange={setSelfie}
+          value={selfie}
         />
-        <TextInput
-          error={errors.comprovanteResidenciaUrl?.message}
-          helperText="Opcional. O backend atual recebe metadados em JSON."
+        <ImageUploadField
           label="Comprovante de residência"
-          placeholder="URL ou caminho"
-          registration={register('comprovanteResidenciaUrl')}
-          type="text"
+          helperText="Selecione uma imagem ou tire uma foto."
+          allowCamera
+          capture="environment"
+          onChange={setComprovanteResidencia}
+          value={comprovanteResidencia}
         />
       </div>
 
