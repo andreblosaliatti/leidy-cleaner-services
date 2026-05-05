@@ -1,4 +1,3 @@
-import { BrandMark } from '../../components/public/BrandMark';
 import {
   ArrowRightIcon,
   CheckCircleIcon,
@@ -23,17 +22,17 @@ const trustItems = [
 const steps = [
   {
     title: 'Solicite sua faxina',
-    description: 'Informe o que você precisa e escolha a melhor data.',
+    description: 'Informe o que você precisa, endereço, data e duração.',
     icon: ClipboardIcon,
   },
   {
-    title: 'Receba uma profissional',
-    description: 'Enviamos uma profissional verificada para o serviço.',
+    title: 'Escolha profissionais',
+    description: 'Veja profissionais elegíveis e selecione até 3 opções.',
     icon: UserIcon,
   },
   {
     title: 'Acompanhe e pague',
-    description: 'Acompanhe tudo pela plataforma e pague com segurança.',
+    description: 'Após o aceite, acompanhe o atendimento e pague com segurança.',
     icon: CheckCircleIcon,
   },
 ];
@@ -61,13 +60,13 @@ export function HomePage() {
     <main id="inicio">
       <section className="mx-auto grid max-w-[1180px] items-center gap-8 px-6 pb-8 pt-6 md:grid-cols-[1fr_1.08fr] md:px-10 md:pb-4 md:pt-8">
   <div className="z-10">
-    <div className="inline-flex items-center gap-2 rounded-2xl bg-green-50 px-4 py-3 text-sm font-bold text-green-700">
+    <div className="inline-flex items-center gap-2 rounded-2xl bg-cyan-50 px-4 py-3 text-sm font-bold text-cyan-500">
       <ShieldCheckIcon className="h-5 w-5" />
       Profissionais verificadas
     </div>
 
     <h1 className="mt-7 max-w-[620px] text-5xl font-bold leading-[1.08] tracking-[-0.02em] text-slate-900 md:text-[60px]">
-      Sua casa limpa, <span className="text-green-700">seu tempo leve.</span>
+      Sua casa limpa, <span className="text-cyan-500">seu tempo leve.</span>
     </h1>
 
     <p className="mt-5 max-w-[560px] text-xl leading-8 text-slate-600">
@@ -89,7 +88,7 @@ export function HomePage() {
     <div className="mt-8 grid gap-5 sm:grid-cols-3">
       {trustItems.map((item) => (
         <div key={item.label} className="flex items-center gap-3">
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-green-50 text-green-700">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-cyan-50 text-cyan-500">
             <item.icon className="h-6 w-6" />
           </span>
           <span className="text-sm font-semibold leading-5 text-slate-600">{item.label}</span>
@@ -111,7 +110,7 @@ export function HomePage() {
         <div className="grid gap-4 rounded-lg border border-slate-100 bg-white p-5 shadow-[0_10px_28px_rgba(15,23,42,0.04)] md:grid-cols-3 md:p-6">
           {benefits.map((benefit) => (
             <div key={benefit.title} className="flex gap-4">
-              <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-green-50 text-green-700">
+              <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-cyan-50 text-cyan-500">
                 <benefit.icon className="h-8 w-8" />
               </span>
               <div>
@@ -123,8 +122,22 @@ export function HomePage() {
         </div>
       </section>
 
+      <section id="como-funciona" className="mx-auto max-w-[980px] px-5 py-3 md:px-8">
+        <div className="text-center">
+          <h2 className="text-3xl font-black text-slate-900 md:text-4xl">Como funciona</h2>
+          <p className="mt-4 text-lg text-slate-600">
+            Processo simples e seguro para sua faxina residencial.
+          </p>
+        </div>
+        <div className="mt-12 grid gap-6 md:grid-cols-3">
+          {steps.map((step, index) => (
+            <StepCard key={step.title} index={index + 1} {...step} />
+          ))}
+        </div>
+      </section>
+
       <section id="profissionais" className="mx-auto max-w-[980px] px-5 py-3 md:px-8">
-        <div className="grid items-center gap-5 overflow-hidden rounded-lg bg-green-700 px-5 py-5 text-white md:grid-cols-[180px_1fr_auto] md:px-8 md:py-0">
+        <div className="grid items-center gap-5 overflow-hidden rounded-lg bg-cyan-600 px-5 py-5 text-white md:grid-cols-[180px_1fr_auto] md:px-8 md:py-0">
           <div className="hidden self-end md:block">
             <img
               src={profissionalCtaUrl}
@@ -133,9 +146,9 @@ export function HomePage() {
             />
           </div>
           <div className="relative">
-            <SparkleIcon className="absolute -left-12 top-1 hidden h-8 w-8 text-lime-300 md:block" />
+            <SparkleIcon className="absolute -left-12 top-1 hidden h-8 w-8 text-sky-300 md:block" />
             <h2 className="text-2xl font-black">É profissional de limpeza?</h2>
-            <p className="mt-2 max-w-xl font-medium leading-6 text-green-50">
+            <p className="mt-2 max-w-xl font-medium leading-6 text-cyan-50">
               Cadastre-se na Leidy Cleaner Services e tenha mais oportunidades de trabalho.
             </p>
           </div>
@@ -149,7 +162,7 @@ export function HomePage() {
       <section id="cadastro" className="mx-auto max-w-[980px] px-5 py-3 md:px-8">
         <div className="grid items-center gap-5 rounded-lg border border-slate-100 bg-white px-5 py-5 shadow-[0_10px_28px_rgba(15,23,42,0.04)] md:grid-cols-[180px_1fr_auto] md:px-8">
           <HomeSparkPlaceholder />
-          <h2 className="text-2xl font-black leading-tight text-green-700 md:text-3xl">
+          <h2 className="text-2xl font-black leading-tight text-cyan-500 md:text-3xl">
             Transforme sua rotina com mais tempo e tranquilidade.
           </h2>
           <PublicButton href="/cadastro/cliente" className="w-full md:w-auto">
@@ -189,26 +202,19 @@ function StepCard({
   icon: typeof ClipboardIcon;
 }) {
   return (
-    <>
-      <article className="rounded-lg border border-slate-100 bg-white p-5 shadow-[0_12px_30px_rgba(15,23,42,0.05)]">
-        <div className="flex items-center gap-5">
-          <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg bg-green-50 text-green-700">
-            <Icon className="h-9 w-9" />
-          </span>
-          <div>
-            <h3 className="font-black text-slate-900">
-              {index}. {title}
-            </h3>
-            <p className="mt-2 text-sm leading-6 text-slate-600">{description}</p>
-          </div>
+    <article className="rounded-lg border border-slate-100 bg-white p-5 shadow-[0_12px_30px_rgba(15,23,42,0.05)]">
+      <div className="flex items-center gap-5">
+        <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg bg-cyan-50 text-cyan-500">
+          <Icon className="h-9 w-9" />
+        </span>
+        <div>
+          <h3 className="font-black text-slate-900">
+            {index}. {title}
+          </h3>
+          <p className="mt-2 text-sm leading-6 text-slate-600">{description}</p>
         </div>
-      </article>
-      {index < 3 && (
-        <div className="hidden items-center justify-center text-green-700 lg:flex">
-          <ArrowRightIcon className="h-8 w-8" />
-        </div>
-      )}
-    </>
+      </div>
+    </article>
   );
 }
 
@@ -222,7 +228,7 @@ function AudienceCta({ title, description, href }: { title: string; description:
         </div>
         <a
           href={href}
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-white text-green-700 shadow-sm transition hover:bg-green-50"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-white text-cyan-500 shadow-sm transition hover:bg-cyan-50"
           aria-label={`${title}: continuar`}
         >
           <ArrowRightIcon className="h-6 w-6" />

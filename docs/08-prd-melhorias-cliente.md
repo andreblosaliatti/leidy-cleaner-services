@@ -201,6 +201,37 @@ Quando houver atendimento finalizado e o valor definitivo existir, usar o valor 
 
 ---
 
+## RF03 — UX pública — tema ciano
+
+### Descrição
+
+Atualizar o tema visual da homepage pública para usar ciano/turquesa como cor principal, substituindo o verde atual.
+
+### Comportamento esperado
+
+- Homepage pública com esquema de cores ciano.
+- Seção "Como funciona" atualizada com fluxo correto: solicite → escolha profissionais → acompanhe e pague.
+- Footer com colunas: Navegação, Institucional, Ajuda, Contato.
+
+### Telas afetadas
+
+- Homepage pública (`/`)
+- Layout público (header/footer)
+
+### Critérios de aceite
+
+- [x] Homepage usa ciano como cor principal.
+- [x] Seção "Como funciona" reflete o fluxo real do produto.
+- [x] Footer organizado em colunas institucionais.
+- [x] Build frontend passa sem erros.
+- [ ] Pré-pagamento/crédito não implementado.
+
+### Nota de implementação
+
+2026-05-04: Implementado redesign da homepage pública com tema ciano, atualização da seção "Como funciona" para refletir fluxo correto (solicite → escolha até 3 profissionais → acompanhe após aceite), e reorganização do footer. Não alterou backend ou fluxo de pagamento.
+
+---
+
 ## RF03 — Simulação de valores no painel admin para 4h, 6h e 8h
 
 ### Descrição

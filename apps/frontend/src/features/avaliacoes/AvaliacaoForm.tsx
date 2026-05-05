@@ -43,8 +43,8 @@ export function AvaliacaoForm({ isSubmitting, onSubmit }: AvaliacaoFormProps) {
               className={[
                 'flex min-h-12 cursor-pointer items-center justify-center rounded-lg border text-sm font-black transition',
                 nota === option
-                  ? 'border-green-700 bg-green-50 text-green-800'
-                  : 'border-slate-200 bg-white text-slate-700 hover:border-green-200 hover:bg-green-50',
+                  ? 'border-cyan-700 bg-cyan-50 text-cyan-800'
+                  : 'border-slate-200 bg-white text-slate-700 hover:border-cyan-200 hover:bg-cyan-50',
               ].join(' ')}
             >
               <input
@@ -66,7 +66,7 @@ export function AvaliacaoForm({ isSubmitting, onSubmit }: AvaliacaoFormProps) {
       <label className="grid gap-2 text-sm font-bold text-slate-700">
         Comentário opcional
         <textarea
-          className="min-h-28 rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-700"
+          className="min-h-28 rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-700"
           disabled={isSubmitting}
           maxLength={1000}
           value={comentario}
@@ -75,7 +75,7 @@ export function AvaliacaoForm({ isSubmitting, onSubmit }: AvaliacaoFormProps) {
       </label>
 
       <button
-        className="min-h-11 rounded-lg bg-green-700 px-5 text-sm font-black text-white transition hover:bg-green-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+        className="min-h-11 rounded-lg bg-cyan-700 px-5 text-sm font-black text-white transition hover:bg-cyan-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-700 disabled:cursor-not-allowed disabled:bg-slate-300"
         disabled={isSubmitting}
         type="submit"
       >

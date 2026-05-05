@@ -21,11 +21,19 @@ const footerColumns = [
     ],
   },
   {
-    title: 'Acesso',
+    title: 'Institucional',
     items: [
-      { label: 'Entrar', to: '/entrar' },
-      { label: 'Cadastro cliente', to: '/cadastro/cliente' },
-      { label: 'Cadastro profissional', to: '/cadastro/profissional' },
+      { label: 'Sobre nós', href: '/#sobre-nos' },
+      { label: 'Política de privacidade', href: '/#privacidade' },
+      { label: 'Termos de uso', href: '/#termos' },
+    ],
+  },
+  {
+    title: 'Ajuda',
+    items: [
+      { label: 'Perguntas frequentes', href: '/#faq' },
+      { label: 'Suporte', href: '/#suporte' },
+      { label: 'Contato', href: '/#contato' },
     ],
   },
 ];
@@ -56,7 +64,7 @@ export function PublicLayout() {
             <Link to="/entrar" className="whitespace-nowrap">
               Entrar
             </Link>
-            <Link to="/cadastro/cliente" className="whitespace-nowrap text-green-700">
+            <Link to="/cadastro/cliente" className="whitespace-nowrap text-cyan-500">
               Solicitar faxina
             </Link>
           </nav>
@@ -103,7 +111,7 @@ export function PublicLayout() {
 }
 
 function PublicNavItem({ label, href, to }: { label: string; href?: string; to?: string }) {
-  const className = 'border-b-2 border-transparent py-2 transition hover:border-green-700 hover:text-green-700';
+  const className = 'border-b-2 border-transparent py-2 transition hover:border-cyan-500 hover:text-cyan-500';
 
   if (to) {
     return (
@@ -128,11 +136,11 @@ function FooterColumn({ title, items }: { title: string; items: Array<{ label: s
         {items.map((item) => (
           <li key={item.label}>
             {item.to ? (
-              <Link to={item.to} className="transition hover:text-green-700">
+              <Link to={item.to} className="transition hover:text-cyan-700">
                 {item.label}
               </Link>
             ) : (
-              <a href={item.href} className="transition hover:text-green-700">
+              <a href={item.href} className="transition hover:text-cyan-700">
                 {item.label}
               </a>
             )}

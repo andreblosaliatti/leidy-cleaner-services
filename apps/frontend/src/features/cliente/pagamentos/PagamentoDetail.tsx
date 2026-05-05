@@ -30,7 +30,7 @@ export function PagamentoDetail({ isRechecking, onRecheck, pagamento }: Pagament
 
         {canRecheckPagamento(pagamento.status) && (
           <button
-            className="inline-flex min-h-11 items-center justify-center rounded-lg border border-green-100 px-5 text-sm font-black text-green-700 transition hover:bg-green-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-700 disabled:cursor-not-allowed disabled:text-slate-400"
+            className="inline-flex min-h-11 items-center justify-center rounded-lg border border-cyan-100 px-5 text-sm font-black text-cyan-700 transition hover:bg-cyan-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-700 disabled:cursor-not-allowed disabled:text-slate-400"
             disabled={isRechecking}
             type="button"
             onClick={() => onRecheck(pagamento.id)}
@@ -49,11 +49,11 @@ export function PagamentoDetail({ isRechecking, onRecheck, pagamento }: Pagament
 
       <div className="mt-6 grid gap-4">
         {pagamento.urlPagamento && (
-          <div className="rounded-lg border border-green-100 bg-green-50 p-4">
-            <h3 className="font-black text-green-900">Link de pagamento</h3>
-            <p className="mt-2 break-all text-sm leading-6 text-green-800">{pagamento.urlPagamento}</p>
+          <div className="rounded-lg border border-cyan-100 bg-cyan-50 p-4">
+            <h3 className="font-black text-cyan-900">Link de pagamento</h3>
+            <p className="mt-2 break-all text-sm leading-6 text-cyan-800">{pagamento.urlPagamento}</p>
             <a
-              className="mt-3 inline-flex min-h-10 items-center justify-center rounded-lg bg-green-700 px-4 text-sm font-black text-white transition hover:bg-green-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-700"
+              className="mt-3 inline-flex min-h-10 items-center justify-center rounded-lg bg-cyan-700 px-4 text-sm font-black text-white transition hover:bg-cyan-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-700"
               href={pagamento.urlPagamento}
               rel="noreferrer"
               target="_blank"
@@ -91,7 +91,7 @@ function PixCopyBox({ pixCopiaECola }: { pixCopiaECola: string }) {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h3 className="font-black text-slate-900">Pix copia e cola</h3>
         <button
-          className="min-h-10 rounded-lg border border-slate-200 bg-white px-4 text-sm font-black text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-700"
+          className="min-h-10 rounded-lg border border-slate-200 bg-white px-4 text-sm font-black text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-700"
           type="button"
           onClick={handleCopy}
         >
@@ -99,7 +99,7 @@ function PixCopyBox({ pixCopiaECola }: { pixCopiaECola: string }) {
         </button>
       </div>
       <textarea
-        className="mt-3 min-h-28 w-full resize-y rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm leading-6 text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-700"
+        className="mt-3 min-h-28 w-full resize-y rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm leading-6 text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-700"
         readOnly
         value={pixCopiaECola}
       />

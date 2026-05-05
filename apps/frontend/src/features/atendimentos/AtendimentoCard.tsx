@@ -16,7 +16,7 @@ export function AtendimentoCard({ atendimento, profile }: AtendimentoCardProps) 
   const amount = profile === 'PROFISSIONAL' ? atendimento.valorEstimadoProfissional : 'valorServico' in atendimento ? atendimento.valorServico : null;
 
   return (
-    <article className="rounded-lg border border-slate-100 bg-white p-5 shadow-sm transition hover:border-green-100">
+    <article className="rounded-lg border border-slate-100 bg-white p-5 shadow-sm transition hover:border-cyan-100">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
@@ -26,7 +26,7 @@ export function AtendimentoCard({ atendimento, profile }: AtendimentoCardProps) 
           <p className="mt-2 text-sm font-semibold text-slate-700">{getTipoServicoAtendimentoLabel(atendimento.tipoServico)}</p>
           <p className="mt-2 text-sm leading-6 text-slate-600">Previsto para {formatDateTime(atendimento.inicioPrevistoEm)}</p>
           <div className="mt-2">
-            <p className="text-xs font-black uppercase tracking-[0.12em] text-green-700">{amountLabel}</p>
+            <p className="text-xs font-black uppercase tracking-[0.12em] text-cyan-700">{amountLabel}</p>
             <p className="mt-1 text-sm font-semibold text-slate-700">
               {amount == null ? 'Valor indisponível' : formatCurrency(amount)}
             </p>
@@ -37,7 +37,7 @@ export function AtendimentoCard({ atendimento, profile }: AtendimentoCardProps) 
         </div>
 
         <Link
-          className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-lg border border-slate-200 px-4 text-sm font-black text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-700"
+          className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-lg border border-slate-200 px-4 text-sm font-black text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-700"
           to={`${basePath}/${atendimento.id}`}
         >
           Ver detalhes

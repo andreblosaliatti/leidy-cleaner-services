@@ -40,7 +40,7 @@ export function CheckpointActionForm({ actionLabel, isSubmitting, onSubmit, tone
         <label className="grid gap-2 text-sm font-bold text-slate-700">
           Latitude
           <input
-            className="min-h-11 rounded-lg border border-slate-200 px-3 text-sm font-semibold text-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-700"
+            className="min-h-11 rounded-lg border border-slate-200 px-3 text-sm font-semibold text-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-700"
             inputMode="decimal"
             placeholder="-30.000000"
             type="text"
@@ -51,7 +51,7 @@ export function CheckpointActionForm({ actionLabel, isSubmitting, onSubmit, tone
         <label className="grid gap-2 text-sm font-bold text-slate-700">
           Longitude
           <input
-            className="min-h-11 rounded-lg border border-slate-200 px-3 text-sm font-semibold text-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-700"
+            className="min-h-11 rounded-lg border border-slate-200 px-3 text-sm font-semibold text-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-700"
             inputMode="decimal"
             placeholder="-51.000000"
             type="text"
@@ -64,7 +64,7 @@ export function CheckpointActionForm({ actionLabel, isSubmitting, onSubmit, tone
       <label className="grid gap-2 text-sm font-bold text-slate-700">
         URL da evidência
         <input
-          className="min-h-11 rounded-lg border border-slate-200 px-3 text-sm font-semibold text-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-700"
+          className="min-h-11 rounded-lg border border-slate-200 px-3 text-sm font-semibold text-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-700"
           placeholder="local/checkpoints/evidencia.png"
           type="text"
           value={fotoComprovacaoUrl}
@@ -75,7 +75,7 @@ export function CheckpointActionForm({ actionLabel, isSubmitting, onSubmit, tone
       <label className="grid gap-2 text-sm font-bold text-slate-700">
         Observação
         <textarea
-          className="min-h-24 rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-700"
+          className="min-h-24 rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-700"
           maxLength={1000}
           value={observacao}
           onChange={(event) => setObservacao(event.target.value)}
@@ -87,7 +87,7 @@ export function CheckpointActionForm({ actionLabel, isSubmitting, onSubmit, tone
           'min-h-11 rounded-lg px-5 text-sm font-black text-white transition focus:outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:bg-slate-300',
           tone === 'finish'
             ? 'bg-slate-900 hover:bg-slate-800 focus-visible:ring-slate-700'
-            : 'bg-green-700 hover:bg-green-800 focus-visible:ring-green-700',
+            : 'bg-cyan-700 hover:bg-cyan-800 focus-visible:ring-cyan-700',
         ].join(' ')}
         disabled={isSubmitting}
         type="submit"

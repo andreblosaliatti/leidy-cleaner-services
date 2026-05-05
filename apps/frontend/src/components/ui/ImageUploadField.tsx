@@ -132,7 +132,7 @@ export function ImageUploadField({
               <button
                 type="button"
                 onClick={() => cameraInputRef.current?.click()}
-                className="ml-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 text-sm"
+                className="ml-2 px-4 py-2 bg-cyan-500 text-white rounded-lg hover:bg-cyan-600 text-sm"
               >
                 Tirar foto
               </button>

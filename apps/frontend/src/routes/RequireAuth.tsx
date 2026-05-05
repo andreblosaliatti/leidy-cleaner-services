@@ -21,7 +21,7 @@ export function RequireAuth() {
 function FullPageLoading({ label }: { label: string }) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#f6f7f4] px-5">
-      <div className="rounded-lg border border-green-100 bg-white px-6 py-5 text-sm font-semibold text-slate-700 shadow-sm">
+      <div className="rounded-lg border border-cyan-100 bg-white px-6 py-5 text-sm font-semibold text-slate-700 shadow-sm">
         {label}
       </div>
     </div>

@@ -21,20 +21,20 @@ export function ProfissionalElegivelCard({
     <article
       className={[
         'rounded-lg border bg-white p-5 shadow-sm transition',
-        selected ? 'border-green-200 ring-2 ring-green-100' : 'border-slate-100',
-        disabled && !selected ? 'opacity-60' : 'hover:border-green-100',
+        selected ? 'border-cyan-200 ring-2 ring-cyan-100' : 'border-slate-100',
+        disabled && !selected ? 'opacity-60' : 'hover:border-cyan-100',
       ].join(' ')}
     >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex min-w-0 gap-4">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-green-50 text-xl font-black text-green-700">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-cyan-50 text-xl font-black text-cyan-700">
             {profissional.nomeExibicao.charAt(0).toUpperCase()}
           </div>
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-lg font-black text-slate-900">{profissional.nomeExibicao}</h2>
               {selectionOrder && (
-                <span className="rounded-lg bg-green-50 px-3 py-1 text-xs font-black uppercase tracking-[0.1em] text-green-700">
+                <span className="rounded-lg bg-cyan-50 px-3 py-1 text-xs font-black uppercase tracking-[0.1em] text-cyan-700">
                   {selectionOrder}ª escolha
                 </span>
               )}
@@ -52,7 +52,7 @@ export function ProfissionalElegivelCard({
         <div className="flex shrink-0 flex-wrap gap-2">
           {profissional.totalAvaliacoes > 0 && (
             <button
-              className="min-h-10 rounded-lg border border-slate-200 px-4 text-sm font-black text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-700"
+              className="min-h-10 rounded-lg border border-slate-200 px-4 text-sm font-black text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-700"
               type="button"
               onClick={() => onReadReviews(profissional)}
             >
@@ -61,10 +61,10 @@ export function ProfissionalElegivelCard({
           )}
           <button
             className={[
-              'min-h-10 rounded-lg px-4 text-sm font-black transition focus:outline-none focus-visible:ring-2 focus-visible:ring-green-700',
+              'min-h-10 rounded-lg px-4 text-sm font-black transition focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-700',
               selected
                 ? 'border border-red-100 text-red-700 hover:bg-red-50 focus-visible:ring-red-600'
-                : 'bg-green-700 text-white hover:bg-green-800 disabled:cursor-not-allowed disabled:bg-slate-300',
+                : 'bg-cyan-700 text-white hover:bg-cyan-800 disabled:cursor-not-allowed disabled:bg-slate-300',
             ].join(' ')}
             disabled={disabled && !selected}
             type="button"

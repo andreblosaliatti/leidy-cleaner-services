@@ -141,15 +141,15 @@ export function EnderecoForm({ initialAddress, isSubmitting = false, onCancel, o
         />
       </div>
 
-      <label className="flex items-start gap-3 rounded-lg border border-green-100 bg-green-50 px-4 py-3 text-sm text-slate-700">
+      <label className="flex items-start gap-3 rounded-lg border border-cyan-100 bg-cyan-50 px-4 py-3 text-sm text-slate-700">
         <input
-          className="mt-1 h-4 w-4 rounded border-green-300 text-green-700 focus:ring-green-700"
+          className="mt-1 h-4 w-4 rounded border-cyan-300 text-cyan-700 focus:ring-cyan-700"
           type="checkbox"
           {...register('principal')}
         />
         <span>
-          <span className="block font-black text-green-800">Definir como endereço principal</span>
-          <span className="mt-1 block leading-5 text-green-900/75">
+          <span className="block font-black text-cyan-800">Definir como endereço principal</span>
+          <span className="mt-1 block leading-5 text-cyan-900/75">
             O backend mantém a regra de principal e a lista será atualizada depois de salvar.
           </span>
         </span>
@@ -158,7 +158,7 @@ export function EnderecoForm({ initialAddress, isSubmitting = false, onCancel, o
       <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
         {onCancel && (
           <button
-            className="min-h-11 rounded-lg border border-slate-200 px-5 text-sm font-black text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-700"
+            className="min-h-11 rounded-lg border border-slate-200 px-5 text-sm font-black text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-700"
             disabled={isSubmitting}
             type="button"
             onClick={onCancel}
@@ -167,7 +167,7 @@ export function EnderecoForm({ initialAddress, isSubmitting = false, onCancel, o
           </button>
         )}
         <button
-          className="min-h-11 rounded-lg bg-green-700 px-5 text-sm font-black text-white shadow-[0_14px_28px_rgba(21,128,61,0.18)] transition hover:bg-green-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-700 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
+          className="min-h-11 rounded-lg bg-cyan-700 px-5 text-sm font-black text-white shadow-[0_14px_28px_rgba(14,138,141,0.18)] transition hover:bg-cyan-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-700 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
           disabled={isSubmitting}
           type="submit"
         >

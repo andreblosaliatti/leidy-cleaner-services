@@ -17,7 +17,7 @@ export function EnderecoCard({ endereco, isDeleting = false, onDelete, onEdit }:
               {endereco.logradouro}, {endereco.numero}
             </h2>
             {endereco.principal && (
-              <span className="rounded-lg bg-green-50 px-3 py-1 text-xs font-black uppercase tracking-[0.12em] text-green-700">
+              <span className="rounded-lg bg-cyan-50 px-3 py-1 text-xs font-black uppercase tracking-[0.12em] text-cyan-700">
                 Principal
               </span>
             )}
@@ -31,7 +31,7 @@ export function EnderecoCard({ endereco, isDeleting = false, onDelete, onEdit }:
 
         <div className="flex shrink-0 gap-2">
           <button
-            className="min-h-10 rounded-lg border border-slate-200 px-4 text-sm font-black text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-700"
+            className="min-h-10 rounded-lg border border-slate-200 px-4 text-sm font-black text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-700"
             type="button"
             onClick={() => onEdit(endereco)}
           >

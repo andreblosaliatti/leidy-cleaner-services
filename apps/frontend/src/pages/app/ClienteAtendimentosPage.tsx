@@ -39,8 +39,8 @@ export function ClienteAtendimentosPage() {
 
   return (
     <div className="grid gap-5">
-      <section className="rounded-lg border border-green-100 bg-white p-5 shadow-sm md:p-7">
-        <p className="text-xs font-black uppercase tracking-[0.16em] text-green-700">Cliente</p>
+      <section className="rounded-lg border border-cyan-100 bg-white p-5 shadow-sm md:p-7">
+        <p className="text-xs font-black uppercase tracking-[0.16em] text-cyan-700">Cliente</p>
         <h1 className="mt-3 text-3xl font-black tracking-normal text-slate-900 md:text-4xl">Meus atendimentos</h1>
         <p className="mt-3 max-w-3xl text-base leading-7 text-slate-600">
           Acompanhe os atendimentos criados após o aceite da profissional. Esta área é somente leitura para clientes.
@@ -79,7 +79,7 @@ export function ClienteAtendimentosPage() {
           </div>
         )}
 
-        <Link className="font-black text-green-700 hover:text-green-800" to="/app/cliente/solicitacoes">
+        <Link className="font-black text-cyan-700 hover:text-cyan-800" to="/app/cliente/solicitacoes">
           Voltar para solicitações
         </Link>
       </section>

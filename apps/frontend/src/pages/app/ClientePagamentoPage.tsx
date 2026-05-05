@@ -195,7 +195,7 @@ export function ClientePagamentoPage() {
     return (
       <div className="grid gap-5">
         <FormAlert tone="error" title="Pagamento inválido" message="O identificador informado não é válido." />
-        <Link className="font-black text-green-700 hover:text-green-800" to="/app/cliente/pagamentos">
+        <Link className="font-black text-cyan-700 hover:text-cyan-800" to="/app/cliente/pagamentos">
           Voltar para pagamentos
         </Link>
       </div>
@@ -204,17 +204,17 @@ export function ClientePagamentoPage() {
 
   return (
     <div className="grid gap-5">
-      <section className="rounded-lg border border-green-100 bg-white p-5 shadow-sm md:p-7">
+      <section className="rounded-lg border border-cyan-100 bg-white p-5 shadow-sm md:p-7">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.16em] text-green-700">Cliente</p>
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-cyan-700">Cliente</p>
             <h1 className="mt-3 text-3xl font-black tracking-normal text-slate-900 md:text-4xl">Checkout e status</h1>
             <p className="mt-3 max-w-3xl text-base leading-7 text-slate-600">
               Pague pelo checkout do Asaas e acompanhe o status retornado pelo backend.
             </p>
           </div>
           <Link
-            className="inline-flex min-h-11 items-center justify-center rounded-lg border border-green-100 px-5 text-sm font-black text-green-700 transition hover:bg-green-50"
+            className="inline-flex min-h-11 items-center justify-center rounded-lg border border-cyan-100 px-5 text-sm font-black text-cyan-700 transition hover:bg-cyan-50"
             to="/app/cliente/pagamentos"
           >
             Voltar
@@ -333,12 +333,12 @@ function renderPaymentState({
 
   if (checkoutPreview) {
     return (
-      <section className="rounded-lg border border-green-100 bg-green-50 p-5 shadow-sm">
-        <h2 className="text-xl font-black text-green-900">Checkout criado</h2>
-        <p className="mt-2 text-sm leading-6 text-green-800">{checkoutPreview.descricao}</p>
-        <p className="mt-2 text-sm font-semibold text-green-900">{formatCurrency(checkoutPreview.valor)}</p>
+      <section className="rounded-lg border border-cyan-100 bg-cyan-50 p-5 shadow-sm">
+        <h2 className="text-xl font-black text-cyan-900">Checkout criado</h2>
+        <p className="mt-2 text-sm leading-6 text-cyan-800">{checkoutPreview.descricao}</p>
+        <p className="mt-2 text-sm font-semibold text-cyan-900">{formatCurrency(checkoutPreview.valor)}</p>
         <a
-          className="mt-4 inline-flex min-h-10 items-center justify-center rounded-lg bg-green-700 px-4 text-sm font-black text-white transition hover:bg-green-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-700"
+          className="mt-4 inline-flex min-h-10 items-center justify-center rounded-lg bg-cyan-700 px-4 text-sm font-black text-white transition hover:bg-cyan-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-700"
           href={checkoutPreview.checkoutUrl}
           rel="noreferrer"
           target="_blank"

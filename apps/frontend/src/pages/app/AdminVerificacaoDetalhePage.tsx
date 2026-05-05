@@ -93,7 +93,7 @@ export function AdminVerificacaoDetalhePage() {
     return (
       <div className="grid gap-5">
         <FormAlert tone="error" title="Verificação inválida" message="O identificador da verificação não é válido." />
-        <Link className="font-black text-green-700 hover:text-green-800" to="/app/admin/verificacoes">
+        <Link className="font-black text-cyan-700 hover:text-cyan-800" to="/app/admin/verificacoes">
           Voltar para verificações
         </Link>
       </div>
@@ -104,17 +104,17 @@ export function AdminVerificacaoDetalhePage() {
 
   return (
     <div className="grid gap-5">
-      <section className="rounded-lg border border-green-100 bg-white p-5 shadow-sm md:p-7">
+      <section className="rounded-lg border border-cyan-100 bg-white p-5 shadow-sm md:p-7">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.16em] text-green-700">Administração</p>
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-cyan-700">Administração</p>
             <h1 className="mt-3 text-3xl font-black tracking-normal text-slate-900 md:text-4xl">Detalhe da verificação</h1>
             <p className="mt-3 max-w-3xl text-base leading-7 text-slate-600">
               Consulte os campos retornados pelo backend e registre a análise documental.
             </p>
           </div>
           <Link
-            className="inline-flex min-h-11 items-center justify-center rounded-lg border border-green-100 px-5 text-sm font-black text-green-700 transition hover:bg-green-50"
+            className="inline-flex min-h-11 items-center justify-center rounded-lg border border-cyan-100 px-5 text-sm font-black text-cyan-700 transition hover:bg-cyan-50"
             to="/app/admin/verificacoes"
           >
             Voltar
@@ -185,7 +185,7 @@ function DocumentReference({ label, value }: { label: string; value: string | nu
           <span className="text-sm font-semibold text-slate-800">Referência registrada</span>
           {isExternalUrl(value) && (
             <a
-              className="text-sm font-black text-green-700 hover:text-green-800"
+              className="text-sm font-black text-cyan-700 hover:text-cyan-800"
               href={value}
               rel="noreferrer"
               target="_blank"

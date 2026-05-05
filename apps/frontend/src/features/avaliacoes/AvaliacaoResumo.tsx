@@ -7,7 +7,7 @@ type AvaliacaoResumoProps = {
 
 export function AvaliacaoResumo({ avaliacao }: AvaliacaoResumoProps) {
   return (
-    <article className="rounded-lg border border-green-100 bg-green-50 p-5 text-green-900 shadow-sm">
+    <article className="rounded-lg border border-cyan-100 bg-cyan-50 p-5 text-cyan-900 shadow-sm">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h3 className="text-xl font-black">Avaliação registrada</h3>

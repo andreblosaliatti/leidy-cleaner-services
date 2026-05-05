@@ -80,17 +80,17 @@ export function AdminAtendimentosPage() {
 
   return (
     <div className="grid gap-5">
-      <section className="rounded-lg border border-green-100 bg-white p-5 shadow-sm md:p-7">
+      <section className="rounded-lg border border-cyan-100 bg-white p-5 shadow-sm md:p-7">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.16em] text-green-700">Administração</p>
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-cyan-700">Administração</p>
             <h1 className="mt-3 text-3xl font-black tracking-normal text-slate-900 md:text-4xl">Atendimentos</h1>
             <p className="mt-3 max-w-3xl text-base leading-7 text-slate-600">
               Liste atendimentos operacionais pelo backend. Esta visão é somente leitura.
             </p>
           </div>
           <Link
-            className="inline-flex min-h-11 items-center justify-center rounded-lg border border-green-100 px-5 text-sm font-black text-green-700 transition hover:bg-green-50"
+            className="inline-flex min-h-11 items-center justify-center rounded-lg border border-cyan-100 px-5 text-sm font-black text-cyan-700 transition hover:bg-cyan-50"
             to="/app/admin"
           >
             Voltar
@@ -105,7 +105,7 @@ export function AdminAtendimentosPage() {
         <label className="grid min-w-[min(100%,13rem)] flex-1 gap-2 text-sm font-bold text-slate-700">
           Status
           <select
-            className="min-h-11 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-700"
+            className="min-h-11 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-700"
             value={draftFilters.status}
             onChange={(event) =>
               setDraftFilters((current) => ({ ...current, status: event.target.value as StatusAtendimento | '' }))
@@ -132,14 +132,14 @@ export function AdminAtendimentosPage() {
         />
 
         <button
-          className="min-h-11 w-full rounded-lg bg-green-700 px-5 text-sm font-black text-white transition hover:bg-green-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-700 sm:w-auto"
+          className="min-h-11 w-full rounded-lg bg-cyan-700 px-5 text-sm font-black text-white transition hover:bg-cyan-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-700 sm:w-auto"
           type="submit"
         >
           Filtrar
         </button>
 
         <button
-          className="min-h-11 w-full rounded-lg border border-slate-200 px-5 text-sm font-black text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-700 sm:w-auto"
+          className="min-h-11 w-full rounded-lg border border-slate-200 px-5 text-sm font-black text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-700 sm:w-auto"
           type="button"
           onClick={handleClearFilters}
         >
@@ -178,7 +178,7 @@ function FilterInput({ label, onChange, value }: { label: string; onChange: (val
     <label className="grid min-w-[min(100%,13rem)] flex-1 gap-2 text-sm font-bold text-slate-700">
       {label}
       <input
-        className="min-h-11 rounded-lg border border-slate-200 px-3 text-sm font-semibold text-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-700"
+        className="min-h-11 rounded-lg border border-slate-200 px-3 text-sm font-semibold text-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-700"
         inputMode="numeric"
         placeholder="ID"
         type="text"

@@ -16,7 +16,7 @@ export const statusContaOptions: Array<{ value: StatusConta; label: string }> = 
 export function getTipoUsuarioInfo(tipoUsuario: TipoUsuario) {
   const labels: Record<TipoUsuario, { label: string; className: string }> = {
     ADMIN: { label: 'Admin', className: 'bg-purple-50 text-purple-800' },
-    CLIENTE: { label: 'Cliente', className: 'bg-green-50 text-green-700' },
+    CLIENTE: { label: 'Cliente', className: 'bg-cyan-50 text-cyan-700' },
     PROFISSIONAL: { label: 'Profissional', className: 'bg-blue-50 text-blue-800' },
   };
 

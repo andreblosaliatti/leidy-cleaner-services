@@ -89,7 +89,7 @@ export function LoginPage() {
           />
 
           <button
-            className="min-h-12 rounded-lg bg-green-700 px-6 text-sm font-black text-white shadow-[0_14px_28px_rgba(21,128,61,0.22)] transition hover:bg-green-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-700 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
+            className="min-h-12 rounded-lg bg-cyan-700 px-6 text-sm font-black text-white shadow-[0_14px_28px_rgba(6,182,212,0.22)] transition hover:bg-cyan-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-700 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
             disabled={isSubmitting}
             type="submit"
           >
@@ -100,13 +100,13 @@ export function LoginPage() {
         <div className="mt-6 grid gap-3 rounded-lg border border-slate-100 bg-slate-50 p-4 text-sm text-slate-600">
           <p>
             Ainda não tem conta?{' '}
-            <Link className="font-black text-green-700 hover:text-green-800" to="/cadastro/cliente">
+            <Link className="font-black text-cyan-700 hover:text-cyan-800" to="/cadastro/cliente">
               Criar conta de cliente
             </Link>
           </p>
           <p>
             Atua com limpeza?{' '}
-            <Link className="font-black text-green-700 hover:text-green-800" to="/cadastro/profissional">
+            <Link className="font-black text-cyan-700 hover:text-cyan-800" to="/cadastro/profissional">
               Cadastrar como profissional
             </Link>
           </p>

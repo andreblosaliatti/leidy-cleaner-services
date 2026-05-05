@@ -32,7 +32,7 @@ export function AnaliseVerificacaoForm({ initialStatus, isSubmitting, onSubmit }
       <label className="grid gap-2 text-sm font-bold text-slate-700">
         Status
         <select
-          className="min-h-11 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-700"
+          className="min-h-11 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-700"
           disabled={isSubmitting}
           value={statusVerificacao}
           onChange={(event) => setStatusVerificacao(event.target.value as StatusVerificacao)}
@@ -48,7 +48,7 @@ export function AnaliseVerificacaoForm({ initialStatus, isSubmitting, onSubmit }
       <label className="grid gap-2 text-sm font-bold text-slate-700">
         Observação da análise
         <textarea
-          className="min-h-28 rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-700"
+          className="min-h-28 rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-700"
           disabled={isSubmitting}
           value={observacaoAnalise}
           onChange={(event) => setObservacaoAnalise(event.target.value)}
@@ -56,7 +56,7 @@ export function AnaliseVerificacaoForm({ initialStatus, isSubmitting, onSubmit }
       </label>
 
       <button
-        className="min-h-11 rounded-lg bg-green-700 px-5 text-sm font-black text-white transition hover:bg-green-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+        className="min-h-11 rounded-lg bg-cyan-700 px-5 text-sm font-black text-white transition hover:bg-cyan-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-700 disabled:cursor-not-allowed disabled:bg-slate-300"
         disabled={isSubmitting}
         type="submit"
       >

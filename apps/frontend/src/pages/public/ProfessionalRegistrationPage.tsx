@@ -230,7 +230,7 @@ export function ProfessionalRegistrationPage() {
           </div>
 
           <button
-            className="min-h-12 rounded-lg bg-green-700 px-6 text-sm font-black text-white shadow-[0_14px_28px_rgba(21,128,61,0.22)] transition hover:bg-green-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-700 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
+            className="min-h-12 rounded-lg bg-cyan-700 px-6 text-sm font-black text-white shadow-[0_14px_28px_rgba(6,182,212,0.22)] transition hover:bg-cyan-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-700 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
             disabled={isSubmitting}
             type="submit"
           >
@@ -240,7 +240,7 @@ export function ProfessionalRegistrationPage() {
 
         <p className="mt-6 text-sm text-slate-600">
           Já tem conta?{' '}
-          <Link className="font-black text-green-700 hover:text-green-800" to="/entrar">
+          <Link className="font-black text-cyan-500 hover:text-cyan-600" to="/entrar">
             Entrar
           </Link>
         </p>

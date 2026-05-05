@@ -23,7 +23,7 @@ export function OcorrenciaCard({ detailBasePath, ocorrencia }: OcorrenciaCardPro
           <p className="mt-3 line-clamp-2 text-sm leading-6 text-slate-600">{ocorrencia.descricao}</p>
         </div>
         <Link
-          className="inline-flex min-h-10 items-center justify-center rounded-lg border border-green-100 px-4 text-sm font-black text-green-700 transition hover:bg-green-50"
+          className="inline-flex min-h-10 items-center justify-center rounded-lg border border-cyan-100 px-4 text-sm font-black text-cyan-700 transition hover:bg-cyan-50"
           to={`${detailBasePath}/${ocorrencia.id}`}
         >
           Ver detalhe

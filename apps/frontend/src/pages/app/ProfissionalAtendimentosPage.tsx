@@ -39,8 +39,8 @@ export function ProfissionalAtendimentosPage() {
 
   return (
     <div className="grid gap-5">
-      <section className="rounded-lg border border-green-100 bg-white p-5 shadow-sm md:p-7">
-        <p className="text-xs font-black uppercase tracking-[0.16em] text-green-700">Profissional</p>
+      <section className="rounded-lg border border-cyan-100 bg-white p-5 shadow-sm md:p-7">
+        <p className="text-xs font-black uppercase tracking-[0.16em] text-cyan-700">Profissional</p>
         <h1 className="mt-3 text-3xl font-black tracking-normal text-slate-900 md:text-4xl">Meus atendimentos</h1>
         <p className="mt-3 max-w-3xl text-base leading-7 text-slate-600">
           Acompanhe serviços atribuídos a você e registre início ou fim quando o backend permitir.
@@ -79,7 +79,7 @@ export function ProfissionalAtendimentosPage() {
           </div>
         )}
 
-        <Link className="font-black text-green-700 hover:text-green-800" to="/app/profissional/convites">
+        <Link className="font-black text-cyan-700 hover:text-cyan-800" to="/app/profissional/convites">
           Voltar para convites
         </Link>
       </section>

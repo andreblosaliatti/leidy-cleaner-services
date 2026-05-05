@@ -22,7 +22,7 @@ export function AvaliacoesProfissionalList({ avaliacoes, currentAtendimentoId }:
           key={avaliacao.avaliacaoId}
           className={[
             'rounded-lg border bg-white p-4 shadow-sm',
-            avaliacao.atendimentoId === currentAtendimentoId ? 'border-green-100' : 'border-slate-100',
+            avaliacao.atendimentoId === currentAtendimentoId ? 'border-cyan-100' : 'border-slate-100',
           ].join(' ')}
         >
           <div className="flex flex-wrap items-center justify-between gap-2">

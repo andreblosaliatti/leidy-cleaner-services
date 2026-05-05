@@ -12,9 +12,9 @@ type PageStateProps = {
 
 const toneClassName: Record<PageStateTone, string> = {
   neutral: 'border-slate-100 bg-white text-slate-900',
-  loading: 'border-green-100 bg-green-50 text-green-900',
+  loading: 'border-cyan-100 bg-cyan-50 text-cyan-900',
   empty: 'border-slate-100 bg-white text-slate-900',
-  success: 'border-green-100 bg-green-50 text-green-900',
+  success: 'border-cyan-100 bg-cyan-50 text-cyan-900',
 };
 
 export function PageState({ title, description, tone = 'neutral', children, className = '' }: PageStateProps) {
@@ -27,9 +27,9 @@ export function PageState({ title, description, tone = 'neutral', children, clas
       <div className="mx-auto flex max-w-xl flex-col items-center">
         {tone === 'loading' && (
           <span className="mb-4 flex items-center gap-1" aria-hidden="true">
-            <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-green-700" />
-            <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-green-600 [animation-delay:120ms]" />
-            <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-green-500 [animation-delay:240ms]" />
+            <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-cyan-700" />
+            <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-cyan-600 [animation-delay:120ms]" />
+            <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-cyan-500 [animation-delay:240ms]" />
           </span>
         )}
         <h3 className="font-black text-current">{title}</h3>

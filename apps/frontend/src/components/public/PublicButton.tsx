@@ -6,9 +6,9 @@ type PublicButtonProps = AnchorHTMLAttributes<HTMLAnchorElement> & {
 };
 
 const variantClassName = {
-  primary: 'bg-green-700 text-white shadow-[0_14px_28px_rgba(21,128,61,0.22)] hover:bg-green-800 focus-visible:ring-green-700',
-  secondary: 'border border-green-700 bg-white text-green-700 hover:bg-green-50 focus-visible:ring-green-700',
-  light: 'bg-white text-green-700 shadow-[0_12px_24px_rgba(15,23,42,0.12)] hover:bg-green-50 focus-visible:ring-white',
+  primary: 'bg-cyan-500 text-white shadow-[0_14px_28px_rgba(6,182,212,0.22)] hover:bg-cyan-600 focus-visible:ring-cyan-400',
+  secondary: 'border border-cyan-500 bg-white text-cyan-700 hover:bg-cyan-50 focus-visible:ring-cyan-400',
+  light: 'bg-white text-cyan-700 shadow-[0_12px_24px_rgba(15,23,42,0.12)] hover:bg-cyan-50 focus-visible:ring-white',
 };
 
 export function PublicButton({ children, className = '', variant = 'primary', ...props }: PublicButtonProps) {

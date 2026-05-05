@@ -32,7 +32,7 @@ export function SolicitacaoCard({
     <article
       className={[
         'rounded-lg border bg-white p-5 shadow-sm transition',
-        selected ? 'border-green-200 ring-2 ring-green-100' : 'border-slate-100 hover:border-green-100',
+        selected ? 'border-cyan-200 ring-2 ring-cyan-100' : 'border-slate-100 hover:border-cyan-100',
       ].join(' ')}
     >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -55,7 +55,7 @@ export function SolicitacaoCard({
 
         <div className="flex shrink-0 flex-wrap gap-2">
           <button
-            className="min-h-10 rounded-lg border border-slate-200 px-4 text-sm font-black text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-700"
+            className="min-h-10 rounded-lg border border-slate-200 px-4 text-sm font-black text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-700"
             type="button"
             onClick={() => onSelect(solicitacao)}
           >
@@ -63,7 +63,7 @@ export function SolicitacaoCard({
           </button>
           {canSelectProfessionals(solicitacao.status) && (
             <Link
-              className="inline-flex min-h-10 items-center justify-center rounded-lg bg-green-700 px-4 text-sm font-black text-white transition hover:bg-green-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-700"
+              className="inline-flex min-h-10 items-center justify-center rounded-lg bg-cyan-700 px-4 text-sm font-black text-white transition hover:bg-cyan-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-700"
               to={`/app/cliente/solicitacoes/${solicitacao.id}/profissionais`}
             >
               Selecionar profissionais

@@ -215,8 +215,8 @@ export function ProfissionalOnboardingPage() {
 
   return (
     <div className="grid gap-5">
-      <section className="rounded-lg border border-green-100 bg-white p-5 shadow-sm md:p-7">
-        <p className="text-xs font-black uppercase tracking-[0.16em] text-green-700">Profissional</p>
+      <section className="rounded-lg border border-cyan-100 bg-white p-5 shadow-sm md:p-7">
+        <p className="text-xs font-black uppercase tracking-[0.16em] text-cyan-700">Profissional</p>
         <h1 className="mt-3 text-3xl font-black tracking-normal text-slate-900 md:text-4xl">Meu perfil e onboarding</h1>
         <p className="mt-3 max-w-3xl text-base leading-7 text-slate-600">
           Complete seus dados profissionais, regiões, disponibilidade e verificação documental. As regras finais continuam centralizadas no backend.
@@ -396,7 +396,7 @@ function getStatusInfo(status: StatusAprovacaoProfissional | StatusVerificacao) 
   const map: Record<StatusAprovacaoProfissional | StatusVerificacao, { label: string; className: string }> = {
     PENDENTE: { label: 'Pendente', className: 'bg-amber-50 text-amber-800' },
     EM_ANALISE: { label: 'Em análise', className: 'bg-blue-50 text-blue-800' },
-    APROVADO: { label: 'Aprovado', className: 'bg-green-50 text-green-700' },
+    APROVADO: { label: 'Aprovado', className: 'bg-cyan-50 text-cyan-700' },
     REJEITADO: { label: 'Rejeitado', className: 'bg-red-50 text-red-700' },
   };
 

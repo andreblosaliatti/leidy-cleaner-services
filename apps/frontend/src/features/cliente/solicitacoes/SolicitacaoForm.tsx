@@ -109,7 +109,7 @@ export function SolicitacaoForm({ enderecos, regioes, isSubmitting = false, onSu
           <span className="text-sm font-black text-slate-800">Endereço</span>
           <select
             id="enderecoId"
-            className="mt-2 min-h-12 w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 outline-none transition focus:border-green-600 focus:ring-2 focus:ring-green-100"
+            className="mt-2 min-h-12 w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 outline-none transition focus:border-cyan-600 focus:ring-2 focus:ring-cyan-100"
             onInput={() => setBairroError(null)}
             {...register('enderecoId')}
           >
@@ -127,7 +127,7 @@ export function SolicitacaoForm({ enderecos, regioes, isSubmitting = false, onSu
           <div
             className={[
               'rounded-lg border px-4 py-3 text-sm leading-6',
-              selectedUnsupportedBairro ? 'border-red-100 bg-red-50 text-red-800' : 'border-green-100 bg-green-50 text-green-900',
+              selectedUnsupportedBairro ? 'border-red-100 bg-red-50 text-red-800' : 'border-cyan-100 bg-cyan-50 text-cyan-900',
             ].join(' ')}
           >
             {selectedUnsupportedBairro ? (
@@ -146,7 +146,7 @@ export function SolicitacaoForm({ enderecos, regioes, isSubmitting = false, onSu
           <span className="text-sm font-black text-slate-800">Tipo de serviço</span>
           <select
             id="tipoServico"
-            className="mt-2 min-h-12 w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 outline-none transition focus:border-green-600 focus:ring-2 focus:ring-green-100"
+            className="mt-2 min-h-12 w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 outline-none transition focus:border-cyan-600 focus:ring-2 focus:ring-cyan-100"
             {...register('tipoServico')}
           >
             {tipoServicoOptions.map((option) => (
@@ -187,7 +187,7 @@ export function SolicitacaoForm({ enderecos, regioes, isSubmitting = false, onSu
 
       <div className="flex justify-end">
         <button
-          className="min-h-11 rounded-lg bg-green-700 px-5 text-sm font-black text-white shadow-[0_14px_28px_rgba(21,128,61,0.18)] transition hover:bg-green-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-700 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
+          className="min-h-11 rounded-lg bg-cyan-700 px-5 text-sm font-black text-white shadow-[0_14px_28px_rgba(14,138,141,0.18)] transition hover:bg-cyan-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-700 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
           disabled={isSubmitting || enderecos.length === 0 || regioes.length === 0 || selectedUnsupportedBairro}
           type="submit"
         >

@@ -16,17 +16,17 @@ export function AuthPageLayout({ eyebrow, title, description, children }: AuthPa
       <div className="mx-auto flex min-h-[calc(100vh-3rem)] w-full max-w-6xl flex-col overflow-hidden rounded-lg bg-white shadow-[0_24px_80px_rgba(15,23,42,0.08)]">
         <header className="flex items-center justify-between gap-4 border-b border-slate-100 px-5 py-5 md:px-8">
           <BrandMark />
-          <Link className="text-sm font-bold text-green-700 transition hover:text-green-800" to="/">
+          <Link className="text-sm font-bold text-cyan-500 transition hover:text-cyan-600" to="/">
             Voltar ao início
           </Link>
         </header>
 
         <div className="grid flex-1 lg:grid-cols-[0.9fr_1.1fr]">
-          <section className="flex flex-col justify-center bg-green-700 px-6 py-10 text-white md:px-10">
-            <p className="text-sm font-black uppercase tracking-[0.16em] text-green-100">{eyebrow}</p>
+          <section className="flex flex-col justify-center bg-cyan-600 px-6 py-10 text-white md:px-10">
+            <p className="text-sm font-black uppercase tracking-[0.16em] text-cyan-100">{eyebrow}</p>
             <h1 className="mt-5 max-w-xl text-4xl font-black leading-tight tracking-normal md:text-5xl">{title}</h1>
-            <p className="mt-5 max-w-lg text-lg leading-8 text-green-50">{description}</p>
-            <div className="mt-8 grid gap-3 text-sm font-semibold text-green-50">
+            <p className="mt-5 max-w-lg text-lg leading-8 text-cyan-50">{description}</p>
+            <div className="mt-8 grid gap-3 text-sm font-semibold text-cyan-50">
               <span className="rounded-lg bg-white/10 px-4 py-3">Profissionais verificadas e fluxo acompanhado</span>
               <span className="rounded-lg bg-white/10 px-4 py-3">Contratação organizada com segurança operacional</span>
               <span className="rounded-lg bg-white/10 px-4 py-3">Dados protegidos em cada etapa da jornada</span>

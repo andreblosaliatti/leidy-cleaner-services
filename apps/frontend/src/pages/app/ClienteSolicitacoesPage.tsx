@@ -169,8 +169,8 @@ export function ClienteSolicitacoesPage() {
 
   return (
     <div className="grid gap-5">
-      <section className="rounded-lg border border-green-100 bg-white p-5 shadow-sm md:p-7">
-        <p className="text-xs font-black uppercase tracking-[0.16em] text-green-700">Cliente</p>
+      <section className="rounded-lg border border-cyan-100 bg-white p-5 shadow-sm md:p-7">
+        <p className="text-xs font-black uppercase tracking-[0.16em] text-cyan-700">Cliente</p>
         <h1 className="mt-3 text-3xl font-black tracking-normal text-slate-900 md:text-4xl">Minhas solicitações</h1>
         <p className="mt-3 max-w-3xl text-base leading-7 text-slate-600">
           Crie e acompanhe solicitações de faxina usando seus endereços cadastrados. Validação de elegibilidade, status e cancelamento fica no backend.
@@ -336,7 +336,7 @@ function SolicitacaoDetailPanel({
         <div className="mt-5 grid gap-3">
           {canSelectProfessionals(solicitacao.status) && (
             <Link
-              className="inline-flex min-h-10 items-center justify-center rounded-lg bg-green-700 px-4 text-sm font-black text-white transition hover:bg-green-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-700"
+              className="inline-flex min-h-10 items-center justify-center rounded-lg bg-cyan-700 px-4 text-sm font-black text-white transition hover:bg-cyan-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-700"
               to={`/app/cliente/solicitacoes/${solicitacao.id}/profissionais`}
             >
               Selecionar profissionais

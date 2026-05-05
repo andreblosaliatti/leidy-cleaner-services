@@ -160,7 +160,7 @@ export function ClienteSelecionarProfissionaisPage() {
     return (
       <div className="grid gap-5">
         <FormAlert tone="error" title="Solicitação inválida" message="O identificador da solicitação não é válido." />
-        <Link className="font-black text-green-700 hover:text-green-800" to="/app/cliente/solicitacoes">
+        <Link className="font-black text-cyan-700 hover:text-cyan-800" to="/app/cliente/solicitacoes">
           Voltar para solicitações
         </Link>
       </div>
@@ -169,10 +169,10 @@ export function ClienteSelecionarProfissionaisPage() {
 
   return (
     <div className="grid gap-5">
-      <section className="rounded-lg border border-green-100 bg-white p-5 shadow-sm md:p-7">
+      <section className="rounded-lg border border-cyan-100 bg-white p-5 shadow-sm md:p-7">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.16em] text-green-700">Cliente</p>
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-cyan-700">Cliente</p>
             <h1 className="mt-3 text-3xl font-black tracking-normal text-slate-900 md:text-4xl">
               Selecionar profissionais
             </h1>
@@ -181,7 +181,7 @@ export function ClienteSelecionarProfissionaisPage() {
             </p>
           </div>
           <Link
-            className="inline-flex min-h-11 items-center justify-center rounded-lg border border-green-100 px-5 text-sm font-black text-green-700 transition hover:bg-green-50"
+            className="inline-flex min-h-11 items-center justify-center rounded-lg border border-cyan-100 px-5 text-sm font-black text-cyan-700 transition hover:bg-cyan-50"
             to="/app/cliente/solicitacoes"
           >
             Voltar
@@ -283,7 +283,7 @@ function AvaliacoesDialog({
       >
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.16em] text-green-700">Avaliações</p>
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-cyan-700">Avaliações</p>
             <h2 id="avaliacoes-profissional-title" className="mt-2 text-2xl font-black text-slate-900">
               {profissional.nomeExibicao}
             </h2>
@@ -293,7 +293,7 @@ function AvaliacoesDialog({
             </p>
           </div>
           <button
-            className="min-h-10 rounded-lg border border-slate-200 px-4 text-sm font-black text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-700"
+            className="min-h-10 rounded-lg border border-slate-200 px-4 text-sm font-black text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-700"
             type="button"
             onClick={onClose}
           >

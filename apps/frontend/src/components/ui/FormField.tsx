@@ -18,7 +18,7 @@ type TextAreaProps = BaseFieldProps &
   };
 
 const fieldClassName =
-  'min-h-12 w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-green-600 focus:ring-2 focus:ring-green-100 disabled:cursor-not-allowed disabled:bg-slate-50';
+  'min-h-12 w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-cyan-600 focus:ring-2 focus:ring-cyan-100 disabled:cursor-not-allowed disabled:bg-slate-50';
 
 export function TextInput({ label, error, helperText, registration, id, ...props }: TextInputProps) {
   const fieldId = id ?? registration.name;

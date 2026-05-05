@@ -53,7 +53,7 @@ export function OcorrenciaStatusForm({ initialStatus, isSubmitting, onSubmit }: 
         <span className="text-sm font-black text-slate-800">Status</span>
         <select
           id="status"
-          className="mt-2 min-h-12 w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 outline-none transition focus:border-green-600 focus:ring-2 focus:ring-green-100 disabled:cursor-not-allowed disabled:bg-slate-50"
+          className="mt-2 min-h-12 w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 outline-none transition focus:border-cyan-600 focus:ring-2 focus:ring-cyan-100 disabled:cursor-not-allowed disabled:bg-slate-50"
           disabled={isSubmitting}
           {...register('status')}
         >
@@ -68,7 +68,7 @@ export function OcorrenciaStatusForm({ initialStatus, isSubmitting, onSubmit }: 
 
       <div className="flex justify-end">
         <button
-          className="min-h-11 rounded-lg bg-green-700 px-5 text-sm font-black text-white transition hover:bg-green-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+          className="min-h-11 rounded-lg bg-cyan-700 px-5 text-sm font-black text-white transition hover:bg-cyan-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-700 disabled:cursor-not-allowed disabled:bg-slate-300"
           disabled={isSubmitting}
           type="submit"
         >

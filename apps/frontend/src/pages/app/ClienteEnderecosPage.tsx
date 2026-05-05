@@ -151,17 +151,17 @@ export function ClienteEnderecosPage() {
 
   return (
     <div className="grid gap-5">
-      <section className="rounded-lg border border-green-100 bg-white p-5 shadow-sm md:p-7">
+      <section className="rounded-lg border border-cyan-100 bg-white p-5 shadow-sm md:p-7">
         <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.16em] text-green-700">Cliente</p>
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-cyan-700">Cliente</p>
             <h1 className="mt-3 text-3xl font-black tracking-normal text-slate-900 md:text-4xl">Meus endereços</h1>
             <p className="mt-3 max-w-3xl text-base leading-7 text-slate-600">
               Cadastre e mantenha seus locais de atendimento. A plataforma usa o estado retornado pela API para indicar o endereço principal.
             </p>
           </div>
           <button
-            className="min-h-12 rounded-lg bg-green-700 px-5 text-sm font-black text-white shadow-[0_14px_28px_rgba(21,128,61,0.18)] transition hover:bg-green-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-700 focus-visible:ring-offset-2"
+            className="min-h-12 rounded-lg bg-cyan-700 px-5 text-sm font-black text-white shadow-[0_14px_28px_rgba(14,138,141,0.18)] transition hover:bg-cyan-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-700 focus-visible:ring-offset-2"
             type="button"
             onClick={openCreateForm}
           >

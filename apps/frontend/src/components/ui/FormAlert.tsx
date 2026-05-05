@@ -7,7 +7,7 @@ type FormAlertProps = {
 
 const toneClassName = {
   error: 'border-red-100 bg-red-50 text-red-800',
-  success: 'border-green-100 bg-green-50 text-green-800',
+  success: 'border-cyan-100 bg-cyan-50 text-cyan-800',
   info: 'border-slate-100 bg-slate-50 text-slate-700',
 };
 

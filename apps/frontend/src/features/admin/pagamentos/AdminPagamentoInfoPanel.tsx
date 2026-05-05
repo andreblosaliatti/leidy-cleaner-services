@@ -56,7 +56,7 @@ function ReadOnlyBlock({ label, multiline = false, value }: { label: string; mul
       <h3 className="font-black text-slate-900">{label}</h3>
       {multiline ? (
         <textarea
-          className="mt-3 min-h-28 w-full resize-y rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm leading-6 text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-700"
+          className="mt-3 min-h-28 w-full resize-y rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm leading-6 text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-700"
           readOnly
           value={value}
         />

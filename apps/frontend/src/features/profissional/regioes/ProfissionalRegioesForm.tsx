@@ -61,12 +61,12 @@ export function ProfissionalRegioesForm({
               key={regiao.id}
               className={[
                 'flex items-start gap-3 rounded-lg border px-4 py-3 text-sm transition',
-                selectedIds.includes(regiao.id) ? 'border-green-200 bg-green-50' : 'border-slate-100 bg-white hover:bg-slate-50',
+                selectedIds.includes(regiao.id) ? 'border-cyan-200 bg-cyan-50' : 'border-slate-100 bg-white hover:bg-slate-50',
               ].join(' ')}
             >
               <input
                 checked={selectedIds.includes(regiao.id)}
-                className="mt-1 h-4 w-4 rounded border-green-300 text-green-700 focus:ring-green-700"
+                className="mt-1 h-4 w-4 rounded border-cyan-300 text-cyan-700 focus:ring-cyan-700"
                 type="checkbox"
                 onChange={() => toggleRegion(regiao.id)}
               />
@@ -81,7 +81,7 @@ export function ProfissionalRegioesForm({
 
       <div className="flex justify-end">
         <button
-          className="min-h-11 rounded-lg bg-green-700 px-5 text-sm font-black text-white shadow-[0_14px_28px_rgba(21,128,61,0.18)] transition hover:bg-green-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-700 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
+          className="min-h-11 rounded-lg bg-cyan-700 px-5 text-sm font-black text-white shadow-[0_14px_28px_rgba(14,138,141,0.18)] transition hover:bg-cyan-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-700 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
           disabled={isSubmitting || regioes.length === 0}
           type="submit"
         >

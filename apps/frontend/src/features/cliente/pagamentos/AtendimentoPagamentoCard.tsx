@@ -14,7 +14,7 @@ export function AtendimentoPagamentoCard({ atendimento }: { atendimento: Atendim
   const isPendingPayment = atendimento.status === 'AGUARDANDO_PAGAMENTO';
 
   return (
-    <article className="rounded-lg border border-slate-100 bg-white p-5 shadow-sm transition hover:border-green-100">
+    <article className="rounded-lg border border-slate-100 bg-white p-5 shadow-sm transition hover:border-cyan-100">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
@@ -33,9 +33,9 @@ export function AtendimentoPagamentoCard({ atendimento }: { atendimento: Atendim
 
         <Link
           className={[
-            'inline-flex min-h-10 shrink-0 items-center justify-center rounded-lg px-4 text-sm font-black transition focus:outline-none focus-visible:ring-2 focus-visible:ring-green-700',
+            'inline-flex min-h-10 shrink-0 items-center justify-center rounded-lg px-4 text-sm font-black transition focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-700',
             isPendingPayment
-              ? 'bg-green-700 text-white hover:bg-green-800'
+              ? 'bg-cyan-700 text-white hover:bg-cyan-800'
               : 'border border-slate-200 text-slate-700 hover:bg-slate-50',
           ].join(' ')}
           to={`/app/cliente/pagamentos/atendimento/${atendimento.id}`}

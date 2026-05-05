@@ -15,7 +15,7 @@ import type { AtendimentoFaxina } from '../../atendimentos/types';
 
 export function AdminAtendimentoCard({ atendimento }: { atendimento: AtendimentoFaxina }) {
   return (
-    <article className="rounded-lg border border-slate-100 bg-white p-5 shadow-sm transition hover:border-green-100">
+    <article className="rounded-lg border border-slate-100 bg-white p-5 shadow-sm transition hover:border-cyan-100">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
@@ -27,7 +27,7 @@ export function AdminAtendimentoCard({ atendimento }: { atendimento: Atendimento
         </div>
 
         <Link
-          className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-lg border border-slate-200 px-4 text-sm font-black text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-700"
+          className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-lg border border-slate-200 px-4 text-sm font-black text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-700"
           to={`/app/admin/atendimentos/${atendimento.id}`}
         >
           Ver detalhes

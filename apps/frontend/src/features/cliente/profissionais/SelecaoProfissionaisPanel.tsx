@@ -17,7 +17,7 @@ export function SelecaoProfissionaisPanel({
 }: SelecaoProfissionaisPanelProps) {
   return (
     <aside className="self-start rounded-lg border border-slate-100 bg-white p-5 shadow-sm">
-      <p className="text-xs font-black uppercase tracking-[0.16em] text-green-700">Seleção</p>
+      <p className="text-xs font-black uppercase tracking-[0.16em] text-cyan-700">Seleção</p>
       <h2 className="mt-2 text-xl font-black text-slate-900">Profissionais escolhidas</h2>
       <p className="mt-2 text-sm leading-6 text-slate-600">Selecione de 1 a 3 profissionais. A ordem enviada segue a ordem abaixo.</p>
 
@@ -34,10 +34,10 @@ export function SelecaoProfissionaisPanel({
       ) : (
         <ol className="mt-4 grid gap-3">
           {profissionais.map((profissional, index) => (
-            <li key={profissional.profissionalId} className="rounded-lg border border-green-100 bg-green-50 p-4">
+            <li key={profissional.profissionalId} className="rounded-lg border border-cyan-100 bg-cyan-50 p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-xs font-black uppercase tracking-[0.12em] text-green-700">{index + 1}ª escolha</p>
+                  <p className="text-xs font-black uppercase tracking-[0.12em] text-cyan-700">{index + 1}ª escolha</p>
                   <p className="mt-1 font-black text-slate-900">{profissional.nomeExibicao}</p>
                 </div>
                 <button
@@ -54,7 +54,7 @@ export function SelecaoProfissionaisPanel({
       )}
 
       <button
-        className="mt-5 min-h-11 w-full rounded-lg bg-green-700 px-5 text-sm font-black text-white shadow-[0_14px_28px_rgba(21,128,61,0.18)] transition hover:bg-green-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-700 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
+        className="mt-5 min-h-11 w-full rounded-lg bg-cyan-700 px-5 text-sm font-black text-white shadow-[0_14px_28px_rgba(14,138,141,0.18)] transition hover:bg-cyan-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-700 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
         disabled={isSubmitting}
         type="button"
         onClick={onSubmit}

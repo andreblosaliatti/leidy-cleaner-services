@@ -129,17 +129,17 @@ export function AdminConfiguracaoPrecosPage() {
 
   return (
     <div className="grid gap-5">
-      <section className="rounded-lg border border-green-100 bg-white p-5 shadow-sm md:p-7">
+      <section className="rounded-lg border border-cyan-100 bg-white p-5 shadow-sm md:p-7">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.16em] text-green-700">Administração</p>
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-cyan-700">Administração</p>
             <h1 className="mt-3 text-3xl font-black tracking-normal text-slate-900 md:text-4xl">Preços</h1>
             <p className="mt-3 max-w-3xl text-base leading-7 text-slate-600">
               Defina o valor da hora cobrado da cliente e a comissão da agência usada no cálculo operacional.
             </p>
           </div>
           <Link
-            className="inline-flex min-h-11 items-center justify-center rounded-lg border border-green-100 px-5 text-sm font-black text-green-700 transition hover:bg-green-50"
+            className="inline-flex min-h-11 items-center justify-center rounded-lg border border-cyan-100 px-5 text-sm font-black text-cyan-700 transition hover:bg-cyan-50"
             to="/app/admin"
           >
             Voltar
@@ -198,7 +198,7 @@ export function AdminConfiguracaoPrecosPage() {
 
           <div className="flex justify-end">
             <button
-              className="min-h-11 rounded-lg bg-green-700 px-5 text-sm font-black text-white transition hover:bg-green-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+              className="min-h-11 rounded-lg bg-cyan-700 px-5 text-sm font-black text-white transition hover:bg-cyan-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-700 disabled:cursor-not-allowed disabled:bg-slate-300"
               disabled={mutation.isPending || pricingQuery.isLoading}
               type="submit"
             >
