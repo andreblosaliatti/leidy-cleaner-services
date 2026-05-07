@@ -3,7 +3,10 @@ package br.com.leidycleaner.pagamentos.repository;
 import java.util.List;
 import java.util.Optional;
 
+import jakarta.persistence.LockModeType;
+
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -51,6 +54,24 @@ public interface PagamentoRepository extends JpaRepository<Pagamento, Long> {
     Optional<Pagamento> findByIdWithAtendimentoCliente(@Param("id") Long id);
 
     Optional<Pagamento> findByGatewayPaymentId(String gatewayPaymentId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            select p
+            from Pagamento p
+            join fetch p.atendimento
+            where p.gatewayPaymentId = :gatewayPaymentId
+            """)
+    Optional<Pagamento> findByGatewayPaymentIdForUpdate(@Param("gatewayPaymentId") String gatewayPaymentId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            select p
+            from Pagamento p
+            join fetch p.atendimento a
+            where a.id = :atendimentoId
+            """)
+    Optional<Pagamento> findByAtendimentoIdForUpdate(@Param("atendimentoId") Long atendimentoId);
 
     boolean existsByAtendimentoId(Long atendimentoId);
 }

@@ -64,6 +64,7 @@ public class PagamentoService {
                 atendimento.getValorServico(),
                 "Leidy Cleaner Services - atendimento #" + atendimento.getId()
         ));
+        validarUrlPagamentoGateway(gatewayResponse.urlPagamento());
 
         Pagamento pagamento = new Pagamento(
                 atendimento,
@@ -124,27 +125,28 @@ public class PagamentoService {
     @Transactional
     public CheckoutDto criarCheckout(Long usuarioId, CheckoutRequest request) {
         AtendimentoFaxina atendimento = buscarAtendimentoDoCliente(usuarioId, request.atendimentoId());
-        validarAtendimentoAguardandoPagamento(atendimento);
-        if (pagamentoRepository.existsByAtendimentoId(atendimento.getId())) {
-            throw new BusinessException("PAGAMENTO_JA_EXISTE", "Atendimento ja possui pagamento", HttpStatus.CONFLICT);
+        var pagamentoExistente = pagamentoRepository.findByAtendimentoIdForUpdate(atendimento.getId());
+        if (pagamentoExistente.isPresent()) {
+            return checkoutDtoParaPagamentoExistente(pagamentoExistente.get());
         }
 
+        validarAtendimentoAguardandoPagamento(atendimento);
         AsaasCheckoutGatewayResponse gatewayResponse = asaasGatewayClient.criarCheckout(new AsaasCheckoutRequest(
                 atendimento.getId(),
                 atendimento.getValorServico(),
                 "Leidy Cleaner Services - atendimento #" + atendimento.getId()
         ));
+        validarUrlPagamentoGateway(gatewayResponse.checkoutUrl());
 
-        // Criar pagamento pendente associado ao checkout
         Pagamento pagamento = new Pagamento(
                 atendimento,
                 GatewayPagamento.ASAAS,
-                gatewayResponse.checkoutId(), // Usar checkoutId como gatewayPaymentId
-                MetodoPagamento.CARTAO_CREDITO, // Default para checkout
+                gatewayResponse.checkoutId(),
+                gatewayResponse.metodoPagamento(),
                 StatusPagamento.PENDENTE,
                 atendimento.getValorServico(),
                 gatewayResponse.checkoutUrl(),
-                null, // pixCopiaECola nao se aplica ao checkout
+                null,
                 gatewayResponse.payloadResumo()
         );
         pagamentoRepository.save(pagamento);
@@ -152,9 +154,41 @@ public class PagamentoService {
         return new CheckoutDto(
                 atendimento.getId(),
                 gatewayResponse.checkoutUrl(),
+                gatewayResponse.checkoutUrl(),
                 atendimento.getValorServico(),
                 "Leidy Cleaner Services - atendimento #" + atendimento.getId()
         );
+    }
+
+    private CheckoutDto checkoutDtoParaPagamentoExistente(Pagamento pagamento) {
+        validarUrlPagamentoExistente(pagamento.getUrlPagamento());
+        return new CheckoutDto(
+                pagamento.getAtendimento().getId(),
+                pagamento.getUrlPagamento(),
+                pagamento.getUrlPagamento(),
+                pagamento.getValorBruto(),
+                "Leidy Cleaner Services - atendimento #" + pagamento.getAtendimento().getId()
+        );
+    }
+
+    private void validarUrlPagamentoExistente(String urlPagamento) {
+        if (urlPagamento == null || urlPagamento.isBlank()) {
+            throw new BusinessException(
+                    "PAGAMENTO_URL_INDISPONIVEL",
+                    "Pagamento ja existe para este atendimento, mas nao possui URL de pagamento",
+                    HttpStatus.CONFLICT
+            );
+        }
+    }
+
+    private void validarUrlPagamentoGateway(String urlPagamento) {
+        if (urlPagamento == null || urlPagamento.isBlank()) {
+            throw new BusinessException(
+                    "ASAAS_PAYMENT_URL_NOT_RETURNED",
+                    "URL de pagamento nao retornada pelo Asaas",
+                    HttpStatus.BAD_GATEWAY
+            );
+        }
     }
 
     private AtendimentoFaxina buscarAtendimentoDoCliente(Long usuarioId, Long atendimentoId) {

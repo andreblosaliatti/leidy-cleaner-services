@@ -1,5 +1,7 @@
 package br.com.leidycleaner.pagamentos.gateway;
 
+import java.util.List;
+
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
@@ -7,11 +9,15 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "app.asaas")
 public class AsaasProperties {
 
-    private String baseUrl = "https://sandbox.asaas.com/api";
+    private String baseUrl = "https://api-sandbox.asaas.com/v3";
     private String apiKey;
     private String webhookToken;
     private String defaultCustomerId;
-    private String checkoutSuccessUrl = "http://localhost:5173/pagamento/sucesso";
+    private String paymentBillingType;
+    private boolean paymentAutoRedirect = true;
+    private boolean paymentCallbackEnabled;
+    private List<String> checkoutBillingTypes = List.of("CREDIT_CARD");
+    private String checkoutSuccessUrl;
     private String checkoutCancelUrl = "http://localhost:5173/pagamento/cancelado";
     private String checkoutExpiredUrl = "http://localhost:5173/pagamento/expirado";
 
@@ -45,6 +51,38 @@ public class AsaasProperties {
 
     public void setDefaultCustomerId(String defaultCustomerId) {
         this.defaultCustomerId = defaultCustomerId;
+    }
+
+    public String getPaymentBillingType() {
+        return paymentBillingType;
+    }
+
+    public void setPaymentBillingType(String paymentBillingType) {
+        this.paymentBillingType = paymentBillingType;
+    }
+
+    public boolean isPaymentAutoRedirect() {
+        return paymentAutoRedirect;
+    }
+
+    public void setPaymentAutoRedirect(boolean paymentAutoRedirect) {
+        this.paymentAutoRedirect = paymentAutoRedirect;
+    }
+
+    public boolean isPaymentCallbackEnabled() {
+        return paymentCallbackEnabled;
+    }
+
+    public void setPaymentCallbackEnabled(boolean paymentCallbackEnabled) {
+        this.paymentCallbackEnabled = paymentCallbackEnabled;
+    }
+
+    public List<String> getCheckoutBillingTypes() {
+        return checkoutBillingTypes;
+    }
+
+    public void setCheckoutBillingTypes(List<String> checkoutBillingTypes) {
+        this.checkoutBillingTypes = checkoutBillingTypes;
     }
 
     public String getCheckoutSuccessUrl() {

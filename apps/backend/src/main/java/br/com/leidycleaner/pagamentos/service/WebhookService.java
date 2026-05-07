@@ -22,12 +22,14 @@ import br.com.leidycleaner.pagamentos.entity.Pagamento;
 import br.com.leidycleaner.pagamentos.entity.StatusPagamento;
 import br.com.leidycleaner.pagamentos.gateway.AsaasProperties;
 import br.com.leidycleaner.pagamentos.repository.PagamentoRepository;
+import br.com.leidycleaner.pagamentos.repository.WebhookEventRepository;
 
 @Service
 public class WebhookService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(WebhookService.class);
     private static final Set<String> EVENTOS_SUPORTADOS = Set.of(
+            "PAYMENT_CREATED",
             "PAYMENT_RECEIVED",
             "PAYMENT_CONFIRMED",
             "PAYMENT_RECEIVED_IN_CASH",
@@ -42,17 +44,20 @@ public class WebhookService {
     );
 
     private final PagamentoRepository pagamentoRepository;
+    private final WebhookEventRepository webhookEventRepository;
     private final AtendimentoFaxinaRepository atendimentoFaxinaRepository;
     private final ObjectMapper objectMapper;
     private final AsaasProperties asaasProperties;
 
     public WebhookService(
             PagamentoRepository pagamentoRepository,
+            WebhookEventRepository webhookEventRepository,
             AtendimentoFaxinaRepository atendimentoFaxinaRepository,
             ObjectMapper objectMapper,
             AsaasProperties asaasProperties
     ) {
         this.pagamentoRepository = pagamentoRepository;
+        this.webhookEventRepository = webhookEventRepository;
         this.atendimentoFaxinaRepository = atendimentoFaxinaRepository;
         this.objectMapper = objectMapper;
         this.asaasProperties = asaasProperties;
@@ -90,14 +95,11 @@ public class WebhookService {
                 return;
             }
 
-            StatusPagamento statusDestino = mapearStatusPagamento(jsonNode, event);
-
-            Optional<PagamentoLocalizado> pagamentoLocalizadoOptional = localizarPagamento(identifiers);
-            if (pagamentoLocalizadoOptional.isEmpty()) {
+            String paymentId = identifiers.paymentId();
+            if (paymentId == null) {
                 LOGGER.warn(
-                        "asaas_webhook_pagamento_not_found event={} paymentId={} checkoutSession={} checkoutId={} externalReference={}",
+                        "asaas_webhook_payload_ignored reason=missing_payment_id event={} checkoutSession={} checkoutId={} externalReference={}",
                         event,
-                        identifiers.paymentId(),
                         identifiers.checkoutSessionId(),
                         identifiers.checkoutId(),
                         identifiers.externalReference()
@@ -105,10 +107,36 @@ public class WebhookService {
                 return;
             }
 
+            Optional<PagamentoLocalizado> pagamentoLocalizadoOptional = localizarPagamento(identifiers);
+            if (pagamentoLocalizadoOptional.isEmpty()) {
+                LOGGER.warn(
+                        "Webhook received before local payment exists: {} event={} checkoutSession={} checkoutId={} externalReference={}",
+                        paymentId,
+                        event,
+                        identifiers.checkoutSessionId(),
+                        identifiers.checkoutId(),
+                        identifiers.externalReference()
+                );
+                LOGGER.info("Webhook event: paymentId={}, event={}, processed={}", paymentId, event, false);
+                return;
+            }
+
+            boolean eventoNovo = webhookEventRepository.registrarSeNovo(paymentId, event, payload);
+            LOGGER.info("Webhook event: paymentId={}, event={}, processed={}", paymentId, event, eventoNovo);
+            if (!eventoNovo) {
+                LOGGER.info(
+                        "asaas_webhook_event_skipped reason=duplicate paymentId={} event={}",
+                        paymentId,
+                        event
+                );
+                return;
+            }
+            StatusPagamento statusDestino = mapearStatusPagamento(jsonNode, event);
             PagamentoLocalizado pagamentoLocalizado = pagamentoLocalizadoOptional.get();
             Pagamento pagamento = pagamentoLocalizado.pagamento();
             String identificadorLog = pagamentoLocalizado.identificador();
             StatusPagamento statusAnterior = pagamento.getStatus();
+            boolean webhookProcessadoAnterior = pagamento.isWebhookProcessado();
             boolean mudou = pagamento.aplicarStatusWebhook(statusDestino, payload);
             if (!mudou) {
                 LOGGER.info(
@@ -122,6 +150,8 @@ public class WebhookService {
                 return;
             }
 
+            boolean pagamentoConfirmadoPorEsteEvento = pagamento.getStatus() == StatusPagamento.PAGO
+                    && (statusAnterior != StatusPagamento.PAGO || !webhookProcessadoAnterior);
             LOGGER.info(
                     "asaas_webhook_pagamento_updated event={} gatewayPaymentId={} pagamentoId={} statusAnterior={} statusAtual={} webhookProcessado={}",
                     event,
@@ -131,14 +161,22 @@ public class WebhookService {
                     pagamento.getStatus(),
                     pagamento.isWebhookProcessado()
             );
-            if (mudou && statusDestino == StatusPagamento.PAGO) {
+            if (pagamentoConfirmadoPorEsteEvento && deveConfirmarAtendimento(event)) {
                 LOGGER.info(
-                        "asaas_webhook_pagamento_confirmed event={} gatewayPaymentId={} pagamentoId={}",
+                        "asaas_webhook_pagamento_confirmed event={} paymentId={} gatewayPaymentId={} pagamentoId={}",
                         event,
+                        paymentId,
                         identificadorLog,
                         pagamento.getId()
                 );
-                atualizarStatusAtendimento(pagamento.getAtendimento(), pagamento.getId(), identificadorLog, event);
+                atualizarStatusAtendimento(pagamento, paymentId, identificadorLog, event);
+            } else if (pagamentoConfirmadoPorEsteEvento) {
+                LOGGER.warn(
+                        "asaas_webhook_pagamento_pago_sem_confirmar_atendimento reason=event_not_allowed event={} paymentId={} pagamentoId={}",
+                        event,
+                        paymentId,
+                        pagamento.getId()
+                );
             }
         } catch (BusinessException exception) {
             throw exception;
@@ -194,19 +232,24 @@ public class WebhookService {
         );
     }
 
-    private void atualizarStatusAtendimento(
-            AtendimentoFaxina atendimento,
-            Long pagamentoId,
-            String gatewayPaymentId,
-            String event
-    ) {
+    private void atualizarStatusAtendimento(Pagamento pagamento, String paymentId, String gatewayPaymentId, String event) {
+        if (pagamento.getStatus() != StatusPagamento.PAGO || !pagamento.isWebhookProcessado()) {
+            throw new BusinessException(
+                    "PAGAMENTO_NAO_CONFIRMADO_POR_WEBHOOK",
+                    "Atendimento so pode ser confirmado por pagamento pago via webhook",
+                    HttpStatus.CONFLICT
+            );
+        }
+
+        AtendimentoFaxina atendimento = pagamento.getAtendimento();
         atendimento.confirmarPagamento();
         atendimentoFaxinaRepository.save(atendimento);
         LOGGER.info(
-                "asaas_webhook_atendimento_confirmed event={} gatewayPaymentId={} pagamentoId={} atendimentoId={} status={}",
+                "asaas_webhook_atendimento_confirmed event={} paymentId={} gatewayPaymentId={} pagamentoId={} atendimentoId={} status={}",
                 event,
+                paymentId,
                 gatewayPaymentId,
-                pagamentoId,
+                pagamento.getId(),
                 atendimento.getId(),
                 atendimento.getStatus()
         );
@@ -214,26 +257,26 @@ public class WebhookService {
 
     private Optional<PagamentoLocalizado> localizarPagamento(AsaasWebhookIdentifiers identifiers) {
         if (identifiers.paymentId() != null) {
-            Optional<Pagamento> pagamento = pagamentoRepository.findByGatewayPaymentId(identifiers.paymentId());
+            Optional<Pagamento> pagamento = pagamentoRepository.findByGatewayPaymentIdForUpdate(identifiers.paymentId());
             if (pagamento.isPresent()) {
                 return Optional.of(new PagamentoLocalizado(pagamento.get(), identifiers.paymentId()));
             }
         }
         if (identifiers.checkoutSessionId() != null) {
-            Optional<Pagamento> pagamento = pagamentoRepository.findByGatewayPaymentId(identifiers.checkoutSessionId());
+            Optional<Pagamento> pagamento = pagamentoRepository.findByGatewayPaymentIdForUpdate(identifiers.checkoutSessionId());
             if (pagamento.isPresent()) {
                 return Optional.of(new PagamentoLocalizado(pagamento.get(), identifiers.checkoutSessionId()));
             }
         }
         if (identifiers.checkoutId() != null) {
-            Optional<Pagamento> pagamento = pagamentoRepository.findByGatewayPaymentId(identifiers.checkoutId());
+            Optional<Pagamento> pagamento = pagamentoRepository.findByGatewayPaymentIdForUpdate(identifiers.checkoutId());
             if (pagamento.isPresent()) {
                 return Optional.of(new PagamentoLocalizado(pagamento.get(), identifiers.checkoutId()));
             }
         }
         Long atendimentoId = extrairAtendimentoId(identifiers.externalReference());
         if (atendimentoId != null) {
-            return pagamentoRepository.findByAtendimentoId(atendimentoId)
+            return pagamentoRepository.findByAtendimentoIdForUpdate(atendimentoId)
                     .map(pagamento -> new PagamentoLocalizado(pagamento, identifiers.externalReference()));
         }
         return Optional.empty();
@@ -284,15 +327,22 @@ public class WebhookService {
     private StatusPagamento mapearStatusPagamento(JsonNode jsonNode, String event) {
         String statusGateway = texto(jsonNode.path("payment").path("status"));
         return switch (event) {
-            case "PAYMENT_RECEIVED", "PAYMENT_CONFIRMED", "PAYMENT_RECEIVED_IN_CASH", "CHECKOUT_PAID" ->
+            case "PAYMENT_CREATED" -> StatusPagamento.PENDENTE;
+            case "PAYMENT_RECEIVED", "PAYMENT_CONFIRMED", "CHECKOUT_PAID" ->
                     statusComFallback(statusGateway, StatusPagamento.PAGO);
-            case "PAYMENT_OVERDUE" -> statusComFallback(statusGateway, StatusPagamento.FALHOU);
-            case "PAYMENT_DELETED" -> statusComFallback(statusGateway, StatusPagamento.CANCELADO);
+            case "PAYMENT_RECEIVED_IN_CASH" -> StatusPagamento.AGUARDANDO_CONFIRMACAO;
+            case "PAYMENT_OVERDUE" -> StatusPagamento.FALHOU;
+            case "PAYMENT_DELETED" -> StatusPagamento.CANCELADO;
             case "PAYMENT_REFUNDED", "PAYMENT_PARTIALLY_REFUNDED", "PAYMENT_CHARGEBACK_REQUESTED",
-                    "PAYMENT_CHARGEBACK_DISPUTE", "PAYMENT_AWAITING_CHARGEBACK_REVERSAL" ->
-                    statusComFallback(statusGateway, StatusPagamento.ESTORNADO);
+                    "PAYMENT_CHARGEBACK_DISPUTE", "PAYMENT_AWAITING_CHARGEBACK_REVERSAL" -> StatusPagamento.ESTORNADO;
             default -> throw new IllegalStateException("Evento suportado sem mapeamento de status");
         };
+    }
+
+    private boolean deveConfirmarAtendimento(String event) {
+        return "PAYMENT_CONFIRMED".equals(event)
+                || "PAYMENT_RECEIVED".equals(event)
+                || "CHECKOUT_PAID".equals(event);
     }
 
     private StatusPagamento mapearStatusGateway(String statusGateway) {

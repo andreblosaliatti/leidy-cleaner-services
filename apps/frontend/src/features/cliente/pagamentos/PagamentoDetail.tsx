@@ -1,7 +1,6 @@
-import { useState } from 'react';
+import { Link } from 'react-router-dom';
 
 import {
-  canRecheckPagamento,
   formatCurrency,
   formatDateTime,
   getMetodoPagamentoLabel,
@@ -11,12 +10,13 @@ import { PagamentoStatusBadge } from './PagamentoStatusBadge';
 import type { Pagamento } from './types';
 
 type PagamentoDetailProps = {
-  isRechecking: boolean;
   pagamento: Pagamento;
-  onRecheck: (pagamentoId: number) => void;
 };
 
-export function PagamentoDetail({ isRechecking, onRecheck, pagamento }: PagamentoDetailProps) {
+export function PagamentoDetail({ pagamento }: PagamentoDetailProps) {
+  const isPaid = pagamento.status === 'PAGO';
+  const isWaitingWebhook = pagamento.status === 'PENDENTE' || pagamento.status === 'AGUARDANDO_CONFIRMACAO';
+
   return (
     <section className="rounded-lg border border-slate-100 bg-white p-5 shadow-sm md:p-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
@@ -25,85 +25,64 @@ export function PagamentoDetail({ isRechecking, onRecheck, pagamento }: Pagament
             <h2 className="text-2xl font-black text-slate-900">Pagamento #{pagamento.id}</h2>
             <PagamentoStatusBadge status={pagamento.status} />
           </div>
-          <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">{getStatusPagamentoDescription(pagamento.status)}</p>
+          <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
+            {isWaitingWebhook ? 'Aguardando confirmacao do pagamento pelo webhook.' : getStatusPagamentoDescription(pagamento.status)}
+          </p>
         </div>
-
-        {canRecheckPagamento(pagamento.status) && (
-          <button
-            className="inline-flex min-h-11 items-center justify-center rounded-lg border border-cyan-100 px-5 text-sm font-black text-cyan-700 transition hover:bg-cyan-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-700 disabled:cursor-not-allowed disabled:text-slate-400"
-            disabled={isRechecking}
-            type="button"
-            onClick={() => onRecheck(pagamento.id)}
-          >
-            {isRechecking ? 'Atualizando...' : 'Atualizar status'}
-          </button>
-        )}
       </div>
 
       <dl className="mt-6 grid gap-4 text-sm md:grid-cols-2 xl:grid-cols-3">
-        <DetailItem label="Atendimento" value={`ID ${pagamento.atendimentoId}`} />
-        <DetailItem label="Método" value={getMetodoPagamentoLabel(pagamento.metodoPagamento)} />
-        <DetailItem label="Valor total" value={formatCurrency(pagamento.valorBruto)} />
+        <div>
+          <dt className="text-xs font-black uppercase tracking-[0.12em] text-slate-500">Atendimento relacionado</dt>
+          <dd className="mt-1 flex flex-wrap items-center gap-2 font-semibold leading-6 text-slate-800">
+            #{pagamento.atendimentoId}
+            <Link className="text-sm font-black text-cyan-700 hover:text-cyan-800" to={`/app/cliente/atendimentos/${pagamento.atendimentoId}`}>
+              Ver atendimento
+            </Link>
+          </dd>
+        </div>
+        <DetailItem label="Metodo" value={getMetodoPagamentoLabel(pagamento.metodoPagamento)} />
+        <DetailItem label="Valor" value={formatCurrency(pagamento.valorBruto)} />
+        <DetailItem label="Criado em" value={formatDateTime(pagamento.criadoEm)} />
         <DetailItem label="Recebido em" value={formatDateTime(pagamento.recebidoEm)} />
       </dl>
 
       <div className="mt-6 grid gap-4">
-        {pagamento.urlPagamento && (
+        {isPaid && (
+          <div className="rounded-lg border border-green-100 bg-green-50 p-4 text-sm font-semibold leading-6 text-green-800">
+            Pagamento confirmado pelo backend.
+          </div>
+        )}
+
+        {isWaitingWebhook && (
+          <div className="rounded-lg border border-blue-100 bg-blue-50 p-4 text-sm leading-6 text-blue-900">
+            Aguardando confirmacao do pagamento pelo webhook.
+          </div>
+        )}
+
+        {pagamento.urlPagamento && !isPaid && (
           <div className="rounded-lg border border-cyan-100 bg-cyan-50 p-4">
             <h3 className="font-black text-cyan-900">Link de pagamento</h3>
             <p className="mt-2 break-all text-sm leading-6 text-cyan-800">{pagamento.urlPagamento}</p>
             <a
               className="mt-3 inline-flex min-h-10 items-center justify-center rounded-lg bg-cyan-700 px-4 text-sm font-black text-white transition hover:bg-cyan-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-700"
               href={pagamento.urlPagamento}
-              rel="noreferrer"
-              target="_blank"
             >
-              Abrir checkout
+              Abrir pagamento novamente
             </a>
           </div>
         )}
 
-        {pagamento.pixCopiaECola && <PixCopyBox pixCopiaECola={pagamento.pixCopiaECola} />}
-
-        <div className="rounded-lg border border-blue-100 bg-blue-50 p-4 text-sm leading-6 text-blue-900">
-          O frontend apenas consulta e exibe o status retornado pelo backend. A confirmação definitiva de pagamento depende do webhook.
+        <div className="flex flex-wrap gap-3">
+          <Link
+            className="inline-flex min-h-10 items-center justify-center rounded-lg border border-slate-200 px-4 text-sm font-black text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-700"
+            to="/app/cliente/pagamentos"
+          >
+            Voltar para pagamentos
+          </Link>
         </div>
       </div>
     </section>
-  );
-}
-
-function PixCopyBox({ pixCopiaECola }: { pixCopiaECola: string }) {
-  const [copied, setCopied] = useState(false);
-
-  async function handleCopy() {
-    try {
-      await navigator.clipboard.writeText(pixCopiaECola);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 2200);
-    } catch {
-      setCopied(false);
-    }
-  }
-
-  return (
-    <div className="rounded-lg border border-slate-100 bg-slate-50 p-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h3 className="font-black text-slate-900">Pix copia e cola</h3>
-        <button
-          className="min-h-10 rounded-lg border border-slate-200 bg-white px-4 text-sm font-black text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-700"
-          type="button"
-          onClick={handleCopy}
-        >
-          {copied ? 'Copiado' : 'Copiar Pix'}
-        </button>
-      </div>
-      <textarea
-        className="mt-3 min-h-28 w-full resize-y rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm leading-6 text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-700"
-        readOnly
-        value={pixCopiaECola}
-      />
-    </div>
   );
 }
 

@@ -75,7 +75,6 @@ export function App() {
               <Route path="pagamentos" element={<ClientePagamentosPage />} />
               <Route path="pagamentos/retorno" element={<ClientePagamentoRetornoPage />} />
               <Route path="pagamentos/atendimento/:atendimentoId" element={<ClientePagamentoPage />} />
-              <Route path="pagamentos/:pagamentoId" element={<ClientePagamentoPage />} />
               <Route path="atendimentos" element={<ClienteAtendimentosPage />} />
               <Route path="atendimentos/:id" element={<ClienteAtendimentoDetalhePage />} />
             </Route>

@@ -34,10 +34,17 @@ app:
     api-key: ${ASAAS_API_KEY:}
     webhook-token: ${ASAAS_WEBHOOK_TOKEN:}
     default-customer-id: ${ASAAS_DEFAULT_CUSTOMER_ID:}
-    # Checkout payments store the checkout session id. PAYMENT_CONFIRMED/PAYMENT_RECEIVED
-    # can reconcile through payment.checkoutSession; CHECKOUT_PAID remains supported if sent.
+    # POST /pagamentos/checkout now creates a standard Asaas /payments charge and
+    # stores the returned payment.id in pagamentos.gateway_payment_id.
+    payment-billing-type: ${ASAAS_PAYMENT_BILLING_TYPE:}
+    payment-auto-redirect: ${ASAAS_PAYMENT_AUTO_REDIRECT:true}
+    payment-callback-enabled: ${ASAAS_PAYMENT_CALLBACK_ENABLED:false}
+    # Legacy compatibility fallback for older local env files; the first value is used
+    # only when ASAAS_PAYMENT_BILLING_TYPE is not set.
     checkout-billing-types: ${ASAAS_CHECKOUT_BILLING_TYPES:CREDIT_CARD}
-    checkout-success-url: ${ASAAS_CHECKOUT_SUCCESS_URL:http://localhost:5173/pagamento/sucesso}
+    # Optional for /payments. When empty or disabled, no callback.successUrl is sent to Asaas;
+    # webhook confirmation remains the source of truth.
+    checkout-success-url: ${ASAAS_CHECKOUT_SUCCESS_URL:}
     checkout-cancel-url: ${ASAAS_CHECKOUT_CANCEL_URL:http://localhost:5173/pagamento/cancelado}
     checkout-expired-url: ${ASAAS_CHECKOUT_EXPIRED_URL:http://localhost:5173/pagamento/expirado}
   pricing:

@@ -46,6 +46,7 @@ export type CheckoutPagamentoRequest = {
 export type CheckoutPagamento = {
   atendimentoId: number;
   checkoutUrl: string;
+  paymentUrl?: string | null;
   valor: number;
   descricao: string;
 };

@@ -4,7 +4,7 @@ Monorepo da plataforma operacional de intermediacao de servicos de limpeza **Lei
 
 O escopo de servicos contempla as categorias `FAXINA_RESIDENCIAL`, `FAXINA_COMERCIAL`, `FAXINA_CONDOMINIO` e `FAXINA_EVENTO`.
 
-O produto segue as decisoes do `AGENTS.md` e de `docs/spec.md`: frontend React, backend Spring Boot, PostgreSQL, pagamento via Asaas Checkout vinculado ao atendimento e confirmacao por webhook.
+O produto segue as decisoes do `AGENTS.md` e de `docs/spec.md`: frontend React, backend Spring Boot, PostgreSQL, pagamento via Asaas vinculado ao atendimento e confirmacao por webhook.
 
 ## Estrutura
 
@@ -99,7 +99,7 @@ O caminho principal de pagamento e:
 POST /api/v1/pagamentos/checkout
 ```
 
-Esse endpoint cria um checkout Asaas sempre vinculado a um `AtendimentoFaxina` e persiste o `Pagamento` como `PENDENTE`. O frontend redireciona a cliente para `checkoutUrl`, mas o retorno do checkout nao confirma pagamento. A confirmacao definitiva continua sendo feita apenas pelo webhook:
+Esse endpoint mantem o nome por compatibilidade, mas cria uma cobranca padrao no Asaas via `POST /payments`, sempre vinculada a um `AtendimentoFaxina`. O backend persiste o `Pagamento` como `PENDENTE`, salva `payment.id` em `pagamentos.gateway_payment_id` e retorna `invoiceUrl` como `checkoutUrl`/`paymentUrl`. O retorno do Asaas nao confirma pagamento; a confirmacao definitiva continua sendo feita apenas pelo webhook:
 
 ```text
 POST /api/v1/webhooks/asaas
@@ -111,15 +111,21 @@ Variaveis usadas pela integracao:
 ASAAS_BASE_URL
 ASAAS_API_KEY
 ASAAS_WEBHOOK_TOKEN
+ASAAS_DEFAULT_CUSTOMER_ID
+ASAAS_PAYMENT_BILLING_TYPE
+ASAAS_PAYMENT_AUTO_REDIRECT
+ASAAS_PAYMENT_CALLBACK_ENABLED
 ASAAS_CHECKOUT_BILLING_TYPES
 ASAAS_CHECKOUT_SUCCESS_URL
 ASAAS_CHECKOUT_CANCEL_URL
 ASAAS_CHECKOUT_EXPIRED_URL
 ```
 
-`ASAAS_DEFAULT_CUSTOMER_ID` existe somente para o endpoint legado `POST /api/v1/pagamentos`, que cria cobranca direta e nao e o caminho principal do checkout.
+`ASAAS_CHECKOUT_BILLING_TYPES` permanece como fallback de compatibilidade para ambientes locais antigos. Para o fluxo principal, configure `ASAAS_PAYMENT_BILLING_TYPE` com `CREDIT_CARD` ou `PIX`.
 
-Para pagamentos criados via Asaas Checkout, o backend armazena o identificador da sessao de checkout em `gateway_payment_id`. Eventos de cobranca como `PAYMENT_CONFIRMED` e `PAYMENT_RECEIVED` podem reconciliar esse fluxo quando o payload inclui `payment.checkoutSession`. O evento `CHECKOUT_PAID` continua suportado se a configuracao do Asaas o emitir.
+`ASAAS_PAYMENT_CALLBACK_ENABLED` controla se o backend envia `callback.successUrl` no `POST /payments`. Em desenvolvimento local, mantenha `ASAAS_PAYMENT_CALLBACK_ENABLED=false`; assim o backend nao envia `callback`, mesmo que exista uma `ASAAS_CHECKOUT_SUCCESS_URL` antiga no ambiente, evitando o bloqueio do Asaas Sandbox quando a conta ainda nao possui dominio cadastrado. Para usar callback em producao, configure `ASAAS_PAYMENT_CALLBACK_ENABLED=true` e uma `ASAAS_CHECKOUT_SUCCESS_URL` cujo dominio esteja cadastrado na conta Asaas. Esse callback serve apenas para retorno visual do cliente ao site; sem callback, o cliente pode nao voltar automaticamente. A confirmacao de pagamento continua vindo exclusivamente do webhook, e a cobranca ainda pode ser confirmada via webhook mesmo sem callback.
+
+Para pagamentos criados pelo fluxo principal, eventos de cobranca como `PAYMENT_CONFIRMED` e `PAYMENT_RECEIVED` reconciliam pelo campo `payment.id`. A localizacao por `payment.checkoutSession`, `checkout.id` e `externalReference` continua suportada para compatibilidade com registros antigos.
 
 Seguranca do webhook:
 

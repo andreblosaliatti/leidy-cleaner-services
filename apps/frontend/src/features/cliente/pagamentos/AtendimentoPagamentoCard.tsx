@@ -7,11 +7,28 @@ import {
   getStatusAtendimentoPagamentoInfo,
   getTipoServicoPagamentoLabel,
 } from './pagamentoLabels';
-import type { AtendimentoPagamento } from './types';
+import { PagamentoStatusBadge } from './PagamentoStatusBadge';
+import type { AtendimentoPagamento, Pagamento } from './types';
 
-export function AtendimentoPagamentoCard({ atendimento }: { atendimento: AtendimentoPagamento }) {
+type AtendimentoPagamentoCardProps = {
+  atendimento: AtendimentoPagamento;
+  isOpeningPayment?: boolean;
+  isPagamentoLoading?: boolean;
+  onPay?: (atendimento: AtendimentoPagamento, pagamento: Pagamento | null) => void;
+  pagamento?: Pagamento | null;
+};
+
+export function AtendimentoPagamentoCard({
+  atendimento,
+  isOpeningPayment = false,
+  isPagamentoLoading = false,
+  onPay,
+  pagamento,
+}: AtendimentoPagamentoCardProps) {
   const statusInfo = getStatusAtendimentoPagamentoInfo(atendimento.status);
-  const isPendingPayment = atendimento.status === 'AGUARDANDO_PAGAMENTO';
+  const pagamentoStatus = pagamento?.status ?? 'PENDENTE';
+  const isPaid = pagamentoStatus === 'PAGO';
+  const isPayDisabled = isOpeningPayment || isPagamentoLoading;
 
   return (
     <article className="rounded-lg border border-slate-100 bg-white p-5 shadow-sm transition hover:border-cyan-100">
@@ -29,19 +46,35 @@ export function AtendimentoPagamentoCard({ atendimento }: { atendimento: Atendim
           <p className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
             {getAtendimentoRegiaoLabel(atendimento)}
           </p>
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <span className="text-xs font-black uppercase tracking-[0.12em] text-slate-500">Status do pagamento</span>
+            {isPagamentoLoading ? (
+              <span className="rounded-lg bg-slate-100 px-3 py-1 text-xs font-black uppercase tracking-[0.1em] text-slate-600">
+                Carregando
+              </span>
+            ) : (
+              <PagamentoStatusBadge status={pagamentoStatus} />
+            )}
+          </div>
         </div>
 
-        <Link
-          className={[
-            'inline-flex min-h-10 shrink-0 items-center justify-center rounded-lg px-4 text-sm font-black transition focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-700',
-            isPendingPayment
-              ? 'bg-cyan-700 text-white hover:bg-cyan-800'
-              : 'border border-slate-200 text-slate-700 hover:bg-slate-50',
-          ].join(' ')}
-          to={`/app/cliente/pagamentos/atendimento/${atendimento.id}`}
-        >
-          {isPendingPayment ? 'Abrir checkout' : 'Ver pagamento'}
-        </Link>
+        {isPaid ? (
+          <Link
+            className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-lg border border-slate-200 px-4 text-sm font-black text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-700"
+            to={`/app/cliente/pagamentos/atendimento/${atendimento.id}`}
+          >
+            Ver pagamento
+          </Link>
+        ) : (
+          <button
+            className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-lg bg-cyan-700 px-4 text-sm font-black text-white transition hover:bg-cyan-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600"
+            disabled={isPayDisabled}
+            type="button"
+            onClick={() => onPay?.(atendimento, pagamento ?? null)}
+          >
+            {isOpeningPayment ? 'Abrindo...' : 'Pagar'}
+          </button>
+        )}
       </div>
     </article>
   );

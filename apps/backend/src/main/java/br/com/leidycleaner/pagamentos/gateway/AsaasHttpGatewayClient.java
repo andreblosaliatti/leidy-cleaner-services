@@ -5,14 +5,21 @@ import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
+import java.util.stream.StreamSupport;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.HttpStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestClient;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import br.com.leidycleaner.core.exception.BusinessException;
 import br.com.leidycleaner.pagamentos.entity.MetodoPagamento;
@@ -20,8 +27,14 @@ import br.com.leidycleaner.pagamentos.entity.MetodoPagamento;
 @Service
 public class AsaasHttpGatewayClient implements AsaasGatewayClient {
 
+    private static final String PAYMENT_ENDPOINT = "/payments";
+    private static final List<String> MVP_PAYMENT_BILLING_TYPES = List.of("CREDIT_CARD", "PIX");
+    private static final int ASAAS_ERROR_TEXT_MAX_LENGTH = 240;
+    private static final Logger LOGGER = LoggerFactory.getLogger(AsaasHttpGatewayClient.class);
+
     private final AsaasProperties properties;
     private final RestClient restClient;
+    private final ObjectMapper objectMapper;
     private final Clock clock;
 
     public AsaasHttpGatewayClient(AsaasProperties properties) {
@@ -30,11 +43,11 @@ public class AsaasHttpGatewayClient implements AsaasGatewayClient {
                 .baseUrl(properties.getBaseUrl())
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .build();
+        this.objectMapper = new ObjectMapper();
         this.clock = Clock.systemDefaultZone();
     }
 
     @Override
-    @Deprecated(forRemoval = false)
     public AsaasPagamentoGatewayResponse criarCobranca(AsaasCobrancaRequest request) {
         validarConfiguracaoCobranca();
         Map<String, Object> body = new LinkedHashMap<>();
@@ -44,64 +57,70 @@ public class AsaasHttpGatewayClient implements AsaasGatewayClient {
         body.put("dueDate", LocalDate.now(clock).plusDays(1).toString());
         body.put("description", request.descricao());
         body.put("externalReference", "atendimento-" + request.atendimentoId());
+        Map<String, Object> callback = callbackPagamento(request.atendimentoId());
+        if (callback != null) {
+            body.put("callback", callback);
+        }
 
-        JsonNode response = restClient.post()
-                .uri("/v3/payments")
-                .header("access_token", properties.getApiKey())
-                .body(body)
-                .retrieve()
-                .body(JsonNode.class);
-        return paraGatewayResponse(response);
+        JsonNode response = executarRequisicaoAsaas(
+                () -> restClient.post()
+                        .uri(PAYMENT_ENDPOINT)
+                        .header("access_token", properties.getApiKey())
+                        .body(body)
+                        .retrieve()
+                        .body(JsonNode.class),
+                "Nao foi possivel criar pagamento no Asaas",
+                PAYMENT_ENDPOINT
+        );
+        AsaasPagamentoGatewayResponse gatewayResponse = paraGatewayResponse(response);
+        validarUrlPagamentoRetornada(gatewayResponse.urlPagamento());
+        return gatewayResponse;
     }
 
     @Override
     public AsaasCheckoutGatewayResponse criarCheckout(AsaasCheckoutRequest request) {
-        validarConfiguracaoCheckout();
-        Map<String, Object> body = new LinkedHashMap<>();
-        body.put("billingTypes", List.of("PIX", "CREDIT_CARD", "BOLETO"));
-        body.put("chargeTypes", List.of("DETACHED"));
-        body.put("items", List.of(Map.of(
-                "name", request.descricao(),
-                "value", request.valor(),
-                "quantity", 1
-        )));
-        body.put("successUrl", urlRetorno(properties.getCheckoutSuccessUrl(), request.atendimentoId()));
-        body.put("cancelUrl", urlRetorno(properties.getCheckoutCancelUrl(), request.atendimentoId()));
-        body.put("expiredUrl", urlRetorno(properties.getCheckoutExpiredUrl(), request.atendimentoId()));
-        body.put("externalReference", "atendimento-" + request.atendimentoId());
-
-        JsonNode response = restClient.post()
-                .uri("/v3/checkouts")
-                .header("access_token", properties.getApiKey())
-                .body(body)
-                .retrieve()
-                .body(JsonNode.class);
-        return paraCheckoutGatewayResponse(response);
+        MetodoPagamento metodoPagamento = metodoPagamentoPadrao();
+        AsaasPagamentoGatewayResponse response = criarCobranca(new AsaasCobrancaRequest(
+                request.atendimentoId(),
+                metodoPagamento,
+                request.valor(),
+                request.descricao()
+        ));
+        return new AsaasCheckoutGatewayResponse(
+                response.gatewayPaymentId(),
+                response.urlPagamento(),
+                metodoPagamento,
+                response.payloadResumo()
+        );
     }
 
     @Override
     public AsaasPagamentoGatewayResponse consultarPagamento(String gatewayPaymentId) {
-        validarConfiguracaoCheckout();
-        JsonNode response = restClient.get()
-                .uri("/v3/payments/{id}", gatewayPaymentId)
-                .header("access_token", properties.getApiKey())
-                .retrieve()
-                .body(JsonNode.class);
+        validarConfiguracaoApi();
+        JsonNode response = executarRequisicaoAsaas(
+                () -> restClient.get()
+                        .uri("/payments/{id}", gatewayPaymentId)
+                        .header("access_token", properties.getApiKey())
+                        .retrieve()
+                        .body(JsonNode.class),
+                "Nao foi possivel consultar pagamento no Asaas",
+                "/payments/{id}"
+        );
         return paraGatewayResponse(response);
     }
 
     private void validarConfiguracaoCobranca() {
-        validarConfiguracaoCheckout();
+        validarConfiguracaoApi();
         if (properties.getDefaultCustomerId() == null || properties.getDefaultCustomerId().isBlank()) {
             throw new BusinessException(
                     "ASAAS_CONFIG_INVALIDA",
-                    "Configuracao legada do Asaas incompleta",
+                    "ASAAS_DEFAULT_CUSTOMER_ID nao configurado",
                     HttpStatus.CONFLICT
             );
         }
     }
 
-    private void validarConfiguracaoCheckout() {
+    private void validarConfiguracaoApi() {
         if (properties.getApiKey() == null || properties.getApiKey().isBlank()) {
             throw new BusinessException(
                     "ASAAS_CONFIG_INVALIDA",
@@ -109,9 +128,74 @@ public class AsaasHttpGatewayClient implements AsaasGatewayClient {
                     HttpStatus.CONFLICT
             );
         }
-        validarUrlRetorno(properties.getCheckoutSuccessUrl(), "ASAAS_CHECKOUT_SUCCESS_URL");
-        validarUrlRetorno(properties.getCheckoutCancelUrl(), "ASAAS_CHECKOUT_CANCEL_URL");
-        validarUrlRetorno(properties.getCheckoutExpiredUrl(), "ASAAS_CHECKOUT_EXPIRED_URL");
+    }
+
+    private MetodoPagamento metodoPagamentoPadrao() {
+        String billingType = billingTypePagamentoConfigurado();
+        MetodoPagamento metodoPagamento = paraMetodoPagamento(billingType);
+        if (!MVP_PAYMENT_BILLING_TYPES.contains(paraBillingType(metodoPagamento))) {
+            throw new BusinessException(
+                    "ASAAS_CONFIG_INVALIDA",
+                    "ASAAS_PAYMENT_BILLING_TYPE nao suportado no MVP",
+                    HttpStatus.CONFLICT
+            );
+        }
+        return metodoPagamento;
+    }
+
+    private String billingTypePagamentoConfigurado() {
+        String billingType = limparTexto(properties.getPaymentBillingType());
+        if (billingType == null && properties.getCheckoutBillingTypes() != null) {
+            billingType = properties.getCheckoutBillingTypes()
+                    .stream()
+                    .filter(tipo -> tipo != null && !tipo.isBlank())
+                    .map(tipo -> tipo.trim().toUpperCase())
+                    .findFirst()
+                    .orElse(null);
+        }
+        if (billingType == null) {
+            billingType = "CREDIT_CARD";
+        }
+        return billingType.trim().toUpperCase();
+    }
+
+    private MetodoPagamento paraMetodoPagamento(String billingType) {
+        return switch (billingType) {
+            case "CREDIT_CARD", "CARTAO_CREDITO" -> MetodoPagamento.CARTAO_CREDITO;
+            case "PIX" -> MetodoPagamento.PIX;
+            case "BOLETO" -> MetodoPagamento.BOLETO;
+            default -> throw new BusinessException(
+                    "ASAAS_CONFIG_INVALIDA",
+                    "ASAAS_PAYMENT_BILLING_TYPE invalido",
+                    HttpStatus.CONFLICT
+            );
+        };
+    }
+
+    private Map<String, Object> callbackPagamento(Long atendimentoId) {
+        if (!deveEnviarCallbackPagamento()) {
+            return null;
+        }
+        String successUrl = limparTexto(properties.getCheckoutSuccessUrl());
+        Map<String, Object> callback = new LinkedHashMap<>();
+        callback.put("successUrl", urlRetorno(successUrl, atendimentoId));
+        callback.put("autoRedirect", properties.isPaymentAutoRedirect());
+        return callback;
+    }
+
+    private boolean deveEnviarCallbackPagamento() {
+        return properties.isPaymentCallbackEnabled()
+                && limparTexto(properties.getCheckoutSuccessUrl()) != null;
+    }
+
+    private void validarUrlPagamentoRetornada(String urlPagamento) {
+        if (urlPagamento == null || urlPagamento.isBlank()) {
+            throw new BusinessException(
+                    "ASAAS_PAYMENT_URL_NOT_RETURNED",
+                    "URL de pagamento nao retornada pelo Asaas",
+                    HttpStatus.BAD_GATEWAY
+            );
+        }
     }
 
     private String paraBillingType(MetodoPagamento metodoPagamento) {
@@ -141,6 +225,44 @@ public class AsaasHttpGatewayClient implements AsaasGatewayClient {
         );
     }
 
+    private JsonNode executarRequisicaoAsaas(Supplier<JsonNode> requisicao, String mensagemErro) {
+        return executarRequisicaoAsaas(requisicao, mensagemErro, null);
+    }
+
+    private JsonNode executarRequisicaoAsaas(
+            Supplier<JsonNode> requisicao,
+            String mensagemErro,
+            String endpointPath
+    ) {
+        try {
+            return requisicao.get();
+        } catch (RestClientResponseException exception) {
+            List<AsaasErrorDiagnostic> erros = extrairErrosAsaas(exception);
+            LOGGER.warn(
+                    "asaas_request_failed status={} endpoint={} errors={}",
+                    exception.getStatusCode().value(),
+                    endpointPath,
+                    erros
+            );
+            throw new BusinessException(
+                    "ASAAS_REQUEST_FAILED",
+                    mensagemComDetalhesSeguros(mensagemErro, erros),
+                    HttpStatus.BAD_GATEWAY
+            );
+        } catch (RestClientException exception) {
+            LOGGER.warn(
+                    "asaas_request_unavailable endpoint={} exceptionType={}",
+                    endpointPath,
+                    exception.getClass().getSimpleName()
+            );
+            throw new BusinessException(
+                    "ASAAS_REQUEST_FAILED",
+                    "Asaas indisponivel no momento",
+                    HttpStatus.BAD_GATEWAY
+            );
+        }
+    }
+
     private java.math.BigDecimal decimalOuNull(JsonNode node) {
         if (node == null || node.isMissingNode() || node.isNull()) {
             return null;
@@ -159,21 +281,11 @@ public class AsaasHttpGatewayClient implements AsaasGatewayClient {
         return valor;
     }
 
-    private AsaasCheckoutGatewayResponse paraCheckoutGatewayResponse(JsonNode response) {
-        if (response == null || response.path("id").asText(null) == null) {
-            throw new BusinessException(
-                    "ASAAS_CHECKOUT_RESPONSE_INVALIDA",
-                    "Resposta invalida do Asaas para checkout",
-                    HttpStatus.BAD_GATEWAY
-            );
+    private String limparTexto(String valor) {
+        if (valor == null || valor.isBlank()) {
+            return null;
         }
-        String checkoutId = response.path("id").asText();
-        String checkoutUrl = "https://asaas.com/checkoutSession/show?id=" + checkoutId;
-        return new AsaasCheckoutGatewayResponse(
-                checkoutId,
-                checkoutUrl,
-                response.toString()
-        );
+        return valor.trim();
     }
 
     private String urlRetorno(String urlBase, Long atendimentoId) {
@@ -181,13 +293,61 @@ public class AsaasHttpGatewayClient implements AsaasGatewayClient {
         return urlBase + separador + "atendimentoId=" + atendimentoId;
     }
 
-    private void validarUrlRetorno(String url, String nomeConfiguracao) {
-        if (url == null || url.isBlank()) {
-            throw new BusinessException(
-                    "ASAAS_CONFIG_INVALIDA",
-                    nomeConfiguracao + " nao configurada",
-                    HttpStatus.CONFLICT
-            );
+    private List<AsaasErrorDiagnostic> extrairErrosAsaas(RestClientResponseException exception) {
+        String responseBody = exception.getResponseBodyAsString();
+        if (responseBody == null || responseBody.isBlank()) {
+            return List.of(new AsaasErrorDiagnostic(null, "Resposta do Asaas sem corpo"));
         }
+
+        try {
+            JsonNode root = objectMapper.readTree(responseBody);
+            JsonNode errors = root.path("errors");
+            if (errors.isArray() && !errors.isEmpty()) {
+                return StreamSupport.stream(errors.spliterator(), false)
+                        .map(error -> new AsaasErrorDiagnostic(
+                                textoOuNull(error.path("code")),
+                                limitarErroAsaas(textoOuNull(error.path("description")))
+                        ))
+                        .toList();
+            }
+
+            String message = textoOuNull(root.path("message"));
+            if (message != null) {
+                return List.of(new AsaasErrorDiagnostic(null, limitarErroAsaas(message)));
+            }
+        } catch (Exception parseException) {
+            return List.of(new AsaasErrorDiagnostic(null, "Resposta de erro do Asaas nao estava em JSON valido"));
+        }
+
+        return List.of(new AsaasErrorDiagnostic(null, "Resposta de erro do Asaas sem detalhes reconhecidos"));
+    }
+
+    private String mensagemComDetalhesSeguros(String mensagemErro, List<AsaasErrorDiagnostic> erros) {
+        String detalhes = erros.stream()
+                .map(AsaasErrorDiagnostic::description)
+                .filter(descricao -> descricao != null && !descricao.isBlank())
+                .findFirst()
+                .orElse(null);
+        if (detalhes == null) {
+            return mensagemErro;
+        }
+        return mensagemErro + ": " + detalhes;
+    }
+
+    private String limitarErroAsaas(String texto) {
+        if (texto == null || texto.isBlank()) {
+            return "sem descricao";
+        }
+        String limpo = texto.replaceAll("\\s+", " ").trim();
+        if (limpo.length() <= ASAAS_ERROR_TEXT_MAX_LENGTH) {
+            return limpo;
+        }
+        return limpo.substring(0, ASAAS_ERROR_TEXT_MAX_LENGTH);
+    }
+
+    private record AsaasErrorDiagnostic(
+            String code,
+            String description
+    ) {
     }
 }
