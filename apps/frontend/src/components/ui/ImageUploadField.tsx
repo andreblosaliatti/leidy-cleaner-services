@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 
 type ImageUploadFieldProps = {
   label: string;
@@ -15,6 +15,7 @@ export function ImageUploadField({
   error,
   helperText,
   allowCamera = false,
+  capture,
   onChange,
   value,
 }: ImageUploadFieldProps) {
@@ -59,14 +60,14 @@ export function ImageUploadField({
     reader.readAsDataURL(file);
   };
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       handleFileSelect(file);
     }
   };
 
-  const handleCameraCapture = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCameraCapture = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       handleFileSelect(file);

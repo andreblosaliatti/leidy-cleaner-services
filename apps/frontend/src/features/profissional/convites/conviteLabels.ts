@@ -1,4 +1,4 @@
-import type { StatusConvite, TipoServico } from './types';
+import type { ConviteProfissional, StatusConvite, TipoServico } from './types';
 
 export const statusConviteLabels: Record<StatusConvite, string> = {
   ENVIADO: 'Enviado',
@@ -38,6 +38,15 @@ export function getTipoServicoLabel(tipoServico: TipoServico) {
 
 export function canRespondToConvite(status: StatusConvite) {
   return status === 'ENVIADO' || status === 'VISUALIZADO';
+}
+
+export function isConviteExpirado(expiraEm: string) {
+  const timestamp = new Date(expiraEm).getTime();
+  return Number.isFinite(timestamp) && timestamp <= Date.now();
+}
+
+export function isConviteAtivo(convite: ConviteProfissional) {
+  return canRespondToConvite(convite.status) && !isConviteExpirado(convite.expiraEm);
 }
 
 export function formatDateTime(value: string) {

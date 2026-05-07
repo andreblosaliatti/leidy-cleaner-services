@@ -1,9 +1,11 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 
 import { BrandMark } from '../components/public/BrandMark';
+import { NotificationBadge, type NotificationBadgeTone } from '../components/ui/NotificationBadge';
 import { getFirstName, getProfileLabel, isAdminUser } from '../features/auth/session';
 import type { TipoUsuario } from '../features/auth/types';
 import { useAuth } from '../features/auth/useAuth';
+import { useDashboardIndicators } from '../features/dashboard/useDashboardIndicators';
 
 type NavigationItem = {
   label: string;
@@ -43,14 +45,15 @@ const navigationByProfile: Record<TipoUsuario, NavigationItem[]> = {
 };
 
 export function AuthenticatedLayout() {
-  const { user, logout } = useAuth();
+  const { user, token, logout } = useAuth();
   const navigate = useNavigate();
+  const profile = user ? (isAdminUser(user) ? 'ADMIN' : user.tipoUsuario) : 'CLIENTE';
+  const indicators = useDashboardIndicators(profile, token);
 
   if (!user) {
     return null;
   }
 
-  const profile = isAdminUser(user) ? 'ADMIN' : user.tipoUsuario;
   const navigationItems = navigationByProfile[profile];
   const greetingName = getFirstName(user.nomeCompleto) || getProfileLabel(profile);
 
@@ -92,14 +95,15 @@ export function AuthenticatedLayout() {
                 key={item.label}
                 className={({ isActive }) =>
                   [
-                    'flex min-h-11 items-center rounded-lg px-3 py-3 text-sm font-bold transition',
+                    'flex min-h-11 items-center justify-between gap-3 rounded-lg px-3 py-3 text-sm font-bold transition',
                     isActive ? 'bg-cyan-50 text-cyan-700' : 'text-slate-700 hover:bg-slate-50 hover:text-cyan-700',
                   ].join(' ')
                 }
                 end={item.href === '/app/cliente' || item.href === '/app/profissional' || item.href === '/app/admin'}
                 to={item.href}
               >
-                {item.label}
+                <span className="min-w-0 truncate">{item.label}</span>
+                <SidebarBadge item={item} indicators={indicators} profile={profile} />
               </NavLink>
             ))}
           </nav>
@@ -118,4 +122,59 @@ export function AuthenticatedLayout() {
       </div>
     </div>
   );
+}
+
+function SidebarBadge({
+  indicators,
+  item,
+  profile,
+}: {
+  indicators: ReturnType<typeof useDashboardIndicators>;
+  item: NavigationItem;
+  profile: TipoUsuario;
+}) {
+  const badge = getSidebarBadge(profile, item.label, indicators);
+
+  if (!badge) {
+    return null;
+  }
+
+  return <NotificationBadge count={badge.count} label={badge.label} tone={badge.tone} />;
+}
+
+function getSidebarBadge(profile: TipoUsuario, label: string, indicators: ReturnType<typeof useDashboardIndicators>) {
+  if (profile === 'CLIENTE' && label === 'Pagamentos') {
+    return {
+      count: indicators.cliente.pagamentosPendentes,
+      label: `${indicators.cliente.pagamentosPendentes} pagamentos pendentes`,
+      tone: 'red' as NotificationBadgeTone,
+    };
+  }
+
+  if (profile === 'CLIENTE' && label === 'Atendimentos') {
+    return {
+      count: indicators.cliente.atendimentosConfirmados,
+      label: `${indicators.cliente.atendimentosConfirmados} atendimentos confirmados`,
+      tone: 'neutral' as NotificationBadgeTone,
+    };
+  }
+
+  if (profile === 'PROFISSIONAL' && label === 'Convites') {
+    return {
+      count: indicators.profissional.convitesPendentes,
+      label: `${indicators.profissional.convitesPendentes} convites pendentes`,
+      tone: 'red' as NotificationBadgeTone,
+    };
+  }
+
+  if (profile === 'PROFISSIONAL' && label === 'Atendimentos') {
+    const count = indicators.profissional.proximosAtendimentos + indicators.profissional.atendimentosEmExecucao;
+    return {
+      count,
+      label: `${count} atendimentos ativos`,
+      tone: indicators.profissional.atendimentosEmExecucao > 0 ? ('yellow' as NotificationBadgeTone) : ('neutral' as NotificationBadgeTone),
+    };
+  }
+
+  return null;
 }

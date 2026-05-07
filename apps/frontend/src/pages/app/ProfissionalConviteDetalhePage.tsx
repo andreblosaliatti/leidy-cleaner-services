@@ -6,11 +6,11 @@ import { FormAlert } from '../../components/ui/FormAlert';
 import { StateBox } from '../../components/ui/PageState';
 import { useAuth } from '../../features/auth/useAuth';
 import {
-  canRespondToConvite,
   formatCurrency,
   formatDateTime,
   formatInviteLocation,
   getTipoServicoLabel,
+  isConviteAtivo,
 } from '../../features/profissional/convites/conviteLabels';
 import { aceitarConvite, buscarConvite, recusarConvite } from '../../features/profissional/convites/convitesApi';
 import { ConviteStatusBadge } from '../../features/profissional/convites/ConviteStatusBadge';
@@ -179,7 +179,7 @@ function ConviteDetail({
   onRespond: (action: ConviteAction) => void;
   pendingAction: ConviteAction | null;
 }) {
-  const canRespond = canRespondToConvite(convite.status);
+  const canRespond = isConviteAtivo(convite);
 
   return (
     <section className="rounded-lg border border-slate-100 bg-white p-5 shadow-sm md:p-6">

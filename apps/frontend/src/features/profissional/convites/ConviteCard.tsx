@@ -1,16 +1,12 @@
 import { Link } from 'react-router-dom';
 
-import {
-  canRespondToConvite,
-  formatCurrency,
-  formatDateTime,
-  formatInviteLocation,
-  getTipoServicoLabel,
-} from './conviteLabels';
+import { formatCurrency, formatDateTime, formatInviteLocation, getTipoServicoLabel, isConviteAtivo } from './conviteLabels';
 import { ConviteStatusBadge } from './ConviteStatusBadge';
 import type { ConviteProfissional } from './types';
 
 export function ConviteCard({ convite }: { convite: ConviteProfissional }) {
+  const isAtivo = isConviteAtivo(convite);
+
   return (
     <article className="rounded-lg border border-slate-100 bg-white p-5 shadow-sm transition hover:border-cyan-100">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -42,7 +38,7 @@ export function ConviteCard({ convite }: { convite: ConviteProfissional }) {
         </div>
 
         <div className="flex shrink-0 flex-wrap gap-2">
-          {canRespondToConvite(convite.status) && (
+          {isAtivo && (
             <span className="inline-flex min-h-10 items-center rounded-lg bg-cyan-50 px-3 text-xs font-black uppercase tracking-[0.1em] text-cyan-700">
               Resposta pendente
             </span>
