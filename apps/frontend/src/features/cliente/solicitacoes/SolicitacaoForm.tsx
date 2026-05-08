@@ -6,7 +6,6 @@ import { z } from 'zod';
 import { TextArea, TextInput } from '../../../components/ui/FormField';
 import { formatEnderecoResumo } from '../enderecos/enderecoLabels';
 import type { Endereco } from '../enderecos/types';
-import { normalizeBairro } from './solicitacaoDisplay';
 import { tipoServicoOptions } from './solicitacaoLabels';
 import type { RegiaoAtendimento, SolicitacaoFaxinaRequest, TipoServico } from './types';
 
@@ -52,8 +51,12 @@ type SolicitacaoFormProps = {
   onSubmit: (payload: SolicitacaoFaxinaRequest) => void | Promise<void>;
 };
 
+const REGION_NOT_FOUND_MESSAGE = 'Não encontramos uma região de atendimento compatível com este endereço.';
+const PORTO_ALEGRE = normalizeRegionName('Porto Alegre');
+const COASTAL_CITIES = new Set(['Tramandaí', 'Capão da Canoa', 'Xangri-lá'].map(normalizeRegionName));
+
 export function SolicitacaoForm({ enderecos, regioes, isSubmitting = false, onSubmit }: SolicitacaoFormProps) {
-  const [bairroError, setBairroError] = useState<string | null>(null);
+  const [regiaoError, setRegiaoError] = useState<string | null>(null);
   const {
     register,
     handleSubmit,
@@ -78,18 +81,17 @@ export function SolicitacaoForm({ enderecos, regioes, isSubmitting = false, onSu
       return undefined;
     }
 
-    const bairro = normalizeBairro(selectedEndereco.bairro);
-    return regioes.find((regiao) => regiao.ativo && normalizeBairro(regiao.nome) === bairro);
+    return findMatchingRegion(selectedEndereco, regioes);
   }, [regioes, selectedEndereco]);
-  const selectedUnsupportedBairro = Boolean(selectedEndereco && !derivedRegiao);
+  const selectedUnsupportedRegion = Boolean(selectedEndereco && !derivedRegiao);
 
   async function handleValidSubmit(values: SolicitacaoFormValues) {
     if (!derivedRegiao) {
-      setBairroError('Ainda não atendemos este bairro.');
+      setRegiaoError(REGION_NOT_FOUND_MESSAGE);
       return;
     }
 
-    setBairroError(null);
+    setRegiaoError(null);
     await onSubmit({
       enderecoId: values.enderecoId,
       regiaoId: derivedRegiao.id,
@@ -99,7 +101,7 @@ export function SolicitacaoForm({ enderecos, regioes, isSubmitting = false, onSu
       observacoes: values.observacoes ?? null,
     });
     reset();
-    setBairroError(null);
+    setRegiaoError(null);
   }
 
   return (
@@ -110,7 +112,7 @@ export function SolicitacaoForm({ enderecos, regioes, isSubmitting = false, onSu
           <select
             id="enderecoId"
             className="mt-2 min-h-12 w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 outline-none transition focus:border-cyan-600 focus:ring-2 focus:ring-cyan-100"
-            onInput={() => setBairroError(null)}
+            onInput={() => setRegiaoError(null)}
             {...register('enderecoId')}
           >
             <option value={0}>Selecione um endereço</option>
@@ -127,18 +129,18 @@ export function SolicitacaoForm({ enderecos, regioes, isSubmitting = false, onSu
           <div
             className={[
               'rounded-lg border px-4 py-3 text-sm leading-6',
-              selectedUnsupportedBairro ? 'border-red-100 bg-red-50 text-red-800' : 'border-cyan-100 bg-cyan-50 text-cyan-900',
+              selectedUnsupportedRegion ? 'border-red-100 bg-red-50 text-red-800' : 'border-cyan-100 bg-cyan-50 text-cyan-900',
             ].join(' ')}
           >
-            {selectedUnsupportedBairro ? (
-              <p className="font-semibold">Ainda não atendemos este bairro.</p>
+            {selectedUnsupportedRegion ? (
+              <p className="font-semibold">{REGION_NOT_FOUND_MESSAGE}</p>
             ) : (
-              <p className="font-semibold">Bairro atendido: {derivedRegiao?.nome}</p>
+              <p className="font-semibold">Região atendida: {derivedRegiao?.nome}</p>
             )}
           </div>
         )}
 
-        {bairroError && <p className="rounded-lg border border-red-100 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800">{bairroError}</p>}
+        {regiaoError && <p className="rounded-lg border border-red-100 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800">{regiaoError}</p>}
       </div>
 
       <div className="grid gap-5 md:grid-cols-[1fr_1fr_0.7fr]">
@@ -188,7 +190,7 @@ export function SolicitacaoForm({ enderecos, regioes, isSubmitting = false, onSu
       <div className="flex justify-end">
         <button
           className="min-h-11 rounded-lg bg-cyan-700 px-5 text-sm font-black text-white shadow-[0_14px_28px_rgba(14,138,141,0.18)] transition hover:bg-cyan-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-700 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
-          disabled={isSubmitting || enderecos.length === 0 || regioes.length === 0 || selectedUnsupportedBairro}
+          disabled={isSubmitting || enderecos.length === 0 || regioes.length === 0 || selectedUnsupportedRegion}
           type="submit"
         >
           {isSubmitting ? 'Criando...' : 'Criar solicitação'}
@@ -196,4 +198,40 @@ export function SolicitacaoForm({ enderecos, regioes, isSubmitting = false, onSu
       </div>
     </form>
   );
+}
+
+function findMatchingRegion(endereco: Endereco, regioes: RegiaoAtendimento[]) {
+  const target = getRegionTarget(endereco);
+
+  if (!target) {
+    return undefined;
+  }
+
+  const targetName = normalizeRegionName(target.nome);
+  return regioes.find(
+    (regiao) => regiao.ativo && regiao.tipo === target.tipo && normalizeRegionName(regiao.nome) === targetName,
+  );
+}
+
+function getRegionTarget(endereco: Endereco): { nome: string; tipo: RegiaoAtendimento['tipo'] } | null {
+  const cidade = normalizeRegionName(endereco.cidade);
+
+  if (cidade === PORTO_ALEGRE) {
+    return { nome: endereco.bairro, tipo: 'BAIRRO' };
+  }
+
+  if (COASTAL_CITIES.has(cidade)) {
+    return { nome: endereco.cidade, tipo: 'CIDADE' };
+  }
+
+  return null;
+}
+
+function normalizeRegionName(value: string) {
+  return value
+    .trim()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, ' ')
+    .toLowerCase();
 }

@@ -183,7 +183,7 @@ export function ClienteSolicitacoesPage() {
         <div className="mb-5">
           <h2 className="text-2xl font-black text-slate-900">Nova solicitação</h2>
           <p className="mt-2 text-sm leading-6 text-slate-600">
-            Escolha um endereço cadastrado. O bairro do endereço define a região operacional da solicitação.
+            Escolha um endereço cadastrado. A região operacional será definida pelo bairro em Porto Alegre ou pela cidade no litoral atendido.
           </p>
         </div>
 
