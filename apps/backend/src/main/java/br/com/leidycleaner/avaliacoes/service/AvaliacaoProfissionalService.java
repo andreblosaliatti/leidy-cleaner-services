@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,6 +19,9 @@ import br.com.leidycleaner.avaliacoes.repository.AvaliacaoProfissionalRepository
 import br.com.leidycleaner.core.exception.BusinessException;
 import br.com.leidycleaner.profissionais.entity.PerfilProfissional;
 import br.com.leidycleaner.profissionais.repository.PerfilProfissionalRepository;
+import br.com.leidycleaner.usuarios.entity.TipoUsuario;
+import br.com.leidycleaner.usuarios.entity.Usuario;
+import br.com.leidycleaner.usuarios.repository.UsuarioRepository;
 
 @Service
 public class AvaliacaoProfissionalService {
@@ -25,19 +29,23 @@ public class AvaliacaoProfissionalService {
     private final AvaliacaoProfissionalRepository avaliacaoProfissionalRepository;
     private final AtendimentoFaxinaRepository atendimentoFaxinaRepository;
     private final PerfilProfissionalRepository perfilProfissionalRepository;
+    private final UsuarioRepository usuarioRepository;
 
     public AvaliacaoProfissionalService(
             AvaliacaoProfissionalRepository avaliacaoProfissionalRepository,
             AtendimentoFaxinaRepository atendimentoFaxinaRepository,
-            PerfilProfissionalRepository perfilProfissionalRepository
+            PerfilProfissionalRepository perfilProfissionalRepository,
+            UsuarioRepository usuarioRepository
     ) {
         this.avaliacaoProfissionalRepository = avaliacaoProfissionalRepository;
         this.atendimentoFaxinaRepository = atendimentoFaxinaRepository;
         this.perfilProfissionalRepository = perfilProfissionalRepository;
+        this.usuarioRepository = usuarioRepository;
     }
 
     @Transactional
     public AvaliacaoProfissionalDto criar(Long usuarioId, AvaliacaoProfissionalRequest request) {
+        validarUsuarioCliente(usuarioId);
         AtendimentoFaxina atendimento = buscarAtendimentoAvaliado(usuarioId, request.atendimentoId());
         validarAtendimentoFinalizado(atendimento);
         validarAindaNaoAvaliado(atendimento);
@@ -76,6 +84,18 @@ public class AvaliacaoProfissionalService {
                 .stream()
                 .map(AvaliacaoProfissionalMapper::paraDto)
                 .toList();
+    }
+
+    private void validarUsuarioCliente(Long usuarioId) {
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new BusinessException(
+                        "USUARIO_NOT_FOUND",
+                        "Usuario nao encontrado",
+                        HttpStatus.NOT_FOUND
+                ));
+        if (usuario.getTipoUsuario() != TipoUsuario.CLIENTE) {
+            throw new AccessDeniedException("Somente clientes podem avaliar profissionais");
+        }
     }
 
     private AtendimentoFaxina buscarAtendimentoAvaliado(Long usuarioId, Long atendimentoId) {
