@@ -27,6 +27,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import br.com.leidycleaner.profissionais.repository.PerfilProfissionalRepository;
 import br.com.leidycleaner.profissionais.entity.StatusAprovacaoProfissional;
+import br.com.leidycleaner.regioes.repository.RegiaoAtendimentoRepository;
 import br.com.leidycleaner.usuarios.entity.StatusConta;
 import br.com.leidycleaner.usuarios.entity.Usuario;
 import br.com.leidycleaner.usuarios.repository.UsuarioAceiteRepository;
@@ -44,6 +45,7 @@ class AuthUsuarioIntegrationTest {
     private final ObjectMapper objectMapper;
     private final UsuarioRepository usuarioRepository;
     private final PerfilProfissionalRepository perfilProfissionalRepository;
+    private final RegiaoAtendimentoRepository regiaoAtendimentoRepository;
     private final UsuarioAceiteRepository usuarioAceiteRepository;
     private final DocumentoVerificacaoRepository documentoVerificacaoRepository;
     private final PasswordEncoder passwordEncoder;
@@ -54,6 +56,7 @@ class AuthUsuarioIntegrationTest {
             ObjectMapper objectMapper,
             UsuarioRepository usuarioRepository,
             PerfilProfissionalRepository perfilProfissionalRepository,
+            RegiaoAtendimentoRepository regiaoAtendimentoRepository,
             UsuarioAceiteRepository usuarioAceiteRepository,
             DocumentoVerificacaoRepository documentoVerificacaoRepository,
             PasswordEncoder passwordEncoder
@@ -62,6 +65,7 @@ class AuthUsuarioIntegrationTest {
         this.objectMapper = objectMapper;
         this.usuarioRepository = usuarioRepository;
         this.perfilProfissionalRepository = perfilProfissionalRepository;
+        this.regiaoAtendimentoRepository = regiaoAtendimentoRepository;
         this.usuarioAceiteRepository = usuarioAceiteRepository;
         this.documentoVerificacaoRepository = documentoVerificacaoRepository;
         this.passwordEncoder = passwordEncoder;
@@ -369,6 +373,94 @@ class AuthUsuarioIntegrationTest {
                 .andExpect(jsonPath("$.message").value("Já existe uma conta cadastrada com este CPF."))
                 .andExpect(jsonPath("$.errors").isArray())
                 .andExpect(jsonPath("$.errors").isEmpty());
+    }
+
+    @Test
+    void preCadastroProfissionalCompletoSemTokenNaoRetorna401Nem403() throws Exception {
+        String email = "profissional.m1b.pre-cadastro-publico@example.com";
+        String cpf = proximoCpf();
+
+        mockMvc.perform(post("/api/v1/usuarios/profissionais/pre-cadastro-completo")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(payloadPreCadastroProfissionalCompleto(email, cpf)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.usuario.email").value(email))
+                .andExpect(jsonPath("$.data.usuario.tipoUsuario").value("PROFISSIONAL"))
+                .andExpect(jsonPath("$.data.usuario.statusConta").value("PENDENTE_VERIFICACAO"));
+    }
+
+    @Test
+    void preCadastroProfissionalCompletoInvalidoRetorna400ENao403() throws Exception {
+        mockMvc.perform(post("/api/v1/usuarios/profissionais/pre-cadastro-completo")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "nomeCompleto": "Profissional Invalida",
+                                  "email": "profissional.m1b.pre-cadastro-invalido@example.com",
+                                  "telefone": "+5551988887676",
+                                  "senha": "senha-segura-123",
+                                  "nomeExibicao": "Profissional Invalida",
+                                  "cpf": "%s",
+                                  "dataNascimento": "1990-01-20",
+                                  "documento": {
+                                    "tipoDocumento": "RG",
+                                    "numeroDocumento": "1234567"
+                                  },
+                                  "regiaoIds": [],
+                                  "disponibilidades": [],
+                                  %s
+                                }
+                                """.formatted(proximoCpf(), camposAceiteJson())))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
+    }
+
+    @Test
+    void preCadastroProfissionalCompletoValidoCriaCadastroPendente() throws Exception {
+        String email = "profissional.m1b.pre-cadastro-valido@example.com";
+        String cpf = proximoCpf();
+
+        mockMvc.perform(post("/api/v1/usuarios/profissionais/pre-cadastro-completo")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(payloadPreCadastroProfissionalCompleto(email, cpf)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.usuario.statusConta").value("PENDENTE_VERIFICACAO"));
+
+        var usuario = usuarioRepository.findByEmail(email).orElseThrow();
+        var perfil = perfilProfissionalRepository.findByCpf(cpfComPrefixo(cpf)).orElseThrow();
+        var documento = documentoVerificacaoRepository.findVerificacaoEfetivaPorUsuarioId(usuario.getId()).orElseThrow();
+
+        assertThat(usuario.getCpf()).isEqualTo(cpf);
+        assertThat(usuario.getStatusConta()).isEqualTo(StatusConta.PENDENTE_VERIFICACAO);
+        assertThat(perfil.getStatusAprovacao()).isEqualTo(StatusAprovacaoProfissional.PENDENTE);
+        assertThat(perfil.isAtivoParaReceberChamados()).isFalse();
+        assertThat(documento.getStatusVerificacao()).isEqualTo(StatusVerificacao.PENDENTE);
+    }
+
+    @Test
+    void profissionalCriadaPorPreCadastroCompletoNaoConsegueLogarAteAprovacao() throws Exception {
+        String email = "profissional.m1b.pre-cadastro-login@example.com";
+        String cpf = proximoCpf();
+
+        mockMvc.perform(post("/api/v1/usuarios/profissionais/pre-cadastro-completo")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(payloadPreCadastroProfissionalCompleto(email, cpf)))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "email": "%s",
+                                  "senha": "senha-segura-123"
+                                }
+                                """.formatted(email)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("PROFESSIONAL_REGISTRATION_PENDING"));
     }
 
     @Test
@@ -734,6 +826,42 @@ class AuthUsuarioIntegrationTest {
                                 }
                                 """.formatted(proximoCpf(), camposAceiteJson())))
                 .andExpect(status().isCreated());
+    }
+
+    private String payloadPreCadastroProfissionalCompleto(String email, String cpf) {
+        Long regiaoId = regiaoAtendimentoRepository.findByAtivoTrueOrderByNomeAsc().getFirst().getId();
+
+        return """
+                {
+                  "nomeCompleto": "Profissional Pre Cadastro",
+                  "email": "%s",
+                  "telefone": "+5551988886767",
+                  "senha": "senha-segura-123",
+                  "nomeExibicao": "Profissional Pre Cadastro",
+                  "cpf": "%s",
+                  "dataNascimento": "1990-01-20",
+                  "descricao": "Atendimento residencial",
+                  "experienciaAnos": 2,
+                  "documento": {
+                    "tipoDocumento": "RG",
+                    "numeroDocumento": "1234567",
+                    "documentoFrenteUrl": "local/documentos/frente.png",
+                    "documentoVersoUrl": "local/documentos/verso.png",
+                    "selfieUrl": "local/documentos/selfie.png",
+                    "comprovanteResidenciaUrl": "local/documentos/comprovante.png"
+                  },
+                  "regiaoIds": [%d],
+                  "disponibilidades": [
+                    {
+                      "diaSemana": "SEGUNDA",
+                      "horaInicio": "08:00",
+                      "horaFim": "12:00",
+                      "ativo": true
+                    }
+                  ],
+                  %s
+                }
+                """.formatted(email, cpfComPrefixo(cpf), regiaoId, camposAceiteJson());
     }
 
     private void cadastrarCliente(String email, String senha) throws Exception {

@@ -2,8 +2,10 @@ package br.com.leidycleaner.config;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import org.junit.jupiter.api.Test;
@@ -71,5 +73,18 @@ class SecurityConfigTest {
                           "errors": []
                         }
                         """));
+    }
+
+    @Test
+    void preCadastroCompletoComOriginLocalPermitidoRetorna400EmVezDe403() throws Exception {
+        mockMvc.perform(post("/api/v1/usuarios/profissionais/pre-cadastro-completo")
+                        .header("Origin", "http://172.21.182.50:5173")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(header().string("Access-Control-Allow-Origin", "http://172.21.182.50:5173"))
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
     }
 }

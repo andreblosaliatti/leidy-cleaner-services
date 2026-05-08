@@ -28,6 +28,10 @@ app:
       - /api/v1/usuarios/profissionais
       - /api/v1/usuarios/profissionais/pre-cadastro-completo
       - /api/v1/webhooks/**
+    cors-allowed-origin-patterns:
+      - ${APP_SECURITY_CORS_ALLOWED_ORIGIN_LOCALHOST:http://localhost:*}
+      - ${APP_SECURITY_CORS_ALLOWED_ORIGIN_LOOPBACK:http://127.0.0.1:*}
+      - ${APP_SECURITY_CORS_ALLOWED_ORIGIN_WSL:http://172.*.*.*:5173}
   jwt:
     secret: ${JWT_SECRET:dev-secret-change-me-with-at-least-32-characters}
     expiration-seconds: ${JWT_EXPIRATION_SECONDS:3600}
