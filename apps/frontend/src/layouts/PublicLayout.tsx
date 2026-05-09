@@ -5,7 +5,6 @@ import { BrandMark } from '../components/public/BrandMark';
 import { MailIcon, PhoneIcon, PinIcon, SparkleIcon } from '../components/public/PublicIcons';
 import { PublicButton } from '../components/public/PublicButton';
 import { WhatsAppFloatingButton } from '../components/ui/WhatsAppFloatingButton';
-
 const navItems = [
   { label: 'Inicio', href: '/#inicio' },
   { label: 'Como funciona', href: '/#como-funciona' },
