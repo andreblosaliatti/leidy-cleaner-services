@@ -47,6 +47,17 @@ export type SolicitacaoFaxinaRequest = {
   valorEstimadoProfissional?: number;
 };
 
+export type SolicitacaoPrecoPreviewRequest = {
+  duracaoEstimadaHoras: number;
+  tipoServico: TipoServico;
+};
+
+export type SolicitacaoPrecoPreview = {
+  valorServico: number;
+  percentualComissaoAgencia: number;
+  valorEstimadoProfissional: number;
+};
+
 export type TipoRegiaoAtendimento = 'BAIRRO' | 'CIDADE';
 
 export type RegiaoAtendimento = {

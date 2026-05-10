@@ -1,8 +1,22 @@
 import { apiRequest } from '../../../services/apiClient';
-import type { RegiaoAtendimento, SolicitacaoFaxina, SolicitacaoFaxinaRequest } from './types';
+import type {
+  RegiaoAtendimento,
+  SolicitacaoFaxina,
+  SolicitacaoFaxinaRequest,
+  SolicitacaoPrecoPreview,
+  SolicitacaoPrecoPreviewRequest,
+} from './types';
 
 export function criarSolicitacao(token: string, payload: SolicitacaoFaxinaRequest) {
   return apiRequest<SolicitacaoFaxina>('/solicitacoes', {
+    method: 'POST',
+    token,
+    body: JSON.stringify(payload),
+  });
+}
+
+export function previewPrecoSolicitacao(token: string, payload: SolicitacaoPrecoPreviewRequest) {
+  return apiRequest<SolicitacaoPrecoPreview>('/solicitacoes/preview-preco', {
     method: 'POST',
     token,
     body: JSON.stringify(payload),

@@ -34,6 +34,8 @@ import br.com.leidycleaner.solicitacoes.dto.ProfissionalDisponivelDto;
 import br.com.leidycleaner.solicitacoes.dto.SelecaoProfissionaisDto;
 import br.com.leidycleaner.solicitacoes.dto.SelecionarProfissionaisRequest;
 import br.com.leidycleaner.solicitacoes.dto.SolicitacaoFaxinaDto;
+import br.com.leidycleaner.solicitacoes.dto.SolicitacaoPrecoPreviewDto;
+import br.com.leidycleaner.solicitacoes.dto.SolicitacaoPrecoPreviewRequest;
 import br.com.leidycleaner.solicitacoes.dto.SolicitacaoFaxinaRequest;
 import br.com.leidycleaner.solicitacoes.entity.StatusSolicitacao;
 import br.com.leidycleaner.solicitacoes.entity.SolicitacaoFaxina;
@@ -107,6 +109,17 @@ public class SolicitacaoFaxinaService {
         );
 
         return SolicitacaoFaxinaMapper.paraDto(solicitacaoFaxinaRepository.save(solicitacao));
+    }
+
+    @Transactional(readOnly = true)
+    public SolicitacaoPrecoPreviewDto preverPreco(Long usuarioId, SolicitacaoPrecoPreviewRequest request) {
+        buscarPerfilCliente(usuarioId);
+        ValoresCalculadosPreco valores = configuracaoPrecoService.calcularValores(request.duracaoEstimadaHoras());
+        return new SolicitacaoPrecoPreviewDto(
+                valores.valorServico(),
+                valores.percentualComissaoAgencia(),
+                valores.valorEstimadoProfissional()
+        );
     }
 
     @Transactional(readOnly = true)

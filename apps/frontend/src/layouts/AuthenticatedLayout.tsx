@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 
 import { BrandMark } from '../components/public/BrandMark';
 import { NotificationBadge, type NotificationBadgeTone } from '../components/ui/NotificationBadge';
@@ -53,6 +53,11 @@ export function AuthenticatedLayout() {
   const profile = user ? (isAdminUser(user) ? 'ADMIN' : user.tipoUsuario) : 'CLIENTE';
   const indicators = useDashboardIndicators(profile, token);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const shouldShowClientRequestCta = profile === 'CLIENTE' && location.pathname !== '/app/cliente/solicitacoes';
+
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname, location.search]);
 
   if (!user) {
     return null;
@@ -60,10 +65,6 @@ export function AuthenticatedLayout() {
 
   const navigationItems = navigationByProfile[profile];
   const greetingName = getFirstName(user.nomeCompleto) || getProfileLabel(profile);
-
-  useEffect(() => {
-    setMobileMenuOpen(false);
-  }, [location.pathname, location.search]);
 
   function handleLogout() {
     logout();
@@ -87,6 +88,14 @@ export function AuthenticatedLayout() {
             <BrandMark compact />
           </div>
           <div className="flex min-w-0 items-center gap-3">
+            {shouldShowClientRequestCta && (
+              <Link
+                className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-lg bg-cyan-700 px-4 text-sm font-black text-white transition hover:bg-cyan-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-700"
+                to="/app/cliente/solicitacoes#nova-solicitacao"
+              >
+                Solicitar faxina
+              </Link>
+            )}
             <div className="hidden min-w-0 text-right md:block">
               <p className="truncate text-sm font-black text-slate-900">{user.nomeCompleto}</p>
               <p className="text-xs font-semibold text-slate-500">{getProfileLabel(profile)}</p>

@@ -23,6 +23,8 @@ import br.com.leidycleaner.solicitacoes.dto.SelecaoProfissionaisDto;
 import br.com.leidycleaner.solicitacoes.dto.SelecionarProfissionaisRequest;
 import br.com.leidycleaner.solicitacoes.dto.SolicitacaoFaxinaDto;
 import br.com.leidycleaner.solicitacoes.dto.SolicitacaoFaxinaRequest;
+import br.com.leidycleaner.solicitacoes.dto.SolicitacaoPrecoPreviewDto;
+import br.com.leidycleaner.solicitacoes.dto.SolicitacaoPrecoPreviewRequest;
 import br.com.leidycleaner.solicitacoes.entity.StatusSolicitacao;
 import br.com.leidycleaner.solicitacoes.entity.TipoServico;
 import br.com.leidycleaner.solicitacoes.service.SolicitacaoFaxinaService;
@@ -45,6 +47,14 @@ public class SolicitacaoFaxinaController {
             @Valid @RequestBody SolicitacaoFaxinaRequest request
     ) {
         return ApiResponse.success(solicitacaoFaxinaService.criar(principal.getId(), request));
+    }
+
+    @PostMapping("/preview-preco")
+    public ApiResponse<SolicitacaoPrecoPreviewDto> previewPreco(
+            @AuthenticationPrincipal UsuarioPrincipal principal,
+            @Valid @RequestBody SolicitacaoPrecoPreviewRequest request
+    ) {
+        return ApiResponse.success(solicitacaoFaxinaService.preverPreco(principal.getId(), request));
     }
 
     @GetMapping("/minhas")

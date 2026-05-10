@@ -449,6 +449,92 @@ class SolicitacaoFaxinaIntegrationTest {
     }
 
     @Test
+    void clientePrevisualizaPrecoUsandoMesmaRegraDoBackend() throws Exception {
+        String token = criarClienteELogar("m3a.preview-preco@example.com");
+
+        mockMvc.perform(post("/api/v1/solicitacoes/preview-preco")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "tipoServico": "FAXINA_RESIDENCIAL",
+                                  "duracaoEstimadaHoras": 4
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.valorServico").value(180.00))
+                .andExpect(jsonPath("$.data.percentualComissaoAgencia").value(20.00))
+                .andExpect(jsonPath("$.data.valorEstimadoProfissional").value(144.00));
+    }
+
+    @Test
+    void previewPrecoInvalidoMantemContratoDeErroJson() throws Exception {
+        String token = criarClienteELogar("m3a.preview-invalido@example.com");
+
+        mockMvc.perform(post("/api/v1/solicitacoes/preview-preco")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "tipoServico": "FAXINA_RESIDENCIAL",
+                                  "duracaoEstimadaHoras": 0
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.errors").isArray());
+    }
+
+    @Test
+    void criacaoDaSolicitacaoPersisteValoresCompativeisComPreview() throws Exception {
+        String token = criarClienteELogar("m3a.preview-match@example.com");
+        Long enderecoId = criarEndereco(token);
+        Long regiaoId = primeiraRegiaoId();
+        ajustarEnderecoParaRegiao(enderecoId, regiaoId);
+
+        String previewResponse = mockMvc.perform(post("/api/v1/solicitacoes/preview-preco")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "tipoServico": "FAXINA_RESIDENCIAL",
+                                  "duracaoEstimadaHoras": 4
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        JsonNode previewData = objectMapper.readTree(previewResponse).path("data");
+
+        mockMvc.perform(post("/api/v1/solicitacoes")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "enderecoId": %d,
+                                  "regiaoId": %d,
+                                  "dataHoraDesejada": "2035-05-10T10:00:00-03:00",
+                                  "duracaoEstimadaHoras": 4,
+                                  "tipoServico": "FAXINA_RESIDENCIAL",
+                                  "observacoes": "Preview e criacao devem bater",
+                                  "valorServico": 1.00,
+                                  "percentualComissaoAgencia": 0.00,
+                                  "valorEstimadoProfissional": 1.00
+                                }
+                                """.formatted(enderecoId, regiaoId)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.valorServico").value(previewData.path("valorServico").doubleValue()))
+                .andExpect(jsonPath("$.data.percentualComissaoAgencia").value(previewData.path("percentualComissaoAgencia").doubleValue()))
+                .andExpect(jsonPath("$.data.valorEstimadoProfissional").value(previewData.path("valorEstimadoProfissional").doubleValue()));
+    }
+
+    @Test
     void endpointsDeSolicitacaoExigemJwt() throws Exception {
         mockMvc.perform(get("/api/v1/solicitacoes/minhas"))
                 .andExpect(status().isUnauthorized())

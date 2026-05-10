@@ -51,7 +51,7 @@ public class PerfilProfissional {
     private int experienciaAnos;
 
     @Column(name = "ativo_para_receber_chamados", nullable = false)
-    private boolean ativoParaReceberChamados;
+    private boolean ativoParaReceberChamados = true;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status_aprovacao", nullable = false, length = 30)

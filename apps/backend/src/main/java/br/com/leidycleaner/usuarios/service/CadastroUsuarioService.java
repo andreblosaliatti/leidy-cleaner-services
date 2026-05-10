@@ -172,7 +172,7 @@ public class CadastroUsuarioService {
                 descricao,
                 fotoPerfilUrl,
                 experienciaAnos == null ? 0 : experienciaAnos,
-                false,
+                true,
                 StatusAprovacaoProfissional.PENDENTE
         ));
         usuarioAceiteService.registrarAceitesObrigatorios(usuarioSalvo, ipOrigem, userAgent);

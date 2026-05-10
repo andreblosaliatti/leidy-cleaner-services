@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 import { FormAlert } from '../../components/ui/FormAlert';
 import { StateBox } from '../../components/ui/PageState';
@@ -48,6 +48,7 @@ type Feedback = {
 export function ClienteSolicitacoesPage() {
   const { token, logout, status } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -91,6 +92,15 @@ export function ClienteSolicitacoesPage() {
       navigate('/entrar', { replace: true });
     }
   }, [logout, navigate, protectedError]);
+
+  useEffect(() => {
+    if (!location.hash) {
+      return;
+    }
+
+    const section = document.getElementById(location.hash.replace('#', ''));
+    section?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+  }, [location.hash]);
 
   const createMutation = useMutation({
     mutationFn: (payload: SolicitacaoFaxinaRequest) => criarSolicitacao(requireToken(token), payload),
@@ -179,7 +189,7 @@ export function ClienteSolicitacoesPage() {
 
       {feedback && <FormAlert tone={feedback.tone} title={feedback.title} message={feedback.message} details={feedback.details} />}
 
-      <section className="rounded-lg border border-slate-100 bg-white p-5 shadow-sm md:p-6">
+      <section className="rounded-lg border border-slate-100 bg-white p-5 shadow-sm md:p-6" id="nova-solicitacao">
         <div className="mb-5">
           <h2 className="text-2xl font-black text-slate-900">Nova solicitação</h2>
           <p className="mt-2 text-sm leading-6 text-slate-600">
@@ -221,6 +231,7 @@ export function ClienteSolicitacoesPage() {
             regioes={regioes}
             isSubmitting={createMutation.isPending}
             onSubmit={handleCreate}
+            token={token}
           />
         )}
       </section>

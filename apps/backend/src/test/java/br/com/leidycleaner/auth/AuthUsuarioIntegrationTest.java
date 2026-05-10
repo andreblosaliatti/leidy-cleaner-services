@@ -149,7 +149,7 @@ class AuthUsuarioIntegrationTest {
         assertThat(usuario.getCpf()).isEqualTo(cpf);
         var perfil = perfilProfissionalRepository.findByCpf(cpf).orElseThrow();
         assertThat(perfil.getStatusAprovacao().name()).isEqualTo("PENDENTE");
-        assertThat(perfil.isAtivoParaReceberChamados()).isFalse();
+        assertThat(perfil.isAtivoParaReceberChamados()).isTrue();
     }
 
     @Test
@@ -436,7 +436,7 @@ class AuthUsuarioIntegrationTest {
         assertThat(usuario.getCpf()).isEqualTo(cpf);
         assertThat(usuario.getStatusConta()).isEqualTo(StatusConta.PENDENTE_VERIFICACAO);
         assertThat(perfil.getStatusAprovacao()).isEqualTo(StatusAprovacaoProfissional.PENDENTE);
-        assertThat(perfil.isAtivoParaReceberChamados()).isFalse();
+        assertThat(perfil.isAtivoParaReceberChamados()).isTrue();
         assertThat(documento.getStatusVerificacao()).isEqualTo(StatusVerificacao.PENDENTE);
     }
 

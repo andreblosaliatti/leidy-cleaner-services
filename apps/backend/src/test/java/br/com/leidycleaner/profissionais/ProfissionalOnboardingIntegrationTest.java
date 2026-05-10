@@ -78,6 +78,13 @@ class ProfissionalOnboardingIntegrationTest {
     }
 
     @Test
+    void novoPerfilProfissionalComecaAtivoParaReceberChamados() throws Exception {
+        String cpf = criarProfissional("m2a.ativo-default@example.com", "50022233344");
+
+        assertThat(perfilProfissionalRepository.findByCpf(cpf).orElseThrow().isAtivoParaReceberChamados()).isTrue();
+    }
+
+    @Test
     void profissionalDefineEListaAsPropriasRegioes() throws Exception {
         String token = criarProfissionalELogar("m2a.regioes@example.com", "50122233344");
         List<RegiaoAtendimento> regioes = regiaoAtendimentoRepository.findByAtivoTrueOrderByNomeAsc();
@@ -237,6 +244,26 @@ class ProfissionalOnboardingIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.length()").value(0));
+    }
+
+    @Test
+    void profissionalPodeDesativarRecebimentoDeChamadosManualmente() throws Exception {
+        String token = criarProfissionalELogar("m2a.ativo-update@example.com", "50212233344");
+        String cpf = cpfComPrefixo("50212233344");
+
+        mockMvc.perform(put("/api/v1/profissionais/me")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "ativoParaReceberChamados": false
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.ativoParaReceberChamados").value(false));
+
+        assertThat(perfilProfissionalRepository.findByCpf(cpf).orElseThrow().isAtivoParaReceberChamados()).isFalse();
     }
 
     @Test
