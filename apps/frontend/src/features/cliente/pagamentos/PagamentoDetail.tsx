@@ -12,6 +12,8 @@ import type { Pagamento, PixQrCodePagamento } from './types';
 
 type PagamentoDetailProps = {
   isPixQrCodeLoading?: boolean;
+  isRefreshingStatus?: boolean;
+  onRefreshStatus?: (() => void) | null;
   pagamento: Pagamento;
   pixQrCode?: PixQrCodePagamento | null;
   pixQrCodeErrorMessage?: string | null;
@@ -19,6 +21,8 @@ type PagamentoDetailProps = {
 
 export function PagamentoDetail({
   isPixQrCodeLoading = false,
+  isRefreshingStatus = false,
+  onRefreshStatus = null,
   pagamento,
   pixQrCode = null,
   pixQrCodeErrorMessage = null,
@@ -59,6 +63,16 @@ export function PagamentoDetail({
             {isWaitingWebhook ? 'Aguardando confirmacao do pagamento pelo webhook.' : getStatusPagamentoDescription(pagamento.status)}
           </p>
         </div>
+        {onRefreshStatus && isWaitingWebhook && (
+          <button
+            className="inline-flex min-h-10 items-center justify-center rounded-lg border border-cyan-200 px-4 text-sm font-black text-cyan-800 transition hover:bg-cyan-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-700 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-500"
+            disabled={isRefreshingStatus}
+            type="button"
+            onClick={onRefreshStatus}
+          >
+            {isRefreshingStatus ? 'Atualizando...' : 'Atualizar status'}
+          </button>
+        )}
       </div>
 
       <dl className="mt-6 grid gap-4 text-sm md:grid-cols-2 xl:grid-cols-3">
@@ -97,7 +111,7 @@ export function PagamentoDetail({
           </div>
         )}
 
-        {isPix && !isPaid && (
+        {isPix && isWaitingWebhook && (
           <section className="grid gap-4 rounded-lg border border-cyan-100 bg-cyan-50 p-4">
             <div>
               <h3 className="font-black text-cyan-900">Pagamento Pix</h3>
