@@ -57,15 +57,16 @@ public class AsaasHttpGatewayClient implements AsaasGatewayClient {
         body.put("value", request.valor());
         body.put("dueDate", LocalDate.now(clock).plusDays(1).toString());
         body.put("description", request.descricao());
-        body.put("externalReference", "atendimento-" + request.atendimentoId());
-        Map<String, Object> callback = callbackPagamento(request.atendimentoId());
+        body.put("externalReference", request.externalReference());
+        Map<String, Object> callback = callbackPagamento(request.callbackParametroNome(), request.callbackReferenciaId());
         if (callback != null) {
             body.put("callback", callback);
         }
         LOGGER.info(
-                "asaas_payment_create_request endpoint={} atendimentoId={} billingType={} value={} dueDate={} externalReference={} callbackEnabled={}",
+                "asaas_payment_create_request endpoint={} atendimentoId={} solicitacaoId={} billingType={} value={} dueDate={} externalReference={} callbackEnabled={}",
                 PAYMENT_ENDPOINT,
-                request.atendimentoId(),
+                "atendimentoId".equals(request.callbackParametroNome()) ? request.callbackReferenciaId() : null,
+                "solicitacaoId".equals(request.callbackParametroNome()) ? request.callbackReferenciaId() : null,
                 body.get("billingType"),
                 body.get("value"),
                 body.get("dueDate"),
@@ -175,12 +176,16 @@ public class AsaasHttpGatewayClient implements AsaasGatewayClient {
     }
 
     private Map<String, Object> callbackPagamento(Long atendimentoId) {
+        return callbackPagamento("atendimentoId", atendimentoId);
+    }
+
+    private Map<String, Object> callbackPagamento(String parametroNome, Long referenciaId) {
         if (!deveEnviarCallbackPagamento()) {
             return null;
         }
         String successUrl = limparTexto(properties.getCheckoutSuccessUrl());
         Map<String, Object> callback = new LinkedHashMap<>();
-        callback.put("successUrl", urlRetorno(successUrl, atendimentoId));
+        callback.put("successUrl", urlRetorno(successUrl, parametroNome, referenciaId));
         callback.put("autoRedirect", properties.isPaymentAutoRedirect());
         return callback;
     }
@@ -315,8 +320,12 @@ public class AsaasHttpGatewayClient implements AsaasGatewayClient {
     }
 
     private String urlRetorno(String urlBase, Long atendimentoId) {
+        return urlRetorno(urlBase, "atendimentoId", atendimentoId);
+    }
+
+    private String urlRetorno(String urlBase, String parametroNome, Long referenciaId) {
         String separador = urlBase.contains("?") ? "&" : "?";
-        return urlBase + separador + "atendimentoId=" + atendimentoId;
+        return urlBase + separador + parametroNome + "=" + referenciaId;
     }
 
     private List<AsaasErrorDiagnostic> extrairErrosAsaas(RestClientResponseException exception) {

@@ -10,6 +10,7 @@ import br.com.leidycleaner.pagamentos.entity.StatusPagamento;
 public record PagamentoDto(
         Long id,
         Long atendimentoId,
+        Long solicitacaoId,
         GatewayPagamento gateway,
         String gatewayPaymentId,
         MetodoPagamento metodoPagamento,

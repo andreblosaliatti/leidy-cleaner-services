@@ -10,5 +10,7 @@ public interface SolicitacaoProfissionalSelecionadoRepository extends JpaReposit
 
     List<SolicitacaoProfissionalSelecionado> findBySolicitacaoIdOrderByOrdemEscolhaAsc(Long solicitacaoId);
 
+    long countBySolicitacaoId(Long solicitacaoId);
+
     void deleteBySolicitacaoId(Long solicitacaoId);
 }

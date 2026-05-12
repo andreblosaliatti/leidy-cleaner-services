@@ -272,32 +272,32 @@ Permitir checkout/cobrança antes do atendimento existir.
 
 ### Checklist
 
-- [ ] Criar ou adaptar endpoint para criar pagamento por `solicitacaoId`.
-- [ ] Validar que a solicitação pertence ao cliente autenticado.
-- [ ] Validar que existe exatamente uma profissional selecionada.
-- [ ] Validar que a solicitação está em status compatível com pagamento.
-- [ ] Impedir mais de um pagamento ativo para a mesma solicitação.
-- [ ] Criar cobrança no Asaas com referência externa baseada em solicitação, por exemplo `solicitacao-{id}`.
-- [ ] Persistir `gateway_payment_id`.
-- [ ] Persistir `solicitacao_id` no pagamento.
-- [ ] Manter `atendimento_id = null` nesse momento.
-- [ ] Criar endpoint de consulta de pagamento por solicitação.
-- [ ] Manter consulta por atendimento para compatibilidade com telas antigas e admin.
-- [ ] Ajustar autorização de pagamento para cliente dono da solicitação e admin.
+- [x] Criar ou adaptar endpoint para criar pagamento por `solicitacaoId`.
+- [x] Validar que a solicitação pertence ao cliente autenticado.
+- [x] Validar que existe exatamente uma profissional selecionada.
+- [x] Validar que a solicitação está em status compatível com pagamento.
+- [x] Impedir mais de um pagamento ativo para a mesma solicitação.
+- [x] Criar cobrança no Asaas com referência externa baseada em solicitação, por exemplo `solicitacao-{id}`.
+- [x] Persistir `gateway_payment_id`.
+- [x] Persistir `solicitacao_id` no pagamento.
+- [x] Manter `atendimento_id = null` nesse momento.
+- [x] Criar endpoint de consulta de pagamento por solicitação.
+- [x] Manter consulta por atendimento para compatibilidade com telas antigas e admin.
+- [x] Ajustar autorização de pagamento para cliente dono da solicitação e admin.
 
 ### Critérios de aceite
 
-- [ ] Cliente consegue gerar Pix/fatura antes de existir atendimento.
-- [ ] Pagamento fica vinculado à solicitação.
-- [ ] Atendimento não é criado nesta etapa.
-- [ ] Frontend continua sem poder confirmar pagamento.
+- [x] Cliente consegue gerar Pix/fatura antes de existir atendimento.
+- [x] Pagamento fica vinculado à solicitação.
+- [x] Atendimento não é criado nesta etapa.
+- [x] Frontend continua sem poder confirmar pagamento.
 
 ### Testes obrigatórios
 
-- [ ] Criar pagamento por solicitação válida.
-- [ ] Bloquear pagamento por solicitação sem profissional selecionada.
-- [ ] Bloquear pagamento por solicitação de outro cliente.
-- [ ] Bloquear pagamento duplicado ativo para a mesma solicitação.
+- [x] Criar pagamento por solicitação válida.
+- [x] Bloquear pagamento por solicitação sem profissional selecionada.
+- [x] Bloquear pagamento por solicitação de outro cliente.
+- [x] Bloquear pagamento duplicado ativo para a mesma solicitação.
 
 ### Validação
 

@@ -243,6 +243,17 @@ public class WebhookService {
         }
 
         AtendimentoFaxina atendimento = pagamento.getAtendimento();
+        if (atendimento == null) {
+            LOGGER.info(
+                    "asaas_webhook_pagamento_confirmed_sem_atendimento event={} paymentId={} gatewayPaymentId={} pagamentoId={} solicitacaoId={}",
+                    event,
+                    paymentId,
+                    gatewayPaymentId,
+                    pagamento.getId(),
+                    pagamento.getSolicitacao() != null ? pagamento.getSolicitacao().getId() : null
+            );
+            return;
+        }
         if (atendimento.getStatus() == StatusAtendimento.CANCELADO) {
             atendimento.enviarParaAnalise();
             atendimentoFaxinaRepository.save(atendimento);

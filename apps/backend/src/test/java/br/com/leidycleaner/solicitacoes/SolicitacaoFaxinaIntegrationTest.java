@@ -102,6 +102,9 @@ class SolicitacaoFaxinaIntegrationTest {
     private record AtendimentoCriado(String tokenCliente, String tokenProfissional, Long solicitacaoId, Long atendimentoId) {
     }
 
+    private record SolicitacaoSelecionada(String tokenCliente, Long solicitacaoId, Long profissionalId) {
+    }
+
     @Autowired
     SolicitacaoFaxinaIntegrationTest(
             MockMvc mockMvc,
@@ -1319,6 +1322,152 @@ class SolicitacaoFaxinaIntegrationTest {
     }
 
     @Test
+    void clienteCriaPagamentoParaPropriaSolicitacaoAguardandoPagamento() throws Exception {
+        SolicitacaoSelecionada solicitacao = criarSolicitacaoAguardandoPagamento("m4.pagamento-solicitacao", "75012233344");
+        mockarCriacaoAsaas("pay_m4_solicitacao", "PENDING", "https://asaas.local/pay_m4_solicitacao", "pix-solicitacao");
+
+        String response = mockMvc.perform(post("/api/v1/pagamentos")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + solicitacao.tokenCliente())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(pagamentoSolicitacaoJson(solicitacao.solicitacaoId(), "PIX")))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.atendimentoId").doesNotExist())
+                .andExpect(jsonPath("$.data.solicitacaoId").value(solicitacao.solicitacaoId()))
+                .andExpect(jsonPath("$.data.gateway").value("ASAAS"))
+                .andExpect(jsonPath("$.data.gatewayPaymentId").value("pay_m4_solicitacao"))
+                .andExpect(jsonPath("$.data.metodoPagamento").value("PIX"))
+                .andExpect(jsonPath("$.data.status").value("PENDENTE"))
+                .andExpect(jsonPath("$.data.valorBruto").value(180.00))
+                .andExpect(jsonPath("$.data.urlPagamento").value("https://asaas.local/pay_m4_solicitacao"))
+                .andExpect(jsonPath("$.data.pixCopiaECola").value("pix-solicitacao"))
+                .andExpect(jsonPath("$.data.webhookProcessado").value(false))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        Long pagamentoId = objectMapper.readTree(response).path("data").path("id").asLong();
+        assertThat(pagamentoRepository.findBySolicitacaoId(solicitacao.solicitacaoId()))
+                .isPresent()
+                .get()
+                .satisfies(pagamento -> {
+                    assertThat(pagamento.getId()).isEqualTo(pagamentoId);
+                    assertThat(pagamento.getAtendimento()).isNull();
+                    assertThat(pagamento.getSolicitacao().getId()).isEqualTo(solicitacao.solicitacaoId());
+                    assertThat(pagamento.getGatewayPaymentId()).isEqualTo("pay_m4_solicitacao");
+                    assertThat(pagamento.getStatus().name()).isEqualTo("PENDENTE");
+                });
+        assertThat(atendimentoFaxinaRepository.findBySolicitacaoId(solicitacao.solicitacaoId())).isEmpty();
+        assertThat(conviteProfissionalRepository.findBySolicitacaoId(solicitacao.solicitacaoId())).isEmpty();
+        assertThat(solicitacaoFaxinaRepository.findById(solicitacao.solicitacaoId()))
+                .isPresent()
+                .get()
+                .extracting(solicitacaoPersistida -> solicitacaoPersistida.getStatus().name())
+                .isEqualTo("AGUARDANDO_PAGAMENTO");
+
+        mockMvc.perform(get("/api/v1/pagamentos/solicitacao/{solicitacaoId}", solicitacao.solicitacaoId())
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + solicitacao.tokenCliente()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.id").value(pagamentoId))
+                .andExpect(jsonPath("$.data.solicitacaoId").value(solicitacao.solicitacaoId()))
+                .andExpect(jsonPath("$.data.atendimentoId").doesNotExist());
+    }
+
+    @Test
+    void clienteNaoCriaPagamentoParaSolicitacaoDeOutraCliente() throws Exception {
+        SolicitacaoSelecionada solicitacao = criarSolicitacaoAguardandoPagamento("m4.pagamento-outra", "75013233344");
+        String tokenOutraCliente = criarClienteELogar("m4.pagamento-outra-nao-dona@example.com");
+
+        mockMvc.perform(post("/api/v1/pagamentos")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenOutraCliente)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(pagamentoSolicitacaoJson(solicitacao.solicitacaoId(), "PIX")))
+                .andExpect(status().isNotFound())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("SOLICITACAO_NOT_FOUND"))
+                .andExpect(jsonPath("$.errors").isArray());
+    }
+
+    @Test
+    void clienteNaoCriaPagamentoParaSolicitacaoForaDeAguardandoPagamento() throws Exception {
+        String tokenCliente = criarClienteELogar("m4.pagamento-status-cliente@example.com");
+        Long solicitacaoId = criarSolicitacao(tokenCliente, criarEndereco(tokenCliente), primeiraRegiaoId(), "FAXINA_RESIDENCIAL");
+
+        mockMvc.perform(post("/api/v1/pagamentos")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenCliente)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(pagamentoSolicitacaoJson(solicitacaoId, "PIX")))
+                .andExpect(status().isConflict())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("SOLICITACAO_STATUS_INCOMPATIVEL"))
+                .andExpect(jsonPath("$.errors").isArray());
+    }
+
+    @Test
+    void clienteNaoCriaPagamentoParaSolicitacaoSemProfissionalSelecionada() throws Exception {
+        String tokenCliente = criarClienteELogar("m4.pagamento-sem-selecao-cliente@example.com");
+        Long solicitacaoId = criarSolicitacao(tokenCliente, criarEndereco(tokenCliente), primeiraRegiaoId(), "FAXINA_RESIDENCIAL");
+        var solicitacao = solicitacaoFaxinaRepository.findById(solicitacaoId).orElseThrow();
+        solicitacao.marcarAguardandoPagamento();
+        solicitacaoFaxinaRepository.saveAndFlush(solicitacao);
+
+        mockMvc.perform(post("/api/v1/pagamentos")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenCliente)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(pagamentoSolicitacaoJson(solicitacaoId, "PIX")))
+                .andExpect(status().isConflict())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("SOLICITACAO_PROFISSIONAL_SELECIONADA_INVALIDA"))
+                .andExpect(jsonPath("$.errors").isArray());
+    }
+
+    @Test
+    void pagamentoRejeitaReferenciaAmbiguaOuAusente() throws Exception {
+        String tokenCliente = criarClienteELogar("m4.pagamento-referencia-cliente@example.com");
+
+        mockMvc.perform(post("/api/v1/pagamentos")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenCliente)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(pagamentoComAtendimentoESolicitacaoJson(1L, 2L, "PIX")))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("PAGAMENTO_REFERENCIA_INVALIDA"))
+                .andExpect(jsonPath("$.errors").isArray());
+
+        mockMvc.perform(post("/api/v1/pagamentos")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenCliente)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(pagamentoSemReferenciaJson("PIX")))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("PAGAMENTO_REFERENCIA_INVALIDA"))
+                .andExpect(jsonPath("$.errors").isArray());
+    }
+
+    @Test
+    void pagamentoDuplicadoParaMesmaSolicitacaoERejeitado() throws Exception {
+        SolicitacaoSelecionada solicitacao = criarSolicitacaoAguardandoPagamento("m4.pagamento-duplicado", "75014233344");
+        mockarCriacaoAsaas("pay_m4_duplicado", "PENDING", "https://asaas.local/pay_m4_duplicado", null);
+        criarPagamentoPorSolicitacao(solicitacao.tokenCliente(), solicitacao.solicitacaoId(), "PIX");
+
+        mockMvc.perform(post("/api/v1/pagamentos")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + solicitacao.tokenCliente())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(pagamentoSolicitacaoJson(solicitacao.solicitacaoId(), "PIX")))
+                .andExpect(status().isConflict())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("PAGAMENTO_JA_EXISTE"))
+                .andExpect(jsonPath("$.errors").isArray());
+    }
+
+    @Test
     void clienteCriaCheckoutParaProprioAtendimentoAguardandoPagamento() throws Exception {
         AtendimentoCriado atendimento = criarAtendimentoAguardandoPagamento("m5a.cria-checkout", "75132233344");
         mockarCheckoutAsaas("pay_m5a_checkout_cria", "https://asaas.local/invoice/pay_m5a_checkout_cria");
@@ -1375,6 +1524,7 @@ class SolicitacaoFaxinaIntegrationTest {
                     assertThat(pagamento.getUrlPagamento()).isEqualTo("https://asaas.local/invoice/pay_m5a_reusa");
                 });
         assertThat(pagamentoRepository.findAll().stream()
+                .filter(pagamento -> pagamento.getAtendimento() != null)
                 .filter(pagamento -> atendimento.atendimentoId().equals(pagamento.getAtendimento().getId()))
                 .count()).isEqualTo(1);
     }
@@ -4196,6 +4346,27 @@ class SolicitacaoFaxinaIntegrationTest {
         return new AtendimentoCriado(tokenCliente, profissional.tokenProfissional(), solicitacaoId, atendimentoId);
     }
 
+    private SolicitacaoSelecionada criarSolicitacaoAguardandoPagamento(String prefixoEmail, String cpf) throws Exception {
+        String tokenCliente = criarClienteELogar(prefixoEmail + "-cliente@example.com");
+        Long regiaoId = ultimaRegiaoId();
+        Long solicitacaoId = criarSolicitacao(tokenCliente, criarEndereco(tokenCliente), regiaoId, "FAXINA_RESIDENCIAL");
+        ProfissionalConfigurada profissional = criarProfissionalConfiguradaComToken(
+                prefixoEmail + "-profissional@example.com",
+                cpf,
+                "Profissional " + prefixoEmail,
+                "ATIVA",
+                "APROVADO",
+                true,
+                "APROVADO",
+                List.of(regiaoId),
+                "QUINTA",
+                "08:00",
+                "12:00"
+        );
+        selecionarProfissionais(tokenCliente, solicitacaoId, List.of(profissional.perfilId()));
+        return new SolicitacaoSelecionada(tokenCliente, solicitacaoId, profissional.perfilId());
+    }
+
     private AtendimentoCriado criarAtendimentoConfirmado(String prefixoEmail, String cpf, String checkoutId) throws Exception {
         AtendimentoCriado atendimento = criarAtendimentoAguardandoPagamento(prefixoEmail, cpf);
         mockarCheckoutAsaas(checkoutId, "https://asaas.local/checkout/" + checkoutId);
@@ -4421,6 +4592,19 @@ class SolicitacaoFaxinaIntegrationTest {
         return objectMapper.readTree(response).path("data").path("id").asLong();
     }
 
+    private Long criarPagamentoPorSolicitacao(String tokenCliente, Long solicitacaoId, String metodoPagamento) throws Exception {
+        String response = mockMvc.perform(post("/api/v1/pagamentos")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenCliente)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(pagamentoSolicitacaoJson(solicitacaoId, metodoPagamento)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.success").value(true))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        return objectMapper.readTree(response).path("data").path("id").asLong();
+    }
+
     private void criarCheckout(String tokenCliente, Long atendimentoId) throws Exception {
         criarCheckout(tokenCliente, atendimentoId, "CARTAO_CREDITO");
     }
@@ -4487,6 +4671,33 @@ class SolicitacaoFaxinaIntegrationTest {
                   "metodoPagamento": "%s"
                 }
                 """.formatted(atendimentoId, metodoPagamento);
+    }
+
+    private String pagamentoSolicitacaoJson(Long solicitacaoId, String metodoPagamento) {
+        return """
+                {
+                  "solicitacaoId": %d,
+                  "metodoPagamento": "%s"
+                }
+                """.formatted(solicitacaoId, metodoPagamento);
+    }
+
+    private String pagamentoComAtendimentoESolicitacaoJson(Long atendimentoId, Long solicitacaoId, String metodoPagamento) {
+        return """
+                {
+                  "atendimentoId": %d,
+                  "solicitacaoId": %d,
+                  "metodoPagamento": "%s"
+                }
+                """.formatted(atendimentoId, solicitacaoId, metodoPagamento);
+    }
+
+    private String pagamentoSemReferenciaJson(String metodoPagamento) {
+        return """
+                {
+                  "metodoPagamento": "%s"
+                }
+                """.formatted(metodoPagamento);
     }
 
     private String checkoutJson(Long atendimentoId, String metodoPagamento) {

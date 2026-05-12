@@ -240,6 +240,36 @@ class AsaasHttpGatewayClientTest {
     }
 
     @Test
+    void criarCobrancaPorSolicitacaoUsaReferenciaExternaECallbackDeSolicitacao() throws Exception {
+        iniciarServidor(200, """
+                {
+                  "id": "pay_test_solicitacao",
+                  "status": "PENDING",
+                  "invoiceUrl": "https://sandbox.asaas.com/i/pay_test_solicitacao"
+                }
+                """);
+        AsaasProperties properties = properties();
+        properties.setPaymentCallbackEnabled(true);
+        properties.setCheckoutSuccessUrl("http://localhost/pagamento/sucesso");
+        AsaasHttpGatewayClient client = new AsaasHttpGatewayClient(properties);
+
+        AsaasPagamentoGatewayResponse response = client.criarCobranca(AsaasCobrancaRequest.paraSolicitacao(
+                456L,
+                MetodoPagamento.PIX,
+                new BigDecimal("180.00"),
+                "Leidy Cleaner Services - solicitacao #456"
+        ));
+
+        assertThat(response.gatewayPaymentId()).isEqualTo("pay_test_solicitacao");
+        JsonNode body = capturedRequest.body();
+        assertThat(body.path("externalReference").asText()).isEqualTo("solicitacao-456");
+        assertThat(body.path("description").asText()).isEqualTo("Leidy Cleaner Services - solicitacao #456");
+        assertThat(body.path("callback").path("successUrl").asText())
+                .isEqualTo("http://localhost/pagamento/sucesso?solicitacaoId=456");
+        assertThat(body.path("callback").path("autoRedirect").asBoolean()).isTrue();
+    }
+
+    @Test
     void criarCheckoutConverteResposta400DoAsaasEmErroControladoERegistraDiagnosticoSeguro(CapturedOutput output) throws Exception {
         iniciarServidor(400, """
                 {

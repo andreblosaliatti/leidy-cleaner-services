@@ -29,6 +29,10 @@ import br.com.leidycleaner.pagamentos.gateway.AsaasPagamentoGatewayResponse;
 import br.com.leidycleaner.pagamentos.gateway.AsaasPixQrCodeGatewayResponse;
 import br.com.leidycleaner.pagamentos.mapper.PagamentoMapper;
 import br.com.leidycleaner.pagamentos.repository.PagamentoRepository;
+import br.com.leidycleaner.solicitacoes.entity.SolicitacaoFaxina;
+import br.com.leidycleaner.solicitacoes.entity.StatusSolicitacao;
+import br.com.leidycleaner.solicitacoes.repository.SolicitacaoFaxinaRepository;
+import br.com.leidycleaner.solicitacoes.repository.SolicitacaoProfissionalSelecionadoRepository;
 import br.com.leidycleaner.usuarios.entity.TipoUsuario;
 import br.com.leidycleaner.usuarios.repository.UsuarioRepository;
 
@@ -37,6 +41,8 @@ public class PagamentoService {
 
     private final PagamentoRepository pagamentoRepository;
     private final AtendimentoFaxinaRepository atendimentoFaxinaRepository;
+    private final SolicitacaoFaxinaRepository solicitacaoFaxinaRepository;
+    private final SolicitacaoProfissionalSelecionadoRepository selecionadoRepository;
     private final AsaasGatewayClient asaasGatewayClient;
     private final UsuarioRepository usuarioRepository;
     private final AtendimentoExpiracaoService atendimentoExpiracaoService;
@@ -44,12 +50,16 @@ public class PagamentoService {
     public PagamentoService(
             PagamentoRepository pagamentoRepository,
             AtendimentoFaxinaRepository atendimentoFaxinaRepository,
+            SolicitacaoFaxinaRepository solicitacaoFaxinaRepository,
+            SolicitacaoProfissionalSelecionadoRepository selecionadoRepository,
             AsaasGatewayClient asaasGatewayClient,
             UsuarioRepository usuarioRepository,
             AtendimentoExpiracaoService atendimentoExpiracaoService
     ) {
         this.pagamentoRepository = pagamentoRepository;
         this.atendimentoFaxinaRepository = atendimentoFaxinaRepository;
+        this.solicitacaoFaxinaRepository = solicitacaoFaxinaRepository;
+        this.selecionadoRepository = selecionadoRepository;
         this.asaasGatewayClient = asaasGatewayClient;
         this.usuarioRepository = usuarioRepository;
         this.atendimentoExpiracaoService = atendimentoExpiracaoService;
@@ -59,6 +69,14 @@ public class PagamentoService {
     @Deprecated(forRemoval = false)
     public PagamentoDto criar(Long usuarioId, PagamentoRequest request) {
         atendimentoExpiracaoService.expirarAtendimentosNaoPagosVencidos();
+        validarReferenciaUnica(request);
+        if (request.solicitacaoId() != null) {
+            return criarPorSolicitacao(usuarioId, request);
+        }
+        return criarPorAtendimento(usuarioId, request);
+    }
+
+    private PagamentoDto criarPorAtendimento(Long usuarioId, PagamentoRequest request) {
         AtendimentoFaxina atendimento = buscarAtendimentoDoCliente(usuarioId, request.atendimentoId());
         validarAtendimentoAguardandoPagamento(atendimento);
         if (pagamentoRepository.existsByAtendimentoId(atendimento.getId())) {
@@ -87,10 +105,40 @@ public class PagamentoService {
         return PagamentoMapper.paraDto(pagamentoRepository.save(pagamento));
     }
 
+    private PagamentoDto criarPorSolicitacao(Long usuarioId, PagamentoRequest request) {
+        SolicitacaoFaxina solicitacao = buscarSolicitacaoDoCliente(usuarioId, request.solicitacaoId());
+        validarSolicitacaoAguardandoPagamento(solicitacao);
+        validarSolicitacaoComUmaProfissionalSelecionada(solicitacao);
+        if (pagamentoRepository.existsBySolicitacaoId(solicitacao.getId())) {
+            throw new BusinessException("PAGAMENTO_JA_EXISTE", "Solicitacao ja possui pagamento", HttpStatus.CONFLICT);
+        }
+
+        AsaasPagamentoGatewayResponse gatewayResponse = asaasGatewayClient.criarCobranca(AsaasCobrancaRequest.paraSolicitacao(
+                solicitacao.getId(),
+                request.metodoPagamento(),
+                solicitacao.getValorServico(),
+                "Leidy Cleaner Services - solicitacao #" + solicitacao.getId()
+        ));
+        validarUrlPagamentoGateway(gatewayResponse.urlPagamento());
+
+        Pagamento pagamento = new Pagamento(
+                solicitacao,
+                GatewayPagamento.ASAAS,
+                gatewayResponse.gatewayPaymentId(),
+                request.metodoPagamento(),
+                paraStatusM5A(gatewayResponse.statusGateway()),
+                solicitacao.getValorServico(),
+                gatewayResponse.urlPagamento(),
+                gatewayResponse.pixCopiaECola(),
+                gatewayResponse.payloadResumo()
+        );
+        return PagamentoMapper.paraDto(pagamentoRepository.save(pagamento));
+    }
+
     @Transactional(readOnly = true)
     public PagamentoDto buscarPorId(Long usuarioId, Long pagamentoId) {
         atendimentoExpiracaoService.expirarAtendimentosNaoPagosVencidos();
-        Pagamento pagamento = pagamentoRepository.findByIdWithAtendimentoCliente(pagamentoId)
+        Pagamento pagamento = pagamentoRepository.findByIdWithRelacionamentos(pagamentoId)
                 .orElseThrow(() -> new BusinessException("PAGAMENTO_NOT_FOUND", "Pagamento nao encontrado", HttpStatus.NOT_FOUND));
         validarClienteOuAdminDoPagamento(usuarioId, pagamento);
         return PagamentoMapper.paraDto(pagamento);
@@ -106,9 +154,23 @@ public class PagamentoService {
     }
 
     @Transactional(readOnly = true)
-    public List<PagamentoDto> listarAdmin(StatusPagamento status, MetodoPagamento metodoPagamento, Long atendimentoId) {
+    public PagamentoDto buscarPorSolicitacao(Long usuarioId, Long solicitacaoId) {
         atendimentoExpiracaoService.expirarAtendimentosNaoPagosVencidos();
-        return pagamentoRepository.findAdminList(status, metodoPagamento, atendimentoId)
+        Pagamento pagamento = pagamentoRepository.findBySolicitacaoId(solicitacaoId)
+                .orElseThrow(() -> new BusinessException("PAGAMENTO_NOT_FOUND", "Pagamento nao encontrado", HttpStatus.NOT_FOUND));
+        validarClienteOuAdminDoPagamento(usuarioId, pagamento);
+        return PagamentoMapper.paraDto(pagamento);
+    }
+
+    @Transactional(readOnly = true)
+    public List<PagamentoDto> listarAdmin(
+            StatusPagamento status,
+            MetodoPagamento metodoPagamento,
+            Long atendimentoId,
+            Long solicitacaoId
+    ) {
+        atendimentoExpiracaoService.expirarAtendimentosNaoPagosVencidos();
+        return pagamentoRepository.findAdminList(status, metodoPagamento, atendimentoId, solicitacaoId)
                 .stream()
                 .map(PagamentoMapper::paraDto)
                 .toList();
@@ -117,10 +179,11 @@ public class PagamentoService {
     @Transactional
     public PagamentoDto consultarStatus(Long usuarioId, Long pagamentoId) {
         atendimentoExpiracaoService.expirarAtendimentosNaoPagosVencidos();
-        Pagamento pagamento = pagamentoRepository.findByIdWithAtendimentoCliente(pagamentoId)
+        Pagamento pagamento = pagamentoRepository.findByIdWithRelacionamentos(pagamentoId)
                 .orElseThrow(() -> new BusinessException("PAGAMENTO_NOT_FOUND", "Pagamento nao encontrado", HttpStatus.NOT_FOUND));
         validarClienteDoPagamento(usuarioId, pagamento);
-        if (pagamento.getAtendimento().getStatus() == StatusAtendimento.CANCELADO
+        if (pagamento.getAtendimento() != null
+                && pagamento.getAtendimento().getStatus() == StatusAtendimento.CANCELADO
                 && pagamento.getStatus() != StatusPagamento.PAGO) {
             return PagamentoMapper.paraDto(pagamento);
         }
@@ -140,7 +203,7 @@ public class PagamentoService {
     @Transactional(readOnly = true)
     public PixQrCodeDto buscarPixQrCode(Long usuarioId, Long pagamentoId) {
         atendimentoExpiracaoService.expirarAtendimentosNaoPagosVencidos();
-        Pagamento pagamento = pagamentoRepository.findByIdWithAtendimentoCliente(pagamentoId)
+        Pagamento pagamento = pagamentoRepository.findByIdWithRelacionamentos(pagamentoId)
                 .orElseThrow(() -> new BusinessException("PAGAMENTO_NOT_FOUND", "Pagamento nao encontrado", HttpStatus.NOT_FOUND));
         validarClienteOuAdminDoPagamento(usuarioId, pagamento);
         validarPagamentoPixComGatewayPaymentId(pagamento);
@@ -274,14 +337,56 @@ public class PagamentoService {
         return atendimento;
     }
 
+    private SolicitacaoFaxina buscarSolicitacaoDoCliente(Long usuarioId, Long solicitacaoId) {
+        SolicitacaoFaxina solicitacao = solicitacaoFaxinaRepository.findByIdWithResumo(solicitacaoId)
+                .orElseThrow(() -> new BusinessException("SOLICITACAO_NOT_FOUND", "Solicitacao nao encontrada", HttpStatus.NOT_FOUND));
+        if (!solicitacao.getCliente().getUsuario().getId().equals(usuarioId)) {
+            throw new BusinessException("SOLICITACAO_NOT_FOUND", "Solicitacao nao encontrada", HttpStatus.NOT_FOUND);
+        }
+        return solicitacao;
+    }
+
     private void validarAtendimentoAguardandoPagamento(AtendimentoFaxina atendimento) {
         if (atendimento.getStatus() != StatusAtendimento.AGUARDANDO_PAGAMENTO) {
             throw new BusinessException("ATENDIMENTO_STATUS_INCOMPATIVEL", "Atendimento nao esta aguardando pagamento", HttpStatus.CONFLICT);
         }
     }
 
+    private void validarSolicitacaoAguardandoPagamento(SolicitacaoFaxina solicitacao) {
+        if (solicitacao.getStatus() != StatusSolicitacao.AGUARDANDO_PAGAMENTO) {
+            throw new BusinessException(
+                    "SOLICITACAO_STATUS_INCOMPATIVEL",
+                    "Solicitacao nao esta aguardando pagamento",
+                    HttpStatus.CONFLICT
+            );
+        }
+    }
+
+    private void validarSolicitacaoComUmaProfissionalSelecionada(SolicitacaoFaxina solicitacao) {
+        long quantidadeSelecionada = selecionadoRepository.countBySolicitacaoId(solicitacao.getId());
+        if (quantidadeSelecionada != 1) {
+            throw new BusinessException(
+                    "SOLICITACAO_PROFISSIONAL_SELECIONADA_INVALIDA",
+                    "Solicitacao deve ter exatamente uma profissional selecionada para criar pagamento",
+                    HttpStatus.CONFLICT
+            );
+        }
+    }
+
+    private void validarReferenciaUnica(PagamentoRequest request) {
+        boolean temAtendimento = request.atendimentoId() != null;
+        boolean temSolicitacao = request.solicitacaoId() != null;
+        if (temAtendimento == temSolicitacao) {
+            throw new BusinessException(
+                    "PAGAMENTO_REFERENCIA_INVALIDA",
+                    "Informe exatamente um dos campos atendimentoId ou solicitacaoId",
+                    HttpStatus.BAD_REQUEST
+            );
+        }
+    }
+
     private void validarClienteDoPagamento(Long usuarioId, Pagamento pagamento) {
-        if (!pagamento.getAtendimento().getCliente().getUsuario().getId().equals(usuarioId)) {
+        if (!clienteUsuarioIdDoPagamento(pagamento).equals(usuarioId)) {
             throw new AccessDeniedException("Usuario autenticado nao pode acessar este pagamento");
         }
     }
@@ -297,6 +402,16 @@ public class PagamentoService {
         return usuarioRepository.findById(usuarioId)
                 .map(usuario -> usuario.getTipoUsuario() == TipoUsuario.ADMIN)
                 .orElse(false);
+    }
+
+    private Long clienteUsuarioIdDoPagamento(Pagamento pagamento) {
+        if (pagamento.getAtendimento() != null) {
+            return pagamento.getAtendimento().getCliente().getUsuario().getId();
+        }
+        if (pagamento.getSolicitacao() != null) {
+            return pagamento.getSolicitacao().getCliente().getUsuario().getId();
+        }
+        throw new BusinessException("PAGAMENTO_SEM_REFERENCIA", "Pagamento sem cliente relacionado", HttpStatus.CONFLICT);
     }
 
     private StatusPagamento paraStatusM5A(String statusGateway) {

@@ -52,9 +52,10 @@ public class PagamentoController {
     public ApiResponse<List<PagamentoDto>> listarAdmin(
             @RequestParam(required = false) StatusPagamento status,
             @RequestParam(required = false) MetodoPagamento metodoPagamento,
-            @RequestParam(required = false) Long atendimentoId
+            @RequestParam(required = false) Long atendimentoId,
+            @RequestParam(required = false) Long solicitacaoId
     ) {
-        return ApiResponse.success(pagamentoService.listarAdmin(status, metodoPagamento, atendimentoId));
+        return ApiResponse.success(pagamentoService.listarAdmin(status, metodoPagamento, atendimentoId, solicitacaoId));
     }
 
     @GetMapping("/atendimento/{atendimentoId}")
@@ -63,6 +64,14 @@ public class PagamentoController {
             @PathVariable Long atendimentoId
     ) {
         return ApiResponse.success(pagamentoService.buscarPorAtendimento(principal.getId(), atendimentoId));
+    }
+
+    @GetMapping("/solicitacao/{solicitacaoId}")
+    public ApiResponse<PagamentoDto> buscarPorSolicitacao(
+            @AuthenticationPrincipal UsuarioPrincipal principal,
+            @PathVariable Long solicitacaoId
+    ) {
+        return ApiResponse.success(pagamentoService.buscarPorSolicitacao(principal.getId(), solicitacaoId));
     }
 
     @GetMapping("/{id}")

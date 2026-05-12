@@ -21,18 +21,23 @@ public interface PagamentoRepository extends JpaRepository<Pagamento, Long> {
     @Query("""
             select p
             from Pagamento p
-            join fetch p.atendimento a
-            join fetch a.cliente c
-            join fetch c.usuario
+            left join fetch p.atendimento a
+            left join fetch a.cliente ac
+            left join fetch ac.usuario
+            left join fetch p.solicitacao s
+            left join fetch s.cliente sc
+            left join fetch sc.usuario
             where (:status is null or p.status = :status)
               and (:metodoPagamento is null or p.metodoPagamento = :metodoPagamento)
               and (:atendimentoId is null or a.id = :atendimentoId)
+              and (:solicitacaoId is null or s.id = :solicitacaoId)
             order by p.criadoEm desc, p.id desc
             """)
     List<Pagamento> findAdminList(
             @Param("status") StatusPagamento status,
             @Param("metodoPagamento") MetodoPagamento metodoPagamento,
-            @Param("atendimentoId") Long atendimentoId
+            @Param("atendimentoId") Long atendimentoId,
+            @Param("solicitacaoId") Long solicitacaoId
     );
 
     @Query("""
@@ -48,12 +53,25 @@ public interface PagamentoRepository extends JpaRepository<Pagamento, Long> {
     @Query("""
             select p
             from Pagamento p
-            join fetch p.atendimento a
-            join fetch a.cliente c
+            join fetch p.solicitacao s
+            join fetch s.cliente c
             join fetch c.usuario
+            where s.id = :solicitacaoId
+            """)
+    Optional<Pagamento> findBySolicitacaoId(@Param("solicitacaoId") Long solicitacaoId);
+
+    @Query("""
+            select p
+            from Pagamento p
+            left join fetch p.atendimento a
+            left join fetch a.cliente ac
+            left join fetch ac.usuario
+            left join fetch p.solicitacao s
+            left join fetch s.cliente sc
+            left join fetch sc.usuario
             where p.id = :id
             """)
-    Optional<Pagamento> findByIdWithAtendimentoCliente(@Param("id") Long id);
+    Optional<Pagamento> findByIdWithRelacionamentos(@Param("id") Long id);
 
     Optional<Pagamento> findByGatewayPaymentId(String gatewayPaymentId);
 
@@ -61,7 +79,8 @@ public interface PagamentoRepository extends JpaRepository<Pagamento, Long> {
     @Query("""
             select p
             from Pagamento p
-            join fetch p.atendimento
+            left join fetch p.atendimento
+            left join fetch p.solicitacao
             where p.gatewayPaymentId = :gatewayPaymentId
             """)
     Optional<Pagamento> findByGatewayPaymentIdForUpdate(@Param("gatewayPaymentId") String gatewayPaymentId);
@@ -75,5 +94,16 @@ public interface PagamentoRepository extends JpaRepository<Pagamento, Long> {
             """)
     Optional<Pagamento> findByAtendimentoIdForUpdate(@Param("atendimentoId") Long atendimentoId);
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            select p
+            from Pagamento p
+            join fetch p.solicitacao s
+            where s.id = :solicitacaoId
+            """)
+    Optional<Pagamento> findBySolicitacaoIdForUpdate(@Param("solicitacaoId") Long solicitacaoId);
+
     boolean existsByAtendimentoId(Long atendimentoId);
+
+    boolean existsBySolicitacaoId(Long solicitacaoId);
 }
