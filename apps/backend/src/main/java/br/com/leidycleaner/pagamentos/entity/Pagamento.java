@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
 import br.com.leidycleaner.atendimentos.entity.AtendimentoFaxina;
+import br.com.leidycleaner.solicitacoes.entity.SolicitacaoFaxina;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -13,6 +14,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
@@ -26,9 +28,13 @@ public class Pagamento {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "atendimento_id", nullable = false, unique = true)
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "atendimento_id", unique = true)
     private AtendimentoFaxina atendimento;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "solicitacao_id")
+    private SolicitacaoFaxina solicitacao;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "gateway", nullable = false, length = 30)
@@ -90,6 +96,30 @@ public class Pagamento {
             String payloadResumo
     ) {
         this.atendimento = atendimento;
+        this.solicitacao = atendimento != null ? atendimento.getSolicitacao() : null;
+        this.gateway = gateway;
+        this.gatewayPaymentId = gatewayPaymentId;
+        this.metodoPagamento = metodoPagamento;
+        this.status = status;
+        this.valorBruto = valorBruto;
+        this.urlPagamento = limparOpcional(urlPagamento);
+        this.pixCopiaECola = limparOpcional(pixCopiaECola);
+        this.payloadResumo = limparOpcional(payloadResumo);
+        this.webhookProcessado = false;
+    }
+
+    public Pagamento(
+            SolicitacaoFaxina solicitacao,
+            GatewayPagamento gateway,
+            String gatewayPaymentId,
+            MetodoPagamento metodoPagamento,
+            StatusPagamento status,
+            BigDecimal valorBruto,
+            String urlPagamento,
+            String pixCopiaECola,
+            String payloadResumo
+    ) {
+        this.solicitacao = solicitacao;
         this.gateway = gateway;
         this.gatewayPaymentId = gatewayPaymentId;
         this.metodoPagamento = metodoPagamento;
@@ -180,6 +210,10 @@ public class Pagamento {
 
     public AtendimentoFaxina getAtendimento() {
         return atendimento;
+    }
+
+    public SolicitacaoFaxina getSolicitacao() {
+        return solicitacao;
     }
 
     public GatewayPagamento getGateway() {

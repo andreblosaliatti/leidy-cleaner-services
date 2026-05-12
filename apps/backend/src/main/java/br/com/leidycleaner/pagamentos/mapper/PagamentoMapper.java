@@ -11,7 +11,7 @@ public final class PagamentoMapper {
     public static PagamentoDto paraDto(Pagamento pagamento) {
         return new PagamentoDto(
                 pagamento.getId(),
-                pagamento.getAtendimento().getId(),
+                pagamento.getAtendimento() != null ? pagamento.getAtendimento().getId() : null,
                 pagamento.getGateway(),
                 pagamento.getGatewayPaymentId(),
                 pagamento.getMetodoPagamento(),
