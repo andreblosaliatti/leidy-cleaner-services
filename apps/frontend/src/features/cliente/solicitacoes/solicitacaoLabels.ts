@@ -11,7 +11,7 @@ export const statusSolicitacaoLabels: Record<StatusSolicitacao, string> = {
   CRIADA: 'Criada',
   AGUARDANDO_SELECAO: 'Aguardando selecao',
   AGUARDANDO_PAGAMENTO: 'Aguardando pagamento',
-  CONVITES_ENVIADOS: 'Convites enviados',
+  CONVITES_ENVIADOS: 'Convite em andamento',
   AGUARDANDO_ACEITE: 'Aguardando aceite',
   PAGA_AGUARDANDO_ACEITE: 'Aguardando aceite da profissional',
   NAO_ACEITA_CREDITO_GERADO: 'Reposicao disponivel',

@@ -16,7 +16,7 @@ const clienteItems = [
   },
   {
     title: 'Pagamentos',
-    description: 'Acompanhe checkouts e status de pagamentos vinculados aos atendimentos.',
+    description: 'Acompanhe pagamentos das solicitações e os convites liberados após a confirmação.',
     href: '/app/cliente/pagamentos',
   },
   {
@@ -42,12 +42,12 @@ export function ClienteDashboardPage() {
     <div className="grid gap-5">
       <DashboardHeader
         title={`Bem-vindo, ${getFirstName(user?.nomeCompleto) || 'Cliente'}.`}
-        description="Sua área de cliente está pronta para receber os próximos fluxos operacionais, mantendo contratação, pagamentos e histórico separados por etapa."
+        description="Acompanhe suas solicitações, confirme pagamentos com segurança e veja quando o convite é enviado para a profissional escolhida."
       />
       {cliente.pagamentosPendentes > 0 && (
         <DashboardActionAlert
           cta={cliente.primeiroAtendimentoPagamentoPendenteId ? 'Pagar agora' : 'Ver pagamento'}
-          description="Finalize o checkout para liberar a próxima etapa do atendimento. A confirmação definitiva continua vindo do webhook."
+          description="Finalize o checkout para liberar o envio do convite. A confirmação definitiva continua vindo do sistema."
           href={pendingPaymentHref}
           title="Você tem pagamento pendente"
         />
@@ -57,7 +57,7 @@ export function ClienteDashboardPage() {
           {
             title: 'Pagamentos pendentes',
             value: cliente.pagamentosPendentes,
-            description: 'Atendimentos aguardando checkout ou confirmação.',
+            description: 'Solicitações aguardando checkout ou confirmação do pagamento.',
             tone: cliente.pagamentosPendentes > 0 ? 'red' : 'neutral',
           },
           {

@@ -356,7 +356,7 @@ export function ClientePagamentoSolicitacaoPage() {
                 <h2 className="mt-2 text-2xl font-black text-slate-900">Use um credito equivalente</h2>
               </div>
               <p className="text-sm leading-6 text-slate-700">
-                Escolha uma solicitacao de reposicao disponivel para tentar novamente um servico equivalente, sem saldo, desconto ou uso parcial.
+                Escolha uma solicitacao de reposicao disponivel para tentar novamente um servico equivalente, sem divisao ou uso parcial.
               </p>
             </div>
 

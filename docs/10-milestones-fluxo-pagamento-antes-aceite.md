@@ -640,8 +640,9 @@ Remover inconsistências depois do fluxo novo estar passando.
 
 ### Checklist
 
-- [ ] Remover textos “até 3 profissionais”.
-- [ ] Remover textos “aguarde aceite para pagar”.
+- [x] Remover textos “até 3 profissionais”.
+- [x] Remover textos “aguarde aceite para pagar”.
+- [x] Remover linguagem de saldo, desconto e banco de horas do crédito de reposição visível para cliente.
 - [ ] Remover rotas de pagamento baseadas exclusivamente em atendimento se não forem mais usadas.
 - [ ] Manter compatibilidade somente onde for necessário para registros antigos/admin.
 - [ ] Remover UI de ordem de escolha.

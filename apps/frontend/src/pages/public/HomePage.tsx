@@ -26,13 +26,13 @@ const steps = [
     icon: ClipboardIcon,
   },
   {
-    title: 'Escolha profissionais',
-    description: 'Veja profissionais elegíveis e selecione até 3 opções.',
+    title: 'Escolha uma profissional',
+    description: 'Veja profissionais elegíveis, escolha uma disponível e siga para o pagamento.',
     icon: UserIcon,
   },
   {
-    title: 'Acompanhe e pague',
-    description: 'Após o aceite, acompanhe o atendimento e pague com segurança.',
+    title: 'Pagamento confirmado e convite',
+    description: 'O convite é enviado após a confirmação do pagamento, com acompanhamento seguro pelo sistema.',
     icon: CheckCircleIcon,
   },
 ];
@@ -71,6 +71,11 @@ export function HomePage() {
 
     <p className="mt-4 max-w-[560px] text-lg leading-7 text-slate-600 sm:mt-5 sm:text-xl sm:leading-8">
       Faxina residencial, comercial, condominial e eventos com praticidade, confiança e cuidado em cada detalhe.
+    </p>
+
+    <p className="mt-4 max-w-[560px] text-base leading-7 text-slate-600">
+      Solicite a faxina, escolha uma profissional disponível e siga para o pagamento. Se a profissional não aceitar,
+      você recebe uma solicitação de reposição equivalente.
     </p>
 
     <p className="mt-4 inline-flex max-w-[560px] rounded-lg bg-slate-50 px-4 py-3 text-sm font-bold leading-6 text-slate-700">
@@ -130,7 +135,8 @@ export function HomePage() {
         <div className="text-center">
           <h2 className="text-3xl font-black text-slate-900 md:text-4xl">Como funciona</h2>
           <p className="mt-4 text-lg text-slate-600">
-            Processo simples e seguro para sua faxina residencial.
+            Processo simples e seguro: solicitação, escolha da profissional, pagamento confirmado e convite enviado
+            pelo sistema.
           </p>
         </div>
         <div className="mt-12 grid gap-6 md:grid-cols-3">
@@ -153,7 +159,8 @@ export function HomePage() {
             <SparkleIcon className="absolute -left-12 top-1 hidden h-8 w-8 text-sky-300 md:block" />
             <h2 className="text-2xl font-black">É profissional de limpeza?</h2>
             <p className="mt-2 max-w-xl font-medium leading-6 text-cyan-50">
-              Cadastre-se na Leidy Cleaner Services e tenha mais oportunidades de trabalho.
+              Cadastre-se na Leidy Cleaner Services e receba convites somente após a confirmação do pagamento da
+              cliente.
             </p>
           </div>
           <PublicButton href="/cadastro/profissional" variant="light" className="w-full lg:w-auto">
@@ -182,7 +189,7 @@ export function HomePage() {
         <div className="grid gap-4 md:grid-cols-2">
           <AudienceCta
             title="Sou cliente"
-            description="Quero organizar uma faxina com profissionais verificadas e pagamento seguro."
+            description="Quero solicitar uma faxina, escolher uma profissional e acompanhar o pagamento com segurança."
             href="/cadastro/cliente"
           />
           <AudienceCta
