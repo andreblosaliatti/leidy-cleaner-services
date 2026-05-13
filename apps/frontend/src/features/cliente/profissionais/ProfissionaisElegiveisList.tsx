@@ -2,38 +2,29 @@ import { ProfissionalElegivelCard } from './ProfissionalElegivelCard';
 import type { ProfissionalDisponivel } from './types';
 
 type ProfissionaisElegiveisListProps = {
-  maxSelectedReached: boolean;
   onReadReviews: (profissional: ProfissionalDisponivel) => void;
   onToggle: (profissional: ProfissionalDisponivel) => void;
   profissionais: ProfissionalDisponivel[];
-  selectedIds: number[];
+  selectedProfessionalId: number | null;
 };
 
 export function ProfissionaisElegiveisList({
-  maxSelectedReached,
   onReadReviews,
   onToggle,
   profissionais,
-  selectedIds,
+  selectedProfessionalId,
 }: ProfissionaisElegiveisListProps) {
   return (
     <div className="grid gap-4">
-      {profissionais.map((profissional) => {
-        const selectedIndex = selectedIds.indexOf(profissional.profissionalId);
-        const selected = selectedIndex >= 0;
-
-        return (
-          <ProfissionalElegivelCard
-            key={profissional.profissionalId}
-            disabled={maxSelectedReached}
-            profissional={profissional}
-            selected={selected}
-            selectionOrder={selected ? selectedIndex + 1 : undefined}
-            onReadReviews={onReadReviews}
-            onToggle={onToggle}
-          />
-        );
-      })}
+      {profissionais.map((profissional) => (
+        <ProfissionalElegivelCard
+          key={profissional.profissionalId}
+          profissional={profissional}
+          selected={selectedProfessionalId === profissional.profissionalId}
+          onReadReviews={onReadReviews}
+          onToggle={onToggle}
+        />
+      ))}
     </div>
   );
 }

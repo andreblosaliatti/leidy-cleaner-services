@@ -18,11 +18,7 @@ import {
 import type { ProfissionalDisponivel } from '../../features/cliente/profissionais/types';
 import { formatDateTime } from '../../features/cliente/solicitacoes/SolicitacaoCard';
 import { getSolicitacaoEnderecoLabel, getSolicitacaoRegiaoLabel } from '../../features/cliente/solicitacoes/solicitacaoDisplay';
-import {
-  canSelectProfessionals,
-  getStatusSolicitacaoInfo,
-  getTipoServicoLabel,
-} from '../../features/cliente/solicitacoes/solicitacaoLabels';
+import { canSelectProfessionals, getStatusSolicitacaoInfo, getTipoServicoLabel } from '../../features/cliente/solicitacoes/solicitacaoLabels';
 import type { SolicitacaoFaxina } from '../../features/cliente/solicitacoes/types';
 import { ApiError, getApiErrorMessage } from '../../services/apiClient';
 
@@ -59,7 +55,8 @@ export function ClienteSelecionarProfissionaisPage() {
     enabled: Boolean(token && validId),
   });
 
-  const selectionAllowed = Boolean(solicitacaoQuery.data && canSelectProfessionals(solicitacaoQuery.data.status));
+  const solicitacao = solicitacaoQuery.data;
+  const selectionAllowed = Boolean(solicitacao && canSelectProfessionals(solicitacao.status));
 
   const profissionaisQuery = useQuery({
     queryKey: validId ? queryKeys.profissionais(solicitacaoId) : ['cliente', 'solicitacoes', 'invalid', 'profissionais'],
@@ -93,13 +90,14 @@ export function ClienteSelecionarProfissionaisPage() {
   const submitMutation = useMutation({
     mutationFn: (profissionalIds: number[]) => selecionarProfissionais(requireToken(token), solicitacaoId, { profissionalIds }),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: queryKeys.solicitacoes });
-      await queryClient.invalidateQueries({ queryKey: queryKeys.detalhe(solicitacaoId) });
-      await queryClient.invalidateQueries({ queryKey: queryKeys.profissionais(solicitacaoId) });
-      setFeedback({
-        tone: 'success',
-        title: 'Profissionais selecionadas',
-        message: 'A seleção foi enviada e o fluxo seguirá conforme as regras do backend.',
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.solicitacoes }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.detalhe(solicitacaoId) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.profissionais(solicitacaoId) }),
+        queryClient.invalidateQueries({ queryKey: ['cliente', 'pagamentos'] }),
+      ]);
+      navigate(`/app/cliente/pagamentos/solicitacao/${solicitacaoId}`, {
+        replace: true,
       });
     },
     onError: (error) => {
@@ -111,7 +109,7 @@ export function ClienteSelecionarProfissionaisPage() {
 
       setFeedback({
         tone: 'error',
-        title: 'Não foi possível salvar a seleção',
+        title: 'Nao foi possivel salvar a escolha',
         message: getApiErrorMessage(error),
         details: error instanceof ApiError ? error.errors : [],
       });
@@ -119,49 +117,40 @@ export function ClienteSelecionarProfissionaisPage() {
   });
 
   const profissionais = profissionaisQuery.data ?? [];
-  const selectedProfessionals = selectedIds
-    .map((selectedId) => profissionais.find((profissional) => profissional.profissionalId === selectedId))
-    .filter((profissional): profissional is ProfissionalDisponivel => Boolean(profissional));
+  const selectedProfessionalId = selectedIds[0] ?? null;
+  const selectedProfessional =
+    profissionais.find((profissional) => profissional.profissionalId === selectedProfessionalId) ?? null;
 
   function toggleProfessional(profissional: ProfissionalDisponivel) {
     setFeedback(null);
     setValidationMessage(null);
-    setSelectedIds((current) => {
-      if (current.includes(profissional.profissionalId)) {
-        return current.filter((id) => id !== profissional.profissionalId);
-      }
-
-      if (current.length >= 3) {
-        setValidationMessage('Você pode selecionar no máximo 3 profissionais.');
-        return current;
-      }
-
-      return [...current, profissional.profissionalId];
-    });
+    setSelectedIds((current) =>
+      current[0] === profissional.profissionalId ? [] : [profissional.profissionalId],
+    );
   }
 
-  function removeProfessional(profissionalId: number) {
+  function clearSelection() {
     setValidationMessage(null);
-    setSelectedIds((current) => current.filter((id) => id !== profissionalId));
+    setSelectedIds([]);
   }
 
   function submitSelection() {
     setFeedback(null);
 
-    if (selectedIds.length === 0) {
-      setValidationMessage('Selecione ao menos uma profissional para continuar.');
+    if (!selectedProfessionalId) {
+      setValidationMessage('Escolha uma profissional para continuar.');
       return;
     }
 
-    submitMutation.mutate(selectedIds);
+    submitMutation.mutate([selectedProfessionalId]);
   }
 
   if (!validId) {
     return (
       <div className="grid gap-5">
-        <FormAlert tone="error" title="Solicitação inválida" message="O identificador da solicitação não é válido." />
+        <FormAlert tone="error" title="Solicitacao invalida" message="O identificador da solicitacao nao e valido." />
         <Link className="font-black text-cyan-700 hover:text-cyan-800" to="/app/cliente/solicitacoes">
-          Voltar para solicitações
+          Voltar para solicitacoes
         </Link>
       </div>
     );
@@ -174,10 +163,10 @@ export function ClienteSelecionarProfissionaisPage() {
           <div>
             <p className="text-xs font-black uppercase tracking-[0.16em] text-cyan-700">Cliente</p>
             <h1 className="mt-3 text-3xl font-black tracking-normal text-slate-900 md:text-4xl">
-              Selecionar profissionais
+              Escolher profissional
             </h1>
             <p className="mt-3 max-w-3xl text-base leading-7 text-slate-600">
-              Escolha de 1 a 3 profissionais elegíveis. A ordem visual será enviada ao backend como prioridade de escolha.
+              Escolha uma profissional disponivel para esta solicitacao. Depois da escolha, voce seguira para o pagamento.
             </p>
           </div>
           <Link
@@ -191,46 +180,43 @@ export function ClienteSelecionarProfissionaisPage() {
 
       {feedback && <FormAlert tone={feedback.tone} title={feedback.title} message={feedback.message} details={feedback.details} />}
 
-      <RequestContextSection isLoading={solicitacaoQuery.isLoading} error={solicitacaoQuery.error} solicitacao={solicitacaoQuery.data} />
+      <RequestContextSection error={solicitacaoQuery.error} isLoading={solicitacaoQuery.isLoading} solicitacao={solicitacao} />
 
-      {solicitacaoQuery.data && !selectionAllowed && (
-        <FormAlert
-          tone="info"
-          title="Seleção indisponível"
-          message="Esta solicitação não está em um status que permite listar e selecionar profissionais elegíveis."
-        />
+      {solicitacao && !selectionAllowed && (
+        <SelectionStatusNotice solicitacao={solicitacao} />
       )}
 
       {selectionAllowed && (
         <div className="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
           <section className="grid gap-4">
             <div>
-              <h2 className="text-2xl font-black text-slate-900">Profissionais elegíveis</h2>
+              <h2 className="text-2xl font-black text-slate-900">Profissionais elegiveis</h2>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                A lista abaixo segue a ordem retornada pelo backend, sem ranking adicional no frontend.
+                O convite sera enviado apos a confirmacao do pagamento. A profissional podera aceitar ou recusar o convite.
               </p>
             </div>
 
-            {profissionaisQuery.isLoading && <StateBox tone="loading" title="Carregando profissionais" description="Buscando profissionais elegíveis para esta solicitação." />}
+            {profissionaisQuery.isLoading && (
+              <StateBox tone="loading" title="Carregando profissionais" description="Buscando profissionais elegiveis para esta solicitacao." />
+            )}
 
             {profissionaisQuery.isError && !protectedError && (
               <FormAlert
                 tone="error"
-                title="Não foi possível carregar profissionais"
+                title="Nao foi possivel carregar profissionais"
                 message={getApiErrorMessage(profissionaisQuery.error)}
                 details={profissionaisQuery.error instanceof ApiError ? profissionaisQuery.error.errors : []}
               />
             )}
 
             {profissionaisQuery.isSuccess && profissionais.length === 0 && (
-              <StateBox tone="empty" title="Nenhuma profissional elegível" description="Não há profissionais disponíveis para os critérios desta solicitação." />
+              <StateBox tone="empty" title="Nenhuma profissional elegivel" description="Nao ha profissionais disponiveis para os criterios desta solicitacao." />
             )}
 
             {profissionais.length > 0 && (
               <ProfissionaisElegiveisList
-                maxSelectedReached={selectedIds.length >= 3}
                 profissionais={profissionais}
-                selectedIds={selectedIds}
+                selectedProfessionalId={selectedProfessionalId}
                 onReadReviews={setReviewsProfessional}
                 onToggle={toggleProfessional}
               />
@@ -239,9 +225,9 @@ export function ClienteSelecionarProfissionaisPage() {
 
           <SelecaoProfissionaisPanel
             isSubmitting={submitMutation.isPending}
-            profissionais={selectedProfessionals}
+            profissional={selectedProfessional}
             validationMessage={validationMessage}
-            onRemove={removeProfessional}
+            onClear={clearSelection}
             onSubmit={submitSelection}
           />
         </div>
@@ -249,11 +235,11 @@ export function ClienteSelecionarProfissionaisPage() {
 
       {reviewsProfessional && (
         <AvaliacoesDialog
+          avaliacoes={avaliacoesQuery.data ?? []}
           error={avaliacoesQuery.error}
           isLoading={avaliacoesQuery.isLoading}
-          profissional={reviewsProfessional}
-          avaliacoes={avaliacoesQuery.data ?? []}
           onClose={() => setReviewsProfessional(null)}
+          profissional={reviewsProfessional}
         />
       )}
     </div>
@@ -283,7 +269,7 @@ function AvaliacoesDialog({
       >
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.16em] text-cyan-700">Avaliações</p>
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-cyan-700">Avaliacoes</p>
             <h2 id="avaliacoes-profissional-title" className="mt-2 text-2xl font-black text-slate-900">
               {profissional.nomeExibicao}
             </h2>
@@ -299,12 +285,12 @@ function AvaliacoesDialog({
         </div>
 
         <div className="mt-5">
-          {isLoading && <StateBox tone="loading" title="Carregando avaliações" description="Buscando avaliações desta profissional." />}
+          {isLoading && <StateBox tone="loading" title="Carregando avaliacoes" description="Buscando avaliacoes desta profissional." />}
 
           {Boolean(error) && (
             <FormAlert
               tone="error"
-              title="Não foi possível carregar avaliações"
+              title="Nao foi possivel carregar avaliacoes"
               message={getApiErrorMessage(error)}
               details={error instanceof ApiError ? error.errors : []}
             />
@@ -317,6 +303,64 @@ function AvaliacoesDialog({
   );
 }
 
+function SelectionStatusNotice({ solicitacao }: { solicitacao: SolicitacaoFaxina }) {
+  if (solicitacao.status === 'AGUARDANDO_PAGAMENTO') {
+    return (
+      <div className="grid gap-3">
+        <FormAlert
+          tone="info"
+          title="Profissional ja escolhida"
+          message="A solicitacao ja tem uma profissional selecionada. O proximo passo e concluir o pagamento."
+        />
+        <Link
+          className="inline-flex min-h-11 items-center justify-center rounded-lg bg-cyan-700 px-5 text-sm font-black text-white transition hover:bg-cyan-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-700 md:w-fit"
+          to={`/app/cliente/pagamentos/solicitacao/${solicitacao.id}`}
+        >
+          Ir para pagamento
+        </Link>
+      </div>
+    );
+  }
+
+  if (solicitacao.status === 'PAGA_AGUARDANDO_ACEITE') {
+    return (
+      <FormAlert
+        tone="info"
+        title="Pagamento confirmado"
+        message="Pagamento confirmado. Aguardando aceite da profissional."
+      />
+    );
+  }
+
+  if (solicitacao.status === 'NAO_ACEITA_CREDITO_GERADO') {
+    return (
+      <FormAlert
+        tone="info"
+        title="Reposicao disponivel"
+        message="A profissional nao aceitou. Uma solicitacao de reposicao equivalente ficou disponivel."
+      />
+    );
+  }
+
+  if (solicitacao.status === 'ACEITA') {
+    return (
+      <FormAlert
+        tone="success"
+        title="Atendimento confirmado"
+        message="Profissional confirmou o atendimento."
+      />
+    );
+  }
+
+  return (
+    <FormAlert
+      tone="info"
+      title="Selecao indisponivel"
+      message="Esta solicitacao nao esta em um status que permite escolher uma profissional."
+    />
+  );
+}
+
 function formatRating(value: number) {
   return new Intl.NumberFormat('pt-BR', {
     minimumFractionDigits: 1,
@@ -326,11 +370,11 @@ function formatRating(value: number) {
 
 function formatRatingSummary(profissional: ProfissionalDisponivel) {
   if (profissional.totalAvaliacoes <= 0) {
-    return 'Sem avaliações ainda';
+    return 'Sem avaliacoes ainda';
   }
 
-  return `Nota ${formatRating(profissional.notaMedia)} · ${profissional.totalAvaliacoes} avaliação${
-    profissional.totalAvaliacoes === 1 ? '' : 'ões'
+  return `Nota ${formatRating(profissional.notaMedia)} - ${profissional.totalAvaliacoes} avaliacao${
+    profissional.totalAvaliacoes === 1 ? '' : 'oes'
   }`;
 }
 
@@ -344,11 +388,11 @@ function RequestContextSection({
   solicitacao?: SolicitacaoFaxina;
 }) {
   if (isLoading) {
-    return <StateBox tone="loading" title="Carregando solicitação" description="Buscando o contexto da solicitação." />;
+    return <StateBox tone="loading" title="Carregando solicitacao" description="Buscando o contexto da solicitacao." />;
   }
 
   if (error) {
-    return <FormAlert tone="error" title="Não foi possível carregar a solicitação" message={getApiErrorMessage(error)} />;
+    return <FormAlert tone="error" title="Nao foi possivel carregar a solicitacao" message={getApiErrorMessage(error)} />;
   }
 
   if (!solicitacao) {
@@ -360,7 +404,7 @@ function RequestContextSection({
   return (
     <section className="rounded-lg border border-slate-100 bg-white p-5 shadow-sm md:p-6">
       <div className="flex flex-wrap items-center gap-2">
-        <h2 className="text-2xl font-black text-slate-900">Solicitação #{solicitacao.id}</h2>
+        <h2 className="text-2xl font-black text-slate-900">Solicitacao #{solicitacao.id}</h2>
         <span className={`rounded-lg px-3 py-1 text-xs font-black uppercase tracking-[0.1em] ${statusInfo.className}`}>
           {statusInfo.label}
         </span>
@@ -368,10 +412,13 @@ function RequestContextSection({
       <dl className="mt-5 grid gap-4 text-sm md:grid-cols-2 xl:grid-cols-4">
         <DetailItem label="Tipo" value={getTipoServicoLabel(solicitacao.tipoServico)} />
         <DetailItem label="Data desejada" value={formatDateTime(solicitacao.dataHoraDesejada)} />
-        <DetailItem label="Duração" value={`${solicitacao.duracaoEstimadaHoras} horas`} />
-        <DetailItem label="Endereço" value={getSolicitacaoEnderecoLabel(solicitacao)} />
-        <DetailItem label="Bairro/região" value={getSolicitacaoRegiaoLabel(solicitacao)} />
+        <DetailItem label="Duracao" value={`${solicitacao.duracaoEstimadaHoras} horas`} />
+        <DetailItem label="Endereco" value={getSolicitacaoEnderecoLabel(solicitacao)} />
+        <DetailItem label="Bairro/regiao" value={getSolicitacaoRegiaoLabel(solicitacao)} />
       </dl>
+      <div className="mt-5 rounded-lg bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-700">
+        Depois da escolha, voce seguira para o pagamento. O convite sera enviado apos a confirmacao do pagamento.
+      </div>
     </section>
   );
 }
@@ -385,13 +432,12 @@ function DetailItem({ label, value }: { label: string; value: string }) {
   );
 }
 
-
 function requireToken(token: string | null) {
   if (!token) {
     throw new ApiError({
       status: 401,
       code: 'UNAUTHENTICATED',
-      message: 'Sessão expirada. Entre novamente.',
+      message: 'Sessao expirada. Entre novamente.',
     });
   }
 

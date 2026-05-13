@@ -1,28 +1,23 @@
 import type { ProfissionalDisponivel } from './types';
 
 type ProfissionalElegivelCardProps = {
-  disabled?: boolean;
   onReadReviews: (profissional: ProfissionalDisponivel) => void;
   onToggle: (profissional: ProfissionalDisponivel) => void;
   profissional: ProfissionalDisponivel;
-  selectionOrder?: number;
   selected?: boolean;
 };
 
 export function ProfissionalElegivelCard({
-  disabled = false,
   onReadReviews,
   onToggle,
   profissional,
-  selectionOrder,
   selected = false,
 }: ProfissionalElegivelCardProps) {
   return (
     <article
       className={[
-        'rounded-lg border bg-white p-5 shadow-sm transition',
+        'rounded-lg border bg-white p-5 shadow-sm transition hover:border-cyan-100',
         selected ? 'border-cyan-200 ring-2 ring-cyan-100' : 'border-slate-100',
-        disabled && !selected ? 'opacity-60' : 'hover:border-cyan-100',
       ].join(' ')}
     >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -33,14 +28,14 @@ export function ProfissionalElegivelCard({
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-lg font-black text-slate-900">{profissional.nomeExibicao}</h2>
-              {selectionOrder && (
+              {selected && (
                 <span className="rounded-lg bg-cyan-50 px-3 py-1 text-xs font-black uppercase tracking-[0.1em] text-cyan-700">
-                  {selectionOrder}ª escolha
+                  Escolhida
                 </span>
               )}
             </div>
             <p className="mt-2 text-sm leading-6 text-slate-600">
-              {profissional.experienciaAnos} ano{profissional.experienciaAnos === 1 ? '' : 's'} de experiência
+              {profissional.experienciaAnos} ano{profissional.experienciaAnos === 1 ? '' : 's'} de experiencia
             </p>
             <p className="mt-1 text-sm leading-6 text-slate-500">{formatRatingSummary(profissional)}</p>
           </div>
@@ -53,7 +48,7 @@ export function ProfissionalElegivelCard({
               type="button"
               onClick={() => onReadReviews(profissional)}
             >
-              Ler avaliações
+              Ler avaliacoes
             </button>
           )}
           <button
@@ -61,14 +56,13 @@ export function ProfissionalElegivelCard({
               'min-h-10 rounded-lg px-4 text-sm font-black transition focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-700',
               selected
                 ? 'border border-red-100 text-red-700 hover:bg-red-50 focus-visible:ring-red-600'
-                : 'bg-cyan-700 text-white hover:bg-cyan-800 disabled:cursor-not-allowed disabled:bg-slate-300',
+                : 'bg-cyan-700 text-white hover:bg-cyan-800',
               'w-full sm:w-auto',
             ].join(' ')}
-            disabled={disabled && !selected}
             type="button"
             onClick={() => onToggle(profissional)}
           >
-            {selected ? 'Remover' : 'Selecionar'}
+            {selected ? 'Remover escolha' : 'Escolher profissional'}
           </button>
         </div>
       </div>
@@ -85,10 +79,10 @@ function formatRating(value: number) {
 
 function formatRatingSummary(profissional: ProfissionalDisponivel) {
   if (profissional.totalAvaliacoes <= 0) {
-    return 'Sem avaliações ainda';
+    return 'Sem avaliacoes ainda';
   }
 
-  return `Nota ${formatRating(profissional.notaMedia)} · ${profissional.totalAvaliacoes} avaliação${
-    profissional.totalAvaliacoes === 1 ? '' : 'ões'
+  return `Nota ${formatRating(profissional.notaMedia)} - ${profissional.totalAvaliacoes} avaliacao${
+    profissional.totalAvaliacoes === 1 ? '' : 'oes'
   }`;
 }

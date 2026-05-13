@@ -492,10 +492,10 @@ Adaptar o fluxo visual do cliente ao novo domínio.
 
 ### Checklist
 
-- [ ] Tela de profissionais elegíveis permite selecionar somente uma profissional.
-- [ ] Remover UI de ordem de escolha.
-- [ ] Remover texto “escolha até 3”.
-- [ ] Após selecionar profissional, redirecionar para pagamento da solicitação.
+- [x] Tela de profissionais elegíveis permite selecionar somente uma profissional.
+- [x] Remover UI de ordem de escolha.
+- [x] Remover texto “escolha até 3”.
+- [x] Após selecionar profissional, redirecionar para pagamento da solicitação.
 - [x] Tela de pagamento usa `solicitacaoId`, não `atendimentoId`.
 - [x] Polling de pagamento continua funcionando.
 - [x] QR Code/Pix aparece apenas enquanto pagamento está pendente.
@@ -507,7 +507,7 @@ Adaptar o fluxo visual do cliente ao novo domínio.
 
 ### Critérios de aceite
 
-- [ ] Cliente não consegue selecionar mais de uma profissional pela UI.
+- [x] Cliente não consegue selecionar mais de uma profissional pela UI.
 - [x] Cliente entende que está pagando antes do aceite.
 - [x] Cliente entende que recusa/expiração vira crédito.
 - [x] Pagamento atualiza automaticamente por polling.
