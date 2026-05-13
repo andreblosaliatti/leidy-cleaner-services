@@ -550,22 +550,22 @@ Critério de pronto:
 
 Objetivo: deixar a experiência da profissional com cara de app antes de empacotar.
 
-- [ ] Criar layout mobile exclusivo
-- [ ] Criar navegação inferior
-- [ ] Criar header simples
-- [ ] Criar home profissional mobile
-- [ ] Criar cards de resumo
-- [ ] Criar botão/toggle de ativa para chamados
-- [ ] Ajustar responsividade
-- [ ] Remover elementos com cara de dashboard desktop
-- [ ] Validar em largura de celular
-- [ ] Validar fluxo no navegador mobile
+- [x] Criar layout mobile exclusivo
+- [x] Criar navegação inferior
+- [x] Criar header simples
+- [x] Criar home profissional mobile
+- [x] Criar cards de resumo
+- [x] Criar botão/toggle de ativa para chamados
+- [x] Ajustar responsividade
+- [x] Remover elementos com cara de dashboard desktop
+- [x] Validar em largura de celular
+- [x] Validar fluxo no navegador mobile
 
 Critério de pronto:
 
-- [ ] Profissional consegue navegar bem pelo celular
-- [ ] Home mostra convites, atendimentos e status
-- [ ] Build do frontend passa
+- [x] Profissional consegue navegar bem pelo celular
+- [x] Home mostra convites, atendimentos e status
+- [x] Build do frontend passa
 
 ---
 
@@ -573,10 +573,10 @@ Critério de pronto:
 
 Objetivo: entregar o fluxo mais importante do app.
 
-- [ ] Listar convites recebidos
-- [ ] Exibir detalhe do convite
-- [ ] Exibir prazo/status
-- [ ] Exibir valor estimado da profissional
+- [x] Listar convites recebidos
+- [x] Exibir detalhe do convite
+- [x] Exibir prazo/status
+- [x] Exibir valor estimado da profissional
 - [ ] Aceitar convite
 - [ ] Recusar convite
 - [ ] Tratar convite expirado
