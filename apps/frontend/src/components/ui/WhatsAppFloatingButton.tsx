@@ -1,9 +1,17 @@
+import { useLocation } from 'react-router-dom';
+
 const WHATSAPP_NUMBER = '5551980303740';
 const WHATSAPP_MESSAGE = 'Ola! Vim pelo site da Leidy Cleaner Services e gostaria de atendimento.';
 
 const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_MESSAGE)}`;
 
 export function WhatsAppFloatingButton() {
+  const location = useLocation();
+
+  if (location.pathname.startsWith('/profissional/app')) {
+    return null;
+  }
+
   return (
     <a
       aria-label="Abrir conversa no WhatsApp da Leidy Cleaner Services"
