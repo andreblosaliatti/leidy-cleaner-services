@@ -63,6 +63,21 @@ public interface ConviteProfissionalRepository extends JpaRepository<ConviteProf
             @Param("usuarioId") Long usuarioId
     );
 
+    @Query("""
+            select convite.solicitacao.id
+            from ConviteProfissional convite
+            where convite.id = :id
+            """)
+    Optional<Long> findSolicitacaoIdById(@Param("id") Long id);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            select convite
+            from ConviteProfissional convite
+            where convite.id = :id
+            """)
+    Optional<ConviteProfissional> findByIdForUpdate(@Param("id") Long id);
+
     List<ConviteProfissional> findBySolicitacaoId(Long solicitacaoId);
 
     Optional<ConviteProfissional> findBySolicitacaoIdAndProfissionalId(Long solicitacaoId, Long profissionalId);

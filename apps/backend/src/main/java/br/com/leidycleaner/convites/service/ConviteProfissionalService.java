@@ -4,6 +4,8 @@ import java.time.Clock;
 import java.time.OffsetDateTime;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -17,6 +19,7 @@ import br.com.leidycleaner.convites.entity.ConviteProfissional;
 import br.com.leidycleaner.convites.mapper.ConviteProfissionalMapper;
 import br.com.leidycleaner.convites.repository.ConviteProfissionalRepository;
 import br.com.leidycleaner.core.exception.BusinessException;
+import br.com.leidycleaner.creditos.service.CreditoClienteService;
 import br.com.leidycleaner.pagamentos.entity.Pagamento;
 import br.com.leidycleaner.pagamentos.entity.StatusPagamento;
 import br.com.leidycleaner.pagamentos.repository.PagamentoRepository;
@@ -30,6 +33,7 @@ import br.com.leidycleaner.solicitacoes.repository.SolicitacaoProfissionalSeleci
 @Service
 public class ConviteProfissionalService {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(ConviteProfissionalService.class);
     private static final int HORAS_PARA_EXPIRAR = 24;
 
     private final ConviteProfissionalRepository conviteProfissionalRepository;
@@ -38,6 +42,7 @@ public class ConviteProfissionalService {
     private final SolicitacaoProfissionalSelecionadoRepository solicitacaoProfissionalSelecionadoRepository;
     private final AtendimentoFaxinaRepository atendimentoFaxinaRepository;
     private final PagamentoRepository pagamentoRepository;
+    private final CreditoClienteService creditoClienteService;
     private final Clock clock;
 
     public ConviteProfissionalService(
@@ -46,7 +51,8 @@ public class ConviteProfissionalService {
             SolicitacaoFaxinaRepository solicitacaoFaxinaRepository,
             SolicitacaoProfissionalSelecionadoRepository solicitacaoProfissionalSelecionadoRepository,
             AtendimentoFaxinaRepository atendimentoFaxinaRepository,
-            PagamentoRepository pagamentoRepository
+            PagamentoRepository pagamentoRepository,
+            CreditoClienteService creditoClienteService
     ) {
         this.conviteProfissionalRepository = conviteProfissionalRepository;
         this.perfilProfissionalRepository = perfilProfissionalRepository;
@@ -54,6 +60,7 @@ public class ConviteProfissionalService {
         this.solicitacaoProfissionalSelecionadoRepository = solicitacaoProfissionalSelecionadoRepository;
         this.atendimentoFaxinaRepository = atendimentoFaxinaRepository;
         this.pagamentoRepository = pagamentoRepository;
+        this.creditoClienteService = creditoClienteService;
         this.clock = Clock.systemDefaultZone();
     }
 
@@ -168,26 +175,10 @@ public class ConviteProfissionalService {
         validarSolicitacaoPagaAguardandoAceite(solicitacao);
         validarAtendimentoAindaNaoCriado(solicitacao);
 
-        Pagamento pagamento = pagamentoRepository.findBySolicitacaoIdForUpdate(solicitacao.getId())
-                .orElseThrow(() -> new BusinessException(
-                        "PAGAMENTO_NOT_FOUND",
-                        "Solicitacao paga nao possui pagamento vinculado",
-                        HttpStatus.CONFLICT
-                ));
-        if (pagamento.getStatus() != StatusPagamento.PAGO) {
-            throw new BusinessException(
-                    "PAGAMENTO_STATUS_INCOMPATIVEL",
-                    "Convite so pode ser aceito quando o pagamento da solicitacao estiver pago",
-                    HttpStatus.CONFLICT
-            );
-        }
-        if (pagamento.getAtendimento() != null) {
-            throw new BusinessException(
-                    "PAGAMENTO_JA_VINCULADO_A_ATENDIMENTO",
-                    "Pagamento da solicitacao ja esta vinculado a um atendimento",
-                    HttpStatus.CONFLICT
-            );
-        }
+        Pagamento pagamento = carregarPagamentoPagoSemAtendimentoParaSolicitacao(
+                solicitacao,
+                "Convite so pode ser aceito quando o pagamento da solicitacao estiver pago"
+        );
 
         convite.aceitar(agora);
         cancelarConvitesConcorrentes(solicitacao.getId(), convite.getId(), agora);
@@ -208,27 +199,99 @@ public class ConviteProfissionalService {
         );
     }
 
+    private ConviteRespostaDto recusarConviteDeSolicitacaoPaga(
+            SolicitacaoFaxina solicitacao,
+            ConviteProfissional convite,
+            OffsetDateTime agora
+    ) {
+        validarSolicitacaoPagaAguardandoAceite(solicitacao);
+        validarAtendimentoAindaNaoCriado(solicitacao);
+        Pagamento pagamento = carregarPagamentoPagoSemAtendimentoParaSolicitacao(
+                solicitacao,
+                "Convite so pode ser recusado quando o pagamento da solicitacao estiver pago"
+        );
+
+        convite.recusar(agora);
+        solicitacao.marcarNaoAceitaCreditoGerado();
+        creditoClienteService.gerarCreditoSemAceite(
+                solicitacao,
+                pagamento,
+                "Credito gerado por recusa da profissional selecionada"
+        );
+        registrarLogOperacionalCredito(convite, solicitacao, pagamento, "recusa da profissional");
+        return respostaSemAtendimento(convite, solicitacao);
+    }
+
+    private void expirarConviteDeSolicitacaoPaga(
+            SolicitacaoFaxina solicitacao,
+            ConviteProfissional convite,
+            OffsetDateTime agora
+    ) {
+        validarSolicitacaoPagaAguardandoAceite(solicitacao);
+        validarAtendimentoAindaNaoCriado(solicitacao);
+        Pagamento pagamento = carregarPagamentoPagoSemAtendimentoParaSolicitacao(
+                solicitacao,
+                "Convite so pode expirar gerando credito quando o pagamento da solicitacao estiver pago"
+        );
+
+        convite.expirar(agora);
+        solicitacao.marcarNaoAceitaCreditoGerado();
+        creditoClienteService.gerarCreditoSemAceite(
+                solicitacao,
+                pagamento,
+                "Credito gerado porque a profissional nao aceitou o convite dentro do prazo"
+        );
+        registrarLogOperacionalCredito(convite, solicitacao, pagamento, "expiracao do convite");
+    }
+
     @Transactional
     public ConviteRespostaDto recusar(Long usuarioId, Long conviteId) {
         validarPerfilProfissional(usuarioId);
+        Long solicitacaoId = conviteProfissionalRepository
+                .findSolicitacaoIdByIdAndProfissionalUsuarioId(conviteId, usuarioId)
+                .orElseThrow(() -> new BusinessException("CONVITE_NOT_FOUND", "Convite nao encontrado", HttpStatus.NOT_FOUND));
+        SolicitacaoFaxina solicitacao = solicitacaoFaxinaRepository.findByIdForUpdate(solicitacaoId)
+                .orElseThrow(() -> new BusinessException("SOLICITACAO_NOT_FOUND", "Solicitacao nao encontrada", HttpStatus.NOT_FOUND));
         ConviteProfissional convite = conviteProfissionalRepository
                 .findByIdAndProfissionalUsuarioIdForUpdate(conviteId, usuarioId)
                 .orElseThrow(() -> new BusinessException("CONVITE_NOT_FOUND", "Convite nao encontrado", HttpStatus.NOT_FOUND));
 
+        validarConvitePertenceASolicitacao(convite, solicitacao);
         validarConviteRespondivel(convite);
         validarConviteNaoExpirado(convite);
 
         OffsetDateTime agora = OffsetDateTime.now(clock);
+        if (solicitacao.getStatus() == StatusSolicitacao.PAGA_AGUARDANDO_ACEITE) {
+            return recusarConviteDeSolicitacaoPaga(solicitacao, convite, agora);
+        }
+
         convite.recusar(agora);
-        SolicitacaoFaxina solicitacao = convite.getSolicitacao();
-        return new ConviteRespostaDto(
-                convite.getId(),
-                convite.getStatus(),
-                solicitacao.getId(),
-                solicitacao.getStatus(),
-                null,
-                null
-        );
+        return respostaSemAtendimento(convite, solicitacao);
+    }
+
+    @Transactional
+    public boolean expirarConviteSeNecessario(Long conviteId) {
+        Long solicitacaoId = conviteProfissionalRepository.findSolicitacaoIdById(conviteId)
+                .orElseThrow(() -> new BusinessException("CONVITE_NOT_FOUND", "Convite nao encontrado", HttpStatus.NOT_FOUND));
+        SolicitacaoFaxina solicitacao = solicitacaoFaxinaRepository.findByIdForUpdate(solicitacaoId)
+                .orElseThrow(() -> new BusinessException("SOLICITACAO_NOT_FOUND", "Solicitacao nao encontrada", HttpStatus.NOT_FOUND));
+        ConviteProfissional convite = conviteProfissionalRepository.findByIdForUpdate(conviteId)
+                .orElseThrow(() -> new BusinessException("CONVITE_NOT_FOUND", "Convite nao encontrado", HttpStatus.NOT_FOUND));
+
+        validarConvitePertenceASolicitacao(convite, solicitacao);
+
+        OffsetDateTime agora = OffsetDateTime.now(clock);
+        if (!convite.expiradoEm(agora) || !convite.podeResponder()) {
+            return false;
+        }
+
+        if (solicitacao.getStatus() == StatusSolicitacao.PAGA_AGUARDANDO_ACEITE) {
+            expirarConviteDeSolicitacaoPaga(solicitacao, convite, agora);
+            return true;
+        }
+
+        convite.expirar(agora);
+        return true;
     }
 
     private void validarPerfilProfissional(Long usuarioId) {
@@ -307,10 +370,67 @@ public class ConviteProfissionalService {
         return conviteProfissionalRepository.save(convite);
     }
 
+    private Pagamento carregarPagamentoPagoSemAtendimentoParaSolicitacao(
+            SolicitacaoFaxina solicitacao,
+            String mensagemPagamentoNaoPago
+    ) {
+        Pagamento pagamento = pagamentoRepository.findBySolicitacaoIdForUpdate(solicitacao.getId())
+                .orElseThrow(() -> new BusinessException(
+                        "PAGAMENTO_NOT_FOUND",
+                        "Solicitacao paga nao possui pagamento vinculado",
+                        HttpStatus.CONFLICT
+                ));
+        if (pagamento.getStatus() != StatusPagamento.PAGO) {
+            throw new BusinessException(
+                    "PAGAMENTO_STATUS_INCOMPATIVEL",
+                    mensagemPagamentoNaoPago,
+                    HttpStatus.CONFLICT
+            );
+        }
+        if (pagamento.getAtendimento() != null) {
+            throw new BusinessException(
+                    "PAGAMENTO_JA_VINCULADO_A_ATENDIMENTO",
+                    "Pagamento da solicitacao ja esta vinculado a um atendimento",
+                    HttpStatus.CONFLICT
+            );
+        }
+        return pagamento;
+    }
+
     private void validarAtendimentoAindaNaoCriado(SolicitacaoFaxina solicitacao) {
         if (atendimentoFaxinaRepository.existsBySolicitacaoId(solicitacao.getId())) {
             throw new BusinessException("ATENDIMENTO_JA_CRIADO", "Solicitacao ja possui atendimento criado", HttpStatus.CONFLICT);
         }
+    }
+
+    private ConviteRespostaDto respostaSemAtendimento(ConviteProfissional convite, SolicitacaoFaxina solicitacao) {
+        return new ConviteRespostaDto(
+                convite.getId(),
+                convite.getStatus(),
+                solicitacao.getId(),
+                solicitacao.getStatus(),
+                null,
+                null
+        );
+    }
+
+    private void registrarLogOperacionalCredito(
+            ConviteProfissional convite,
+            SolicitacaoFaxina solicitacao,
+            Pagamento pagamento,
+            String motivo
+    ) {
+        LOGGER.info(
+                "credito_cliente_gerado_sem_aceite motivo={} solicitacaoId={} pagamentoId={} clienteId={} conviteId={} tipoMovimento={} valor={} solicitacaoStatusFinal={}",
+                motivo,
+                solicitacao.getId(),
+                pagamento.getId(),
+                solicitacao.getCliente().getId(),
+                convite.getId(),
+                "CREDITO_GERADO_SEM_ACEITE",
+                pagamento.getValorBruto(),
+                solicitacao.getStatus()
+        );
     }
 
     private void cancelarConvitesConcorrentes(Long solicitacaoId, Long conviteAceitoId, OffsetDateTime agora) {

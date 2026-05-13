@@ -138,6 +138,10 @@ public class SolicitacaoFaxina {
         status = StatusSolicitacao.PAGA_AGUARDANDO_ACEITE;
     }
 
+    public void marcarNaoAceitaCreditoGerado() {
+        status = StatusSolicitacao.NAO_ACEITA_CREDITO_GERADO;
+    }
+
     public void marcarAceita() {
         status = StatusSolicitacao.ACEITA;
     }

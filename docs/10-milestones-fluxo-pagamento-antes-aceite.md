@@ -402,31 +402,31 @@ Encerrar a solicitação e gerar crédito quando a profissional não aceitar.
 
 ### Checklist
 
-- [ ] Ao recusar convite, marcar convite como `RECUSADO`.
-- [ ] Ao recusar, validar que existe pagamento `PAGO` da solicitação.
-- [ ] Ao recusar, gerar movimento `CREDITO_GERADO_SEM_ACEITE`.
-- [ ] Ao recusar, atualizar solicitação para `NAO_ACEITA_CREDITO_GERADO` ou status equivalente.
-- [ ] Ao expirar convite, marcar convite como `EXPIRADO`.
-- [ ] Ao expirar, gerar o mesmo tipo de crédito.
-- [ ] Criar serviço de expiração se ainda não existir caminho real de processamento.
-- [ ] Garantir idempotência entre recusa e expiração.
-- [ ] Garantir que crédito não pode ser gerado duas vezes para o mesmo pagamento.
-- [ ] Registrar logs operacionais sem expor dados sensíveis.
+- [x] Ao recusar convite, marcar convite como `RECUSADO`.
+- [x] Ao recusar, validar que existe pagamento `PAGO` da solicitação.
+- [x] Ao recusar, gerar movimento `CREDITO_GERADO_SEM_ACEITE`.
+- [x] Ao recusar, atualizar solicitação para `NAO_ACEITA_CREDITO_GERADO` ou status equivalente.
+- [x] Ao expirar convite, marcar convite como `EXPIRADO`.
+- [x] Ao expirar, gerar o mesmo tipo de crédito.
+- [x] Criar serviço de expiração se ainda não existir caminho real de processamento.
+- [x] Garantir idempotência entre recusa e expiração.
+- [x] Garantir que crédito não pode ser gerado duas vezes para o mesmo pagamento.
+- [x] Registrar logs operacionais sem expor dados sensíveis.
 
 ### Critérios de aceite
 
-- [ ] Recusa gera exatamente um crédito.
-- [ ] Expiração gera exatamente um crédito.
-- [ ] Recusa + expiração não duplicam crédito.
-- [ ] Solicitação fica encerrada para aquela escolha.
-- [ ] Atendimento não é criado.
+- [x] Recusa gera exatamente um crédito.
+- [x] Expiração gera exatamente um crédito.
+- [x] Recusa + expiração não duplicam crédito.
+- [x] Solicitação fica encerrada para aquela escolha.
+- [x] Atendimento não é criado.
 
 ### Testes obrigatórios
 
-- [ ] Recusa gera crédito.
-- [ ] Expiração gera crédito.
-- [ ] Duplicidade de processamento não duplica crédito.
-- [ ] Tentativa de aceitar após crédito gerado falha.
+- [x] Recusa gera crédito.
+- [x] Expiração gera crédito.
+- [x] Duplicidade de processamento não duplica crédito.
+- [x] Tentativa de aceitar após crédito gerado falha.
 
 ### Validação
 

@@ -46,6 +46,10 @@ import br.com.leidycleaner.atendimentos.repository.CheckpointServicoRepository;
 import br.com.leidycleaner.avaliacoes.repository.AvaliacaoProfissionalRepository;
 import br.com.leidycleaner.convites.entity.ConviteProfissional;
 import br.com.leidycleaner.convites.repository.ConviteProfissionalRepository;
+import br.com.leidycleaner.convites.service.ConviteProfissionalService;
+import br.com.leidycleaner.creditos.entity.CreditoClienteMovimento;
+import br.com.leidycleaner.creditos.entity.TipoMovimentoCreditoCliente;
+import br.com.leidycleaner.creditos.repository.CreditoClienteMovimentoRepository;
 import br.com.leidycleaner.enderecos.repository.EnderecoRepository;
 import br.com.leidycleaner.pagamentos.gateway.AsaasCheckoutGatewayResponse;
 import br.com.leidycleaner.pagamentos.gateway.AsaasCheckoutRequest;
@@ -82,11 +86,13 @@ class SolicitacaoFaxinaIntegrationTest {
     private final SolicitacaoFaxinaRepository solicitacaoFaxinaRepository;
     private final SolicitacaoProfissionalSelecionadoRepository solicitacaoProfissionalSelecionadoRepository;
     private final ConviteProfissionalRepository conviteProfissionalRepository;
+    private final ConviteProfissionalService conviteProfissionalService;
     private final AtendimentoFaxinaRepository atendimentoFaxinaRepository;
     private final CheckpointServicoRepository checkpointServicoRepository;
     private final AvaliacaoProfissionalRepository avaliacaoProfissionalRepository;
     private final OcorrenciaAtendimentoRepository ocorrenciaAtendimentoRepository;
     private final PagamentoRepository pagamentoRepository;
+    private final CreditoClienteMovimentoRepository creditoClienteMovimentoRepository;
     private final WebhookEventRepository webhookEventRepository;
     private final PerfilProfissionalRepository perfilProfissionalRepository;
     private final DocumentoVerificacaoRepository documentoVerificacaoRepository;
@@ -123,11 +129,13 @@ class SolicitacaoFaxinaIntegrationTest {
             SolicitacaoFaxinaRepository solicitacaoFaxinaRepository,
             SolicitacaoProfissionalSelecionadoRepository solicitacaoProfissionalSelecionadoRepository,
             ConviteProfissionalRepository conviteProfissionalRepository,
+            ConviteProfissionalService conviteProfissionalService,
             AtendimentoFaxinaRepository atendimentoFaxinaRepository,
             CheckpointServicoRepository checkpointServicoRepository,
             AvaliacaoProfissionalRepository avaliacaoProfissionalRepository,
             OcorrenciaAtendimentoRepository ocorrenciaAtendimentoRepository,
             PagamentoRepository pagamentoRepository,
+            CreditoClienteMovimentoRepository creditoClienteMovimentoRepository,
             WebhookEventRepository webhookEventRepository,
             PerfilProfissionalRepository perfilProfissionalRepository,
             DocumentoVerificacaoRepository documentoVerificacaoRepository,
@@ -141,11 +149,13 @@ class SolicitacaoFaxinaIntegrationTest {
         this.solicitacaoFaxinaRepository = solicitacaoFaxinaRepository;
         this.solicitacaoProfissionalSelecionadoRepository = solicitacaoProfissionalSelecionadoRepository;
         this.conviteProfissionalRepository = conviteProfissionalRepository;
+        this.conviteProfissionalService = conviteProfissionalService;
         this.atendimentoFaxinaRepository = atendimentoFaxinaRepository;
         this.checkpointServicoRepository = checkpointServicoRepository;
         this.avaliacaoProfissionalRepository = avaliacaoProfissionalRepository;
         this.ocorrenciaAtendimentoRepository = ocorrenciaAtendimentoRepository;
         this.pagamentoRepository = pagamentoRepository;
+        this.creditoClienteMovimentoRepository = creditoClienteMovimentoRepository;
         this.webhookEventRepository = webhookEventRepository;
         this.perfilProfissionalRepository = perfilProfissionalRepository;
         this.documentoVerificacaoRepository = documentoVerificacaoRepository;
@@ -1506,6 +1516,168 @@ class SolicitacaoFaxinaIntegrationTest {
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.code").value("CONVITE_NOT_FOUND"))
                 .andExpect(jsonPath("$.errors").isArray());
+    }
+
+    @Test
+    void profissionalRecusaConvitePagoEGeraCreditoUnicoSemCriarAtendimento() throws Exception {
+        ConvitePagoPreparado convitePago = criarConvitePagoProntoParaAceite("m7.recusa-paga", proximoCpf());
+
+        mockMvc.perform(post("/api/v1/convites/{id}/recusar", convitePago.conviteId())
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + convitePago.tokenProfissional()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.conviteId").value(convitePago.conviteId()))
+                .andExpect(jsonPath("$.data.conviteStatus").value("RECUSADO"))
+                .andExpect(jsonPath("$.data.solicitacaoId").value(convitePago.solicitacaoId()))
+                .andExpect(jsonPath("$.data.solicitacaoStatus").value("NAO_ACEITA_CREDITO_GERADO"))
+                .andExpect(jsonPath("$.data.atendimentoId").doesNotExist())
+                .andExpect(jsonPath("$.data.atendimentoStatus").doesNotExist());
+
+        assertThat(atendimentoFaxinaRepository.findBySolicitacaoId(convitePago.solicitacaoId())).isEmpty();
+        assertThat(solicitacaoFaxinaRepository.findById(convitePago.solicitacaoId()))
+                .isPresent()
+                .get()
+                .extracting(solicitacao -> solicitacao.getStatus().name())
+                .isEqualTo("NAO_ACEITA_CREDITO_GERADO");
+        assertThat(conviteProfissionalRepository.findById(convitePago.conviteId()))
+                .isPresent()
+                .get()
+                .extracting(convite -> convite.getStatus().name())
+                .isEqualTo("RECUSADO");
+        assertThat(quantidadeCreditosGerados(convitePago.pagamentoId())).isEqualTo(1);
+        assertThat(creditoGerado(convitePago.pagamentoId()))
+                .satisfies(movimento -> {
+                    assertThat(movimento.getValor()).isEqualByComparingTo("180.00");
+                    assertThat(movimento.getSaldoResultante()).isEqualByComparingTo("180.00");
+                    assertThat(movimento.getSolicitacaoUso()).isNull();
+                    assertThat(movimento.getObservacao()).contains("recusa");
+                });
+        assertThat(pagamentoRepository.findById(convitePago.pagamentoId()))
+                .isPresent()
+                .get()
+                .satisfies(pagamento -> {
+                    assertThat(pagamento.getStatus().name()).isEqualTo("PAGO");
+                    assertThat(pagamento.getAtendimento()).isNull();
+                });
+    }
+
+    @Test
+    void recusaDuplicadaDeConvitePagoNaoDuplicaCredito() throws Exception {
+        ConvitePagoPreparado convitePago = criarConvitePagoProntoParaAceite("m7.recusa-duplicada", proximoCpf());
+
+        mockMvc.perform(post("/api/v1/convites/{id}/recusar", convitePago.conviteId())
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + convitePago.tokenProfissional()))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/v1/convites/{id}/recusar", convitePago.conviteId())
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + convitePago.tokenProfissional()))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("CONVITE_STATUS_INCOMPATIVEL"));
+
+        assertThat(quantidadeCreditosGerados(convitePago.pagamentoId())).isEqualTo(1);
+        assertThat(atendimentoFaxinaRepository.findBySolicitacaoId(convitePago.solicitacaoId())).isEmpty();
+    }
+
+    @Test
+    void aceiteAposCreditoGeradoPorRecusaFalhaSemCriarAtendimentoNemDuplicarCredito() throws Exception {
+        ConvitePagoPreparado convitePago = criarConvitePagoProntoParaAceite("m7.aceite-apos-credito", proximoCpf());
+
+        mockMvc.perform(post("/api/v1/convites/{id}/recusar", convitePago.conviteId())
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + convitePago.tokenProfissional()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.solicitacaoStatus").value("NAO_ACEITA_CREDITO_GERADO"));
+
+        assertThat(quantidadeCreditosGerados(convitePago.pagamentoId())).isEqualTo(1);
+
+        mockMvc.perform(post("/api/v1/convites/{id}/aceitar", convitePago.conviteId())
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + convitePago.tokenProfissional()))
+                .andExpect(status().isConflict())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("CONVITE_STATUS_INCOMPATIVEL"))
+                .andExpect(jsonPath("$.errors").isArray());
+
+        assertThat(atendimentoFaxinaRepository.findBySolicitacaoId(convitePago.solicitacaoId())).isEmpty();
+        assertThat(quantidadeCreditosGerados(convitePago.pagamentoId())).isEqualTo(1);
+        assertThat(pagamentoRepository.findById(convitePago.pagamentoId()))
+                .isPresent()
+                .get()
+                .satisfies(pagamento -> {
+                    assertThat(pagamento.getStatus().name()).isEqualTo("PAGO");
+                    assertThat(pagamento.getAtendimento()).isNull();
+                });
+    }
+
+    @Test
+    void expiracaoDeConvitePagoGeraCreditoUnicoESemAtendimento() throws Exception {
+        ConvitePagoPreparado convitePago = criarConvitePagoProntoParaAceite("m7.expira-paga", proximoCpf());
+        expirarConvite(convitePago.conviteId());
+
+        assertThat(conviteProfissionalService.expirarConviteSeNecessario(convitePago.conviteId())).isTrue();
+        assertThat(conviteProfissionalRepository.findById(convitePago.conviteId()))
+                .isPresent()
+                .get()
+                .extracting(convite -> convite.getStatus().name())
+                .isEqualTo("EXPIRADO");
+        assertThat(solicitacaoFaxinaRepository.findById(convitePago.solicitacaoId()))
+                .isPresent()
+                .get()
+                .extracting(solicitacao -> solicitacao.getStatus().name())
+                .isEqualTo("NAO_ACEITA_CREDITO_GERADO");
+        assertThat(quantidadeCreditosGerados(convitePago.pagamentoId())).isEqualTo(1);
+        assertThat(atendimentoFaxinaRepository.findBySolicitacaoId(convitePago.solicitacaoId())).isEmpty();
+        assertThat(pagamentoRepository.findById(convitePago.pagamentoId()))
+                .isPresent()
+                .get()
+                .satisfies(pagamento -> assertThat(pagamento.getAtendimento()).isNull());
+    }
+
+    @Test
+    void recusaSeguidaDeExpiracaoNaoDuplicaCredito() throws Exception {
+        ConvitePagoPreparado convitePago = criarConvitePagoProntoParaAceite("m7.recusa-depois-expira", proximoCpf());
+
+        mockMvc.perform(post("/api/v1/convites/{id}/recusar", convitePago.conviteId())
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + convitePago.tokenProfissional()))
+                .andExpect(status().isOk());
+
+        assertThat(conviteProfissionalService.expirarConviteSeNecessario(convitePago.conviteId())).isFalse();
+        assertThat(quantidadeCreditosGerados(convitePago.pagamentoId())).isEqualTo(1);
+    }
+
+    @Test
+    void expiracaoSeguidaDeRecusaNaoDuplicaCredito() throws Exception {
+        ConvitePagoPreparado convitePago = criarConvitePagoProntoParaAceite("m7.expira-depois-recusa", proximoCpf());
+        expirarConvite(convitePago.conviteId());
+        assertThat(conviteProfissionalService.expirarConviteSeNecessario(convitePago.conviteId())).isTrue();
+
+        mockMvc.perform(post("/api/v1/convites/{id}/recusar", convitePago.conviteId())
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + convitePago.tokenProfissional()))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("CONVITE_STATUS_INCOMPATIVEL"));
+
+        assertThat(quantidadeCreditosGerados(convitePago.pagamentoId())).isEqualTo(1);
+    }
+
+    @Test
+    void saldoResultanteDoCreditoPagoConsideraSaldoAnteriorDoCliente() throws Exception {
+        ConvitePagoPreparado convitePago = criarConvitePagoProntoParaAceite("m7.saldo-acumulado", proximoCpf());
+        var solicitacao = solicitacaoFaxinaRepository.findById(convitePago.solicitacaoId()).orElseThrow();
+        creditoClienteMovimentoRepository.saveAndFlush(new CreditoClienteMovimento(
+                solicitacao.getCliente(),
+                null,
+                null,
+                null,
+                TipoMovimentoCreditoCliente.AJUSTE_ADMIN,
+                new BigDecimal("50.00"),
+                new BigDecimal("50.00"),
+                "Saldo inicial de teste"
+        ));
+
+        mockMvc.perform(post("/api/v1/convites/{id}/recusar", convitePago.conviteId())
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + convitePago.tokenProfissional()))
+                .andExpect(status().isOk());
+
+        assertThat(creditoGerado(convitePago.pagamentoId()).getSaldoResultante()).isEqualByComparingTo("230.00");
     }
 
     @Test
@@ -4843,6 +5015,28 @@ class SolicitacaoFaxinaIntegrationTest {
                 conviteId,
                 pagamentoId
         );
+    }
+
+    private void expirarConvite(Long conviteId) {
+        ConviteProfissional convite = conviteProfissionalRepository.findById(conviteId).orElseThrow();
+        ReflectionTestUtils.setField(convite, "enviadoEm", OffsetDateTime.now().minusDays(2));
+        ReflectionTestUtils.setField(convite, "expiraEm", OffsetDateTime.now().minusDays(1));
+        conviteProfissionalRepository.saveAndFlush(convite);
+    }
+
+    private long quantidadeCreditosGerados(Long pagamentoId) {
+        return creditoClienteMovimentoRepository.countByPagamentoOrigemIdAndTipoMovimento(
+                pagamentoId,
+                TipoMovimentoCreditoCliente.CREDITO_GERADO_SEM_ACEITE
+        );
+    }
+
+    private CreditoClienteMovimento creditoGerado(Long pagamentoId) {
+        return creditoClienteMovimentoRepository.findByPagamentoOrigemIdAndTipoMovimento(
+                        pagamentoId,
+                        TipoMovimentoCreditoCliente.CREDITO_GERADO_SEM_ACEITE
+                )
+                .orElseThrow();
     }
 
     private AtendimentoCriado criarAtendimentoConfirmado(String prefixoEmail, String cpf, String checkoutId) throws Exception {
