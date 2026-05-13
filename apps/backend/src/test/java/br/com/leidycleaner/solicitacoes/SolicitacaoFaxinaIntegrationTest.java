@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -56,6 +58,7 @@ import br.com.leidycleaner.pagamentos.gateway.AsaasCheckoutRequest;
 import br.com.leidycleaner.pagamentos.gateway.AsaasGatewayClient;
 import br.com.leidycleaner.pagamentos.gateway.AsaasPagamentoGatewayResponse;
 import br.com.leidycleaner.pagamentos.gateway.AsaasPixQrCodeGatewayResponse;
+import br.com.leidycleaner.pagamentos.entity.GatewayPagamento;
 import br.com.leidycleaner.pagamentos.entity.MetodoPagamento;
 import br.com.leidycleaner.pagamentos.repository.PagamentoRepository;
 import br.com.leidycleaner.pagamentos.repository.WebhookEventRepository;
@@ -117,6 +120,14 @@ class SolicitacaoFaxinaIntegrationTest {
             Long solicitacaoId,
             Long conviteId,
             Long pagamentoId
+    ) {
+    }
+
+    private record CreditoDisponivelPreparado(
+            String tokenCliente,
+            Long creditoId,
+            Long solicitacaoOrigemId,
+            Long pagamentoOrigemId
     ) {
     }
 
@@ -1672,6 +1683,379 @@ class SolicitacaoFaxinaIntegrationTest {
         mockMvc.perform(get("/api/v1/creditos/saldo")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenCliente))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void clienteListaApenasSeusCreditosSolicitacaoDisponiveis() throws Exception {
+        CreditoDisponivelPreparado creditoClienteA = gerarCreditoDisponivelPorRecusa("m8.lista-a", proximoCpf());
+        CreditoDisponivelPreparado creditoClienteB = gerarCreditoDisponivelPorRecusa("m8.lista-b", proximoCpf());
+
+        mockMvc.perform(get("/api/v1/creditos-solicitacao/meus")
+                        .queryParam("status", "DISPONIVEL")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + creditoClienteA.tokenCliente()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.length()").value(1))
+                .andExpect(jsonPath("$.data[0].id").value(creditoClienteA.creditoId()))
+                .andExpect(jsonPath("$.data[0].status").value("DISPONIVEL"))
+                .andExpect(jsonPath("$.data[0].tipoServico").value("FAXINA_RESIDENCIAL"))
+                .andExpect(jsonPath("$.data[0].duracaoEstimadaHoras").value(4))
+                .andExpect(jsonPath("$.data[0].solicitacaoOrigemId").value(creditoClienteA.solicitacaoOrigemId()))
+                .andExpect(jsonPath("$.data[0].solicitacaoUsoId").doesNotExist())
+                .andExpect(jsonPath("$.data[0].regiaoId").isNumber())
+                .andExpect(jsonPath("$.data[0].regiaoNome").isString())
+                .andExpect(jsonPath("$.data[0].valorReferencia").value(180.00))
+                .andExpect(jsonPath("$.data[0].saldoDisponivel").doesNotExist());
+
+        assertThat(creditoClienteB.creditoId()).isNotEqualTo(creditoClienteA.creditoId());
+    }
+
+    @Test
+    void creditoDisponivelQuitaSolicitacaoEquivalenteSemChamarAsaas() throws Exception {
+        CreditoDisponivelPreparado credito = gerarCreditoDisponivelPorRecusa("m8.uso-equivalente", proximoCpf());
+        SolicitacaoSelecionada destino = criarSolicitacaoSelecionadaParaClienteExistente(
+                credito.tokenCliente(),
+                "m8.destino-equivalente-profissional@example.com",
+                proximoCpf(),
+                ultimaRegiaoId(),
+                "FAXINA_RESIDENCIAL",
+                4,
+                new BigDecimal("180.00"),
+                new BigDecimal("20.00"),
+                new BigDecimal("144.00")
+        );
+
+        clearInvocations(asaasGatewayClient);
+
+        String response = mockMvc.perform(post("/api/v1/creditos-solicitacao/{creditoId}/usar-em-solicitacao/{solicitacaoId}",
+                                credito.creditoId(),
+                                destino.solicitacaoId())
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + credito.tokenCliente()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.creditoSolicitacaoId").value(credito.creditoId()))
+                .andExpect(jsonPath("$.data.creditoStatus").value("UTILIZADO"))
+                .andExpect(jsonPath("$.data.solicitacaoId").value(destino.solicitacaoId()))
+                .andExpect(jsonPath("$.data.solicitacaoStatus").value("PAGA_AGUARDANDO_ACEITE"))
+                .andExpect(jsonPath("$.data.pagamentoStatus").value("PAGO"))
+                .andExpect(jsonPath("$.data.conviteStatus").value("ENVIADO"))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        Long pagamentoId = objectMapper.readTree(response).path("data").path("pagamentoId").asLong();
+        Long conviteId = objectMapper.readTree(response).path("data").path("conviteId").asLong();
+
+        verifyNoInteractions(asaasGatewayClient);
+
+        assertThat(creditoSolicitacaoRepository.findById(credito.creditoId()))
+                .isPresent()
+                .get()
+                .satisfies(creditoPersistido -> {
+                    assertThat(creditoPersistido.getStatus()).isEqualTo(StatusCreditoSolicitacao.UTILIZADO);
+                    assertThat(creditoPersistido.getSolicitacaoUso()).isNotNull();
+                    assertThat(creditoPersistido.getSolicitacaoUso().getId()).isEqualTo(destino.solicitacaoId());
+                    assertThat(creditoPersistido.getUtilizadoEm()).isNotNull();
+                });
+        assertThat(pagamentoRepository.findById(pagamentoId))
+                .isPresent()
+                .get()
+                .satisfies(pagamento -> {
+                    assertThat(pagamento.getGateway()).isEqualTo(GatewayPagamento.INTERNO);
+                    assertThat(pagamento.getMetodoPagamento()).isEqualTo(MetodoPagamento.CREDITO_SOLICITACAO);
+                    assertThat(pagamento.getStatus().name()).isEqualTo("PAGO");
+                    assertThat(pagamento.getSolicitacao()).isNotNull();
+                    assertThat(pagamento.getSolicitacao().getId()).isEqualTo(destino.solicitacaoId());
+                    assertThat(pagamento.getAtendimento()).isNull();
+                    assertThat(pagamento.getGatewayPaymentId())
+                            .isEqualTo("credito-solicitacao-" + credito.creditoId() + "-solicitacao-" + destino.solicitacaoId());
+                    assertThat(pagamento.getValorBruto()).isEqualByComparingTo("180.00");
+                    assertThat(pagamento.getValorTaxaGateway()).isEqualByComparingTo("0.00");
+                    assertThat(pagamento.getValorLiquidoRecebido()).isEqualByComparingTo("180.00");
+                    assertThat(pagamento.getRecebidoEm()).isNotNull();
+                });
+        assertThat(conviteProfissionalRepository.findById(conviteId))
+                .isPresent()
+                .get()
+                .extracting(convite -> convite.getSolicitacao().getId())
+                .isEqualTo(destino.solicitacaoId());
+        assertThat(conviteProfissionalRepository.findBySolicitacaoId(destino.solicitacaoId())).hasSize(1);
+        assertThat(solicitacaoFaxinaRepository.findById(destino.solicitacaoId()))
+                .isPresent()
+                .get()
+                .extracting(solicitacao -> solicitacao.getStatus().name())
+                .isEqualTo("PAGA_AGUARDANDO_ACEITE");
+        assertThat(atendimentoFaxinaRepository.findBySolicitacaoId(destino.solicitacaoId())).isEmpty();
+    }
+
+    @Test
+    void usoDeCreditoFalhaParaClienteDiferente() throws Exception {
+        CreditoDisponivelPreparado credito = gerarCreditoDisponivelPorRecusa("m8.outro-cliente", proximoCpf());
+        String tokenOutraCliente = criarClienteELogar("m8.outro-cliente-uso@example.com");
+        SolicitacaoSelecionada destino = criarSolicitacaoSelecionadaParaClienteExistente(
+                tokenOutraCliente,
+                "m8.outro-cliente-profissional@example.com",
+                proximoCpf(),
+                ultimaRegiaoId(),
+                "FAXINA_RESIDENCIAL",
+                4,
+                new BigDecimal("180.00"),
+                new BigDecimal("20.00"),
+                new BigDecimal("144.00")
+        );
+
+        mockMvc.perform(post("/api/v1/creditos-solicitacao/{creditoId}/usar-em-solicitacao/{solicitacaoId}",
+                        credito.creditoId(),
+                        destino.solicitacaoId())
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenOutraCliente))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("CREDITO_SOLICITACAO_NOT_FOUND"));
+    }
+
+    @Test
+    void usoDeCreditoFalhaQuandoCreditoNaoEstaDisponivel() throws Exception {
+        CreditoDisponivelPreparado credito = gerarCreditoDisponivelPorRecusa("m8.credito-nao-disponivel", proximoCpf());
+        SolicitacaoSelecionada primeiroDestino = criarSolicitacaoSelecionadaParaClienteExistente(
+                credito.tokenCliente(),
+                "m8.primeiro-destino-profissional@example.com",
+                proximoCpf(),
+                ultimaRegiaoId(),
+                "FAXINA_RESIDENCIAL",
+                4,
+                new BigDecimal("180.00"),
+                new BigDecimal("20.00"),
+                new BigDecimal("144.00")
+        );
+        SolicitacaoSelecionada segundoDestino = criarSolicitacaoSelecionadaParaClienteExistente(
+                credito.tokenCliente(),
+                "m8.segundo-destino-profissional@example.com",
+                proximoCpf(),
+                ultimaRegiaoId(),
+                "FAXINA_RESIDENCIAL",
+                4,
+                new BigDecimal("180.00"),
+                new BigDecimal("20.00"),
+                new BigDecimal("144.00")
+        );
+
+        mockMvc.perform(post("/api/v1/creditos-solicitacao/{creditoId}/usar-em-solicitacao/{solicitacaoId}",
+                        credito.creditoId(),
+                        primeiroDestino.solicitacaoId())
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + credito.tokenCliente()))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/v1/creditos-solicitacao/{creditoId}/usar-em-solicitacao/{solicitacaoId}",
+                        credito.creditoId(),
+                        segundoDestino.solicitacaoId())
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + credito.tokenCliente()))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("CREDITO_SOLICITACAO_STATUS_INCOMPATIVEL"));
+
+        assertThat(pagamentoRepository.findBySolicitacaoId(segundoDestino.solicitacaoId())).isEmpty();
+        assertThat(conviteProfissionalRepository.findBySolicitacaoId(segundoDestino.solicitacaoId())).isEmpty();
+    }
+
+    @Test
+    void usoDeCreditoFalhaParaSolicitacaoNaoEquivalente() throws Exception {
+        CreditoDisponivelPreparado credito = gerarCreditoDisponivelPorRecusa("m8.incompativel", proximoCpf());
+
+        SolicitacaoSelecionada tipoDiferente = criarSolicitacaoSelecionadaParaClienteExistente(
+                credito.tokenCliente(),
+                "m8.tipo-diferente-profissional@example.com",
+                proximoCpf(),
+                ultimaRegiaoId(),
+                "FAXINA_EVENTO",
+                4,
+                new BigDecimal("180.00"),
+                new BigDecimal("20.00"),
+                new BigDecimal("144.00")
+        );
+        mockMvc.perform(post("/api/v1/creditos-solicitacao/{creditoId}/usar-em-solicitacao/{solicitacaoId}",
+                        credito.creditoId(),
+                        tipoDiferente.solicitacaoId())
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + credito.tokenCliente()))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("CREDITO_SOLICITACAO_INCOMPATIVEL"));
+
+        SolicitacaoSelecionada duracaoMenor = criarSolicitacaoSelecionadaParaClienteExistente(
+                credito.tokenCliente(),
+                "m8.duracao-menor-profissional@example.com",
+                proximoCpf(),
+                ultimaRegiaoId(),
+                "FAXINA_RESIDENCIAL",
+                3,
+                new BigDecimal("150.00"),
+                new BigDecimal("20.00"),
+                new BigDecimal("120.00")
+        );
+        mockMvc.perform(post("/api/v1/creditos-solicitacao/{creditoId}/usar-em-solicitacao/{solicitacaoId}",
+                        credito.creditoId(),
+                        duracaoMenor.solicitacaoId())
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + credito.tokenCliente()))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("CREDITO_SOLICITACAO_INCOMPATIVEL"));
+
+        SolicitacaoSelecionada duracaoMaior = criarSolicitacaoSelecionadaParaClienteExistente(
+                credito.tokenCliente(),
+                "m8.duracao-maior-profissional@example.com",
+                proximoCpf(),
+                ultimaRegiaoId(),
+                "FAXINA_RESIDENCIAL",
+                5,
+                new BigDecimal("220.00"),
+                new BigDecimal("20.00"),
+                new BigDecimal("176.00")
+        );
+        mockMvc.perform(post("/api/v1/creditos-solicitacao/{creditoId}/usar-em-solicitacao/{solicitacaoId}",
+                        credito.creditoId(),
+                        duracaoMaior.solicitacaoId())
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + credito.tokenCliente()))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("CREDITO_SOLICITACAO_INCOMPATIVEL"));
+
+        SolicitacaoSelecionada regiaoDiferente = criarSolicitacaoSelecionadaParaClienteExistente(
+                credito.tokenCliente(),
+                "m8.regiao-diferente-profissional@example.com",
+                proximoCpf(),
+                primeiraRegiaoId(),
+                "FAXINA_RESIDENCIAL",
+                4,
+                new BigDecimal("180.00"),
+                new BigDecimal("20.00"),
+                new BigDecimal("144.00")
+        );
+        mockMvc.perform(post("/api/v1/creditos-solicitacao/{creditoId}/usar-em-solicitacao/{solicitacaoId}",
+                        credito.creditoId(),
+                        regiaoDiferente.solicitacaoId())
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + credito.tokenCliente()))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("CREDITO_SOLICITACAO_INCOMPATIVEL"));
+    }
+
+    @Test
+    void usoDeCreditoFalhaSemProfissionalSelecionadaOuSemStatusAguardandoPagamento() throws Exception {
+        CreditoDisponivelPreparado credito = gerarCreditoDisponivelPorRecusa("m8.sem-selecao", proximoCpf());
+        Long enderecoId = criarEndereco(credito.tokenCliente());
+        Long solicitacaoSemSelecaoId = criarSolicitacao(
+                credito.tokenCliente(),
+                enderecoId,
+                ultimaRegiaoId(),
+                "FAXINA_RESIDENCIAL",
+                4,
+                new BigDecimal("180.00"),
+                new BigDecimal("20.00"),
+                new BigDecimal("144.00")
+        );
+        var solicitacaoSemSelecao = solicitacaoFaxinaRepository.findById(solicitacaoSemSelecaoId).orElseThrow();
+        solicitacaoSemSelecao.marcarAguardandoPagamento();
+        solicitacaoFaxinaRepository.saveAndFlush(solicitacaoSemSelecao);
+
+        mockMvc.perform(post("/api/v1/creditos-solicitacao/{creditoId}/usar-em-solicitacao/{solicitacaoId}",
+                        credito.creditoId(),
+                        solicitacaoSemSelecaoId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + credito.tokenCliente()))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("SOLICITACAO_PROFISSIONAL_SELECIONADA_INVALIDA"));
+
+        SolicitacaoSelecionada solicitacaoPaga = criarSolicitacaoSelecionadaParaClienteExistente(
+                credito.tokenCliente(),
+                "m8.status-invalido-profissional@example.com",
+                proximoCpf(),
+                ultimaRegiaoId(),
+                "FAXINA_RESIDENCIAL",
+                4,
+                new BigDecimal("180.00"),
+                new BigDecimal("20.00"),
+                new BigDecimal("144.00")
+        );
+        mockarCriacaoAsaas("pay_m8_status_invalido", "PENDING", "https://asaas.local/pay_m8_status_invalido", null);
+        criarPagamentoPorSolicitacao(credito.tokenCliente(), solicitacaoPaga.solicitacaoId(), "PIX");
+        enviarWebhookAsaas("""
+                {
+                  "event": "PAYMENT_CONFIRMED",
+                  "payment": {
+                    "id": "pay_m8_status_invalido",
+                    "status": "CONFIRMED"
+                  }
+                }
+                """);
+
+        mockMvc.perform(post("/api/v1/creditos-solicitacao/{creditoId}/usar-em-solicitacao/{solicitacaoId}",
+                        credito.creditoId(),
+                        solicitacaoPaga.solicitacaoId())
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + credito.tokenCliente()))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("SOLICITACAO_STATUS_INCOMPATIVEL"));
+    }
+
+    @Test
+    void usoDeCreditoFalhaQuandoSolicitacaoJaPossuiPagamento() throws Exception {
+        CreditoDisponivelPreparado credito = gerarCreditoDisponivelPorRecusa("m8.pagamento-existente", proximoCpf());
+        SolicitacaoSelecionada destino = criarSolicitacaoSelecionadaParaClienteExistente(
+                credito.tokenCliente(),
+                "m8.pagamento-existente-profissional@example.com",
+                proximoCpf(),
+                ultimaRegiaoId(),
+                "FAXINA_RESIDENCIAL",
+                4,
+                new BigDecimal("180.00"),
+                new BigDecimal("20.00"),
+                new BigDecimal("144.00")
+        );
+        mockarCriacaoAsaas("pay_m8_pagamento_existente", "PENDING", "https://asaas.local/pay_m8_pagamento_existente", null);
+        criarPagamentoPorSolicitacao(credito.tokenCliente(), destino.solicitacaoId(), "PIX");
+
+        mockMvc.perform(post("/api/v1/creditos-solicitacao/{creditoId}/usar-em-solicitacao/{solicitacaoId}",
+                        credito.creditoId(),
+                        destino.solicitacaoId())
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + credito.tokenCliente()))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("PAGAMENTO_JA_EXISTE"));
+    }
+
+    @Test
+    void duasTentativasDeUsarCreditosNaMesmaSolicitacaoSaoBloqueadasSemDuplicarPagamentoOuConvite() throws Exception {
+        CreditoDisponivelPreparado primeiroCredito = gerarCreditoDisponivelPorRecusa("m8.credito-1", proximoCpf());
+        CreditoDisponivelPreparado segundoCredito = gerarCreditoDisponivelPorRecusaParaClienteExistente(
+                primeiroCredito.tokenCliente(),
+                "m8.credito-2",
+                proximoCpf()
+        );
+
+        String tokenCliente = primeiroCredito.tokenCliente();
+        SolicitacaoSelecionada destino = criarSolicitacaoSelecionadaParaClienteExistente(
+                tokenCliente,
+                "m8.destino-duplo-profissional@example.com",
+                proximoCpf(),
+                ultimaRegiaoId(),
+                "FAXINA_RESIDENCIAL",
+                4,
+                new BigDecimal("180.00"),
+                new BigDecimal("20.00"),
+                new BigDecimal("144.00")
+        );
+
+        mockMvc.perform(post("/api/v1/creditos-solicitacao/{creditoId}/usar-em-solicitacao/{solicitacaoId}",
+                        primeiroCredito.creditoId(),
+                        destino.solicitacaoId())
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenCliente))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/v1/creditos-solicitacao/{creditoId}/usar-em-solicitacao/{solicitacaoId}",
+                        segundoCredito.creditoId(),
+                        destino.solicitacaoId())
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenCliente))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("SOLICITACAO_STATUS_INCOMPATIVEL"));
+
+        assertThat(pagamentoRepository.findBySolicitacaoId(destino.solicitacaoId())).isPresent();
+        assertThat(conviteProfissionalRepository.findBySolicitacaoId(destino.solicitacaoId())).hasSize(1);
+        assertThat(creditoSolicitacaoRepository.findById(segundoCredito.creditoId()))
+                .isPresent()
+                .get()
+                .extracting(CreditoSolicitacao::getStatus)
+                .isEqualTo(StatusCreditoSolicitacao.DISPONIVEL);
     }
 
     @Test
@@ -4528,11 +4912,41 @@ class SolicitacaoFaxinaIntegrationTest {
     }
 
     private Long criarSolicitacao(String token, Long enderecoId, Long regiaoId, String tipoServico) throws Exception {
+        return criarSolicitacao(
+                token,
+                enderecoId,
+                regiaoId,
+                tipoServico,
+                4,
+                new BigDecimal("180.00"),
+                new BigDecimal("20.00"),
+                new BigDecimal("144.00")
+        );
+    }
+
+    private Long criarSolicitacao(
+            String token,
+            Long enderecoId,
+            Long regiaoId,
+            String tipoServico,
+            int duracaoEstimadaHoras,
+            BigDecimal valorServico,
+            BigDecimal percentualComissaoAgencia,
+            BigDecimal valorEstimadoProfissional
+    ) throws Exception {
         ajustarEnderecoParaRegiao(enderecoId, regiaoId);
         String response = mockMvc.perform(post("/api/v1/solicitacoes")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(solicitacaoJson(enderecoId, regiaoId, tipoServico)))
+                        .content(solicitacaoJson(
+                                enderecoId,
+                                regiaoId,
+                                tipoServico,
+                                duracaoEstimadaHoras,
+                                valorServico,
+                                percentualComissaoAgencia,
+                                valorEstimadoProfissional
+                        )))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.status").value("CRIADA"))
@@ -4920,6 +5334,46 @@ class SolicitacaoFaxinaIntegrationTest {
         return new SolicitacaoSelecionada(tokenCliente, solicitacaoId, profissional.perfilId());
     }
 
+    private SolicitacaoSelecionada criarSolicitacaoSelecionadaParaClienteExistente(
+            String tokenCliente,
+            String emailProfissional,
+            String cpf,
+            Long regiaoId,
+            String tipoServico,
+            int duracaoEstimadaHoras,
+            BigDecimal valorServico,
+            BigDecimal percentualComissaoAgencia,
+            BigDecimal valorEstimadoProfissional
+    ) throws Exception {
+        String emailProfissionalUnico = emailProfissional.replace("@", "+" + cpf + "@");
+        Long enderecoId = criarEndereco(tokenCliente);
+        Long solicitacaoId = criarSolicitacao(
+                tokenCliente,
+                enderecoId,
+                regiaoId,
+                tipoServico,
+                duracaoEstimadaHoras,
+                valorServico,
+                percentualComissaoAgencia,
+                valorEstimadoProfissional
+        );
+        ProfissionalConfigurada profissional = criarProfissionalConfiguradaComToken(
+                emailProfissionalUnico,
+                cpf,
+                "Profissional " + emailProfissionalUnico,
+                "ATIVA",
+                "APROVADO",
+                true,
+                "APROVADO",
+                List.of(regiaoId),
+                "QUINTA",
+                "08:00",
+                "12:00"
+        );
+        selecionarProfissionais(tokenCliente, solicitacaoId, List.of(profissional.perfilId()));
+        return new SolicitacaoSelecionada(tokenCliente, solicitacaoId, profissional.perfilId());
+    }
+
     private ConvitePagoPreparado criarConvitePagoProntoParaAceite(String prefixoEmail, String cpf) throws Exception {
         String tokenCliente = criarClienteELogar(prefixoEmail + "-cliente@example.com");
         Long regiaoId = ultimaRegiaoId();
@@ -4958,6 +5412,62 @@ class SolicitacaoFaxinaIntegrationTest {
                 conviteId,
                 pagamentoId
         );
+    }
+
+    private CreditoDisponivelPreparado gerarCreditoDisponivelPorRecusa(String prefixoEmail, String cpf) throws Exception {
+        ConvitePagoPreparado convitePago = criarConvitePagoProntoParaAceite(prefixoEmail, cpf);
+        mockMvc.perform(post("/api/v1/convites/{id}/recusar", convitePago.conviteId())
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + convitePago.tokenProfissional()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.solicitacaoStatus").value("NAO_ACEITA_CREDITO_GERADO"));
+        CreditoSolicitacao credito = creditoSolicitacaoGerado(convitePago.pagamentoId());
+        return new CreditoDisponivelPreparado(
+                convitePago.tokenCliente(),
+                credito.getId(),
+                convitePago.solicitacaoId(),
+                convitePago.pagamentoId()
+        );
+    }
+
+    private CreditoDisponivelPreparado gerarCreditoDisponivelPorRecusaParaClienteExistente(
+            String tokenCliente,
+            String prefixoEmail,
+            String cpf
+    ) throws Exception {
+        Long regiaoId = ultimaRegiaoId();
+        Long solicitacaoId = criarSolicitacao(tokenCliente, criarEndereco(tokenCliente), regiaoId, "FAXINA_RESIDENCIAL");
+        ProfissionalConfigurada profissional = criarProfissionalConfiguradaComToken(
+                prefixoEmail + "-profissional@example.com",
+                cpf,
+                "Profissional " + prefixoEmail,
+                "ATIVA",
+                "APROVADO",
+                true,
+                "APROVADO",
+                List.of(regiaoId),
+                "QUINTA",
+                "08:00",
+                "12:00"
+        );
+        selecionarProfissionais(tokenCliente, solicitacaoId, List.of(profissional.perfilId()));
+        String gatewayPaymentId = "pay_" + prefixoEmail.replace('-', '_');
+        mockarCriacaoAsaas(gatewayPaymentId, "PENDING", "https://asaas.local/" + gatewayPaymentId, null);
+        Long pagamentoId = criarPagamentoPorSolicitacao(tokenCliente, solicitacaoId, "PIX");
+        enviarWebhookAsaas("""
+                {
+                  "event": "PAYMENT_CONFIRMED",
+                  "payment": {
+                    "id": "%s",
+                    "status": "CONFIRMED"
+                  }
+                }
+                """.formatted(gatewayPaymentId));
+        Long conviteId = primeiroConviteId(profissional.tokenProfissional());
+        mockMvc.perform(post("/api/v1/convites/{id}/recusar", conviteId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + profissional.tokenProfissional()))
+                .andExpect(status().isOk());
+        CreditoSolicitacao credito = creditoSolicitacaoGerado(pagamentoId);
+        return new CreditoDisponivelPreparado(tokenCliente, credito.getId(), solicitacaoId, pagamentoId);
     }
 
     private ConvitePagoPreparado criarConvitePagoManualAguardandoAceite(
@@ -5463,19 +5973,47 @@ class SolicitacaoFaxinaIntegrationTest {
     }
 
     private String solicitacaoJson(Long enderecoId, Long regiaoId, String tipoServico) {
+        return solicitacaoJson(
+                enderecoId,
+                regiaoId,
+                tipoServico,
+                4,
+                new BigDecimal("180.00"),
+                new BigDecimal("20.00"),
+                new BigDecimal("144.00")
+        );
+    }
+
+    private String solicitacaoJson(
+            Long enderecoId,
+            Long regiaoId,
+            String tipoServico,
+            int duracaoEstimadaHoras,
+            BigDecimal valorServico,
+            BigDecimal percentualComissaoAgencia,
+            BigDecimal valorEstimadoProfissional
+    ) {
         return """
                 {
                   "enderecoId": %d,
                   "regiaoId": %d,
                   "dataHoraDesejada": "2035-05-10T10:00:00-03:00",
-                  "duracaoEstimadaHoras": 4,
+                  "duracaoEstimadaHoras": %d,
                   "tipoServico": "%s",
                   "observacoes": "Limpeza solicitada pela cliente",
-                  "valorServico": 180.00,
-                  "percentualComissaoAgencia": 20.00,
-                  "valorEstimadoProfissional": 144.00
+                  "valorServico": %s,
+                  "percentualComissaoAgencia": %s,
+                  "valorEstimadoProfissional": %s
                 }
-                """.formatted(enderecoId, regiaoId, tipoServico);
+                """.formatted(
+                enderecoId,
+                regiaoId,
+                duracaoEstimadaHoras,
+                tipoServico,
+                valorServico.toPlainString(),
+                percentualComissaoAgencia.toPlainString(),
+                valorEstimadoProfissional.toPlainString()
+        );
     }
 
     private String solicitacaoJsonSemRegiao(Long enderecoId, String tipoServico) {

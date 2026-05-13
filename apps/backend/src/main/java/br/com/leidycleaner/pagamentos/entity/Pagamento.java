@@ -2,6 +2,7 @@ package br.com.leidycleaner.pagamentos.entity;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.Objects;
 
 import br.com.leidycleaner.atendimentos.entity.AtendimentoFaxina;
 import br.com.leidycleaner.solicitacoes.entity.SolicitacaoFaxina;
@@ -129,6 +130,33 @@ public class Pagamento {
         this.pixCopiaECola = limparOpcional(pixCopiaECola);
         this.payloadResumo = limparOpcional(payloadResumo);
         this.webhookProcessado = false;
+    }
+
+    public static Pagamento criarPagoComCreditoSolicitacao(
+            SolicitacaoFaxina solicitacao,
+            Long creditoSolicitacaoId,
+            OffsetDateTime recebidoEm
+    ) {
+        Objects.requireNonNull(solicitacao, "solicitacao");
+        Objects.requireNonNull(creditoSolicitacaoId, "creditoSolicitacaoId");
+        Objects.requireNonNull(recebidoEm, "recebidoEm");
+
+        Pagamento pagamento = new Pagamento(
+                solicitacao,
+                GatewayPagamento.INTERNO,
+                "credito-solicitacao-" + creditoSolicitacaoId + "-solicitacao-" + solicitacao.getId(),
+                MetodoPagamento.CREDITO_SOLICITACAO,
+                StatusPagamento.PAGO,
+                solicitacao.getValorServico(),
+                null,
+                null,
+                "Pagamento interno quitado por CreditoSolicitacao #" + creditoSolicitacaoId
+        );
+        pagamento.valorTaxaGateway = BigDecimal.ZERO;
+        pagamento.valorLiquidoRecebido = solicitacao.getValorServico();
+        pagamento.recebidoEm = recebidoEm;
+        pagamento.webhookProcessado = false;
+        return pagamento;
     }
 
     @PrePersist

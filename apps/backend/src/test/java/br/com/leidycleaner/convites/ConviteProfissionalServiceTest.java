@@ -18,7 +18,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import br.com.leidycleaner.atendimentos.repository.AtendimentoFaxinaRepository;
 import br.com.leidycleaner.convites.entity.ConviteProfissional;
 import br.com.leidycleaner.convites.repository.ConviteProfissionalRepository;
-import br.com.leidycleaner.convites.service.ConviteProfissionalService;
+import br.com.leidycleaner.convites.service.ConviteSolicitacaoPagaService;
 import br.com.leidycleaner.core.exception.BusinessException;
 import br.com.leidycleaner.creditos.service.CreditoSolicitacaoService;
 import br.com.leidycleaner.pagamentos.repository.PagamentoRepository;
@@ -55,14 +55,9 @@ class ConviteProfissionalServiceTest {
 
     @Test
     void criarConviteParaSolicitacaoPagaRejeitaMaisDeUmaProfissionalSelecionada() {
-        ConviteProfissionalService service = new ConviteProfissionalService(
+        ConviteSolicitacaoPagaService service = new ConviteSolicitacaoPagaService(
                 conviteProfissionalRepository,
-                perfilProfissionalRepository,
-                solicitacaoFaxinaRepository,
-                solicitacaoProfissionalSelecionadoRepository,
-                atendimentoFaxinaRepository,
-                pagamentoRepository,
-                creditoSolicitacaoService
+                solicitacaoProfissionalSelecionadoRepository
         );
         SolicitacaoFaxina solicitacao = mock(SolicitacaoFaxina.class);
         given(solicitacao.getId()).willReturn(10L);

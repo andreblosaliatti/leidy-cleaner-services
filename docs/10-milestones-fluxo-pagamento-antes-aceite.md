@@ -449,31 +449,32 @@ cd apps/backend
 
 ### Objetivo
 Permitir que o cliente use um `CreditoSolicitacao` em uma nova solicitação equivalente, sem semântica de saldo monetário.
+O crédito continua não sendo carteira, saldo em dinheiro, desconto nem banco de horas.
 
 ### Checklist
 
 - [ ] Criar método para localizar crédito disponível do cliente por equivalência.
-- [ ] Criar endpoint ou incluir no fluxo de solicitação o uso de `CreditoSolicitacao`.
+- [x] Criar endpoint ou incluir no fluxo de solicitação o uso de `CreditoSolicitacao`.
 - [ ] Marcar crédito como `RESERVADO` e depois `UTILIZADO` quando a nova solicitação equivalente for efetivamente usada.
-- [ ] Se o cliente usar crédito equivalente, não criar desconto parcial nem saldo restante.
-- [ ] Garantir que uso de crédito também seja idempotente.
-- [ ] Garantir que crédito não pode ser usado por outro cliente.
-- [ ] Não expor saldo de crédito ao cliente.
+- [x] Se o cliente usar crédito equivalente, não criar desconto parcial nem saldo restante.
+- [x] Garantir que uso de crédito também seja idempotente.
+- [x] Garantir que crédito não pode ser usado por outro cliente.
+- [x] Não expor saldo de crédito ao cliente.
 - [ ] Expor histórico/lista de créditos de solicitação para admin quando necessário.
 
 ### Critérios de aceite
 
-- [ ] Cliente com crédito consegue usar uma nova solicitação equivalente.
-- [ ] Uso do crédito não permite parcial, divisão nem desconto.
+- [x] Cliente com crédito consegue usar uma nova solicitação equivalente.
+- [x] Uso do crédito não permite parcial, divisão nem desconto.
 - [ ] Crédito não vira saque nem payout.
-- [ ] Convite só é enviado quando a nova solicitação estiver quitada por crédito equivalente ou por pagamento confirmado.
+- [x] Convite só é enviado quando a nova solicitação estiver quitada por crédito equivalente ou por pagamento confirmado.
 
 ### Testes obrigatórios
 
-- [ ] Uso de crédito equivalente quita a solicitação sem pagamento parcial.
-- [ ] Solicitação não equivalente é rejeitada.
-- [ ] Cliente não usa crédito de outro cliente.
-- [ ] Reprocessamento não duplica uso do crédito.
+- [x] Uso de crédito equivalente quita a solicitação sem pagamento parcial.
+- [x] Solicitação não equivalente é rejeitada.
+- [x] Cliente não usa crédito de outro cliente.
+- [x] Reprocessamento não duplica uso do crédito.
 
 ### Validação
 

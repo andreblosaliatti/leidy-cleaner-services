@@ -147,6 +147,17 @@ public class CreditoSolicitacao {
                 && regiao.getId().equals(solicitacao.getRegiao().getId());
     }
 
+    public boolean estaDisponivel() {
+        return status == StatusCreditoSolicitacao.DISPONIVEL;
+    }
+
+    public void marcarUtilizado(SolicitacaoFaxina solicitacaoUso, OffsetDateTime utilizadoEm) {
+        this.solicitacaoUso = Objects.requireNonNull(solicitacaoUso, "solicitacaoUso");
+        this.status = StatusCreditoSolicitacao.UTILIZADO;
+        this.utilizadoEm = Objects.requireNonNull(utilizadoEm, "utilizadoEm");
+        this.reservadoEm = null;
+    }
+
     public Long getId() {
         return id;
     }

@@ -182,6 +182,9 @@ public class PagamentoService {
         Pagamento pagamento = pagamentoRepository.findByIdWithRelacionamentos(pagamentoId)
                 .orElseThrow(() -> new BusinessException("PAGAMENTO_NOT_FOUND", "Pagamento nao encontrado", HttpStatus.NOT_FOUND));
         validarClienteDoPagamento(usuarioId, pagamento);
+        if (pagamento.getGateway() != GatewayPagamento.ASAAS) {
+            return PagamentoMapper.paraDto(pagamento);
+        }
         if (pagamento.getAtendimento() != null
                 && pagamento.getAtendimento().getStatus() == StatusAtendimento.CANCELADO
                 && pagamento.getStatus() != StatusPagamento.PAGO) {

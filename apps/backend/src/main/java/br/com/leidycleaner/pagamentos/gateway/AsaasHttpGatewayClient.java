@@ -210,6 +210,11 @@ public class AsaasHttpGatewayClient implements AsaasGatewayClient {
             case PIX -> "PIX";
             case BOLETO -> "BOLETO";
             case CARTAO_CREDITO -> "CREDIT_CARD";
+            case CREDITO_SOLICITACAO -> throw new BusinessException(
+                    "METODO_PAGAMENTO_NAO_SUPORTADO",
+                    "Credito de solicitacao nao deve ser enviado ao Asaas",
+                    HttpStatus.BAD_REQUEST
+            );
         };
     }
 

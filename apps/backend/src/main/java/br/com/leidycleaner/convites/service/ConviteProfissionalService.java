@@ -29,7 +29,6 @@ import br.com.leidycleaner.solicitacoes.entity.SolicitacaoFaxina;
 import br.com.leidycleaner.solicitacoes.entity.SolicitacaoProfissionalSelecionado;
 import br.com.leidycleaner.solicitacoes.entity.StatusSolicitacao;
 import br.com.leidycleaner.solicitacoes.repository.SolicitacaoFaxinaRepository;
-import br.com.leidycleaner.solicitacoes.repository.SolicitacaoProfissionalSelecionadoRepository;
 
 @Service
 public class ConviteProfissionalService {
@@ -40,28 +39,28 @@ public class ConviteProfissionalService {
     private final ConviteProfissionalRepository conviteProfissionalRepository;
     private final PerfilProfissionalRepository perfilProfissionalRepository;
     private final SolicitacaoFaxinaRepository solicitacaoFaxinaRepository;
-    private final SolicitacaoProfissionalSelecionadoRepository solicitacaoProfissionalSelecionadoRepository;
     private final AtendimentoFaxinaRepository atendimentoFaxinaRepository;
     private final PagamentoRepository pagamentoRepository;
     private final CreditoSolicitacaoService creditoSolicitacaoService;
+    private final ConviteSolicitacaoPagaService conviteSolicitacaoPagaService;
     private final Clock clock;
 
     public ConviteProfissionalService(
             ConviteProfissionalRepository conviteProfissionalRepository,
             PerfilProfissionalRepository perfilProfissionalRepository,
             SolicitacaoFaxinaRepository solicitacaoFaxinaRepository,
-            SolicitacaoProfissionalSelecionadoRepository solicitacaoProfissionalSelecionadoRepository,
             AtendimentoFaxinaRepository atendimentoFaxinaRepository,
             PagamentoRepository pagamentoRepository,
-            CreditoSolicitacaoService creditoSolicitacaoService
+            CreditoSolicitacaoService creditoSolicitacaoService,
+            ConviteSolicitacaoPagaService conviteSolicitacaoPagaService
     ) {
         this.conviteProfissionalRepository = conviteProfissionalRepository;
         this.perfilProfissionalRepository = perfilProfissionalRepository;
         this.solicitacaoFaxinaRepository = solicitacaoFaxinaRepository;
-        this.solicitacaoProfissionalSelecionadoRepository = solicitacaoProfissionalSelecionadoRepository;
         this.atendimentoFaxinaRepository = atendimentoFaxinaRepository;
         this.pagamentoRepository = pagamentoRepository;
         this.creditoSolicitacaoService = creditoSolicitacaoService;
+        this.conviteSolicitacaoPagaService = conviteSolicitacaoPagaService;
         this.clock = Clock.systemDefaultZone();
     }
 
@@ -87,27 +86,7 @@ public class ConviteProfissionalService {
 
     @Transactional
     public ConviteProfissional criarConviteParaSolicitacaoPaga(SolicitacaoFaxina solicitacao) {
-        validarSolicitacaoElegivelParaConvitePago(solicitacao);
-
-        List<SolicitacaoProfissionalSelecionado> selecionados = solicitacaoProfissionalSelecionadoRepository
-                .findBySolicitacaoIdOrderByOrdemEscolhaAsc(solicitacao.getId());
-        if (selecionados.size() != 1) {
-            throw new BusinessException(
-                    "SOLICITACAO_PROFISSIONAL_SELECIONADA_INVALIDA",
-                    "Solicitacao paga deve ter exatamente uma profissional selecionada para envio de convite",
-                    HttpStatus.CONFLICT
-            );
-        }
-
-        SolicitacaoProfissionalSelecionado selecionado = selecionados.getFirst();
-        Long profissionalId = selecionado.getProfissional().getId();
-        return conviteProfissionalRepository
-                .findBySolicitacaoIdAndProfissionalId(solicitacao.getId(), profissionalId)
-                .map(conviteExistente -> {
-                    solicitacao.marcarPagaAguardandoAceite();
-                    return conviteExistente;
-                })
-                .orElseGet(() -> criarPrimeiroConviteParaSolicitacaoPaga(solicitacao, selecionado));
+        return conviteSolicitacaoPagaService.criarConviteParaSolicitacaoPaga(solicitacao);
     }
 
     @Transactional(readOnly = true)
@@ -335,40 +314,6 @@ public class ConviteProfissionalService {
                     HttpStatus.CONFLICT
             );
         }
-    }
-
-    private void validarSolicitacaoElegivelParaConvitePago(SolicitacaoFaxina solicitacao) {
-        if (solicitacao.getStatus() != StatusSolicitacao.AGUARDANDO_PAGAMENTO
-                && solicitacao.getStatus() != StatusSolicitacao.PAGA_AGUARDANDO_ACEITE) {
-            throw new BusinessException(
-                    "SOLICITACAO_STATUS_INCOMPATIVEL",
-                    "Solicitacao nao esta em status compativel com envio de convite apos pagamento",
-                    HttpStatus.CONFLICT
-            );
-        }
-    }
-
-    private ConviteProfissional criarPrimeiroConviteParaSolicitacaoPaga(
-            SolicitacaoFaxina solicitacao,
-            SolicitacaoProfissionalSelecionado selecionado
-    ) {
-        if (conviteProfissionalRepository.existsBySolicitacaoId(solicitacao.getId())) {
-            throw new BusinessException(
-                    "CONVITE_SOLICITACAO_INCONSISTENTE",
-                    "Solicitacao paga ja possui convite para profissional diferente da selecionada",
-                    HttpStatus.CONFLICT
-            );
-        }
-
-        OffsetDateTime enviadoEm = OffsetDateTime.now(clock);
-        ConviteProfissional convite = new ConviteProfissional(
-                solicitacao,
-                selecionado.getProfissional(),
-                enviadoEm,
-                enviadoEm.plusHours(HORAS_PARA_EXPIRAR)
-        );
-        solicitacao.marcarPagaAguardandoAceite();
-        return conviteProfissionalRepository.save(convite);
     }
 
     private Pagamento carregarPagamentoPagoSemAtendimentoParaSolicitacao(
