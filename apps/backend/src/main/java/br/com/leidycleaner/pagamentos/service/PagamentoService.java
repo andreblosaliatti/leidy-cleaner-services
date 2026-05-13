@@ -46,6 +46,7 @@ public class PagamentoService {
     private final AsaasGatewayClient asaasGatewayClient;
     private final UsuarioRepository usuarioRepository;
     private final AtendimentoExpiracaoService atendimentoExpiracaoService;
+    private final PagamentoConfirmacaoService pagamentoConfirmacaoService;
 
     public PagamentoService(
             PagamentoRepository pagamentoRepository,
@@ -54,7 +55,8 @@ public class PagamentoService {
             SolicitacaoProfissionalSelecionadoRepository selecionadoRepository,
             AsaasGatewayClient asaasGatewayClient,
             UsuarioRepository usuarioRepository,
-            AtendimentoExpiracaoService atendimentoExpiracaoService
+            AtendimentoExpiracaoService atendimentoExpiracaoService,
+            PagamentoConfirmacaoService pagamentoConfirmacaoService
     ) {
         this.pagamentoRepository = pagamentoRepository;
         this.atendimentoFaxinaRepository = atendimentoFaxinaRepository;
@@ -63,6 +65,7 @@ public class PagamentoService {
         this.asaasGatewayClient = asaasGatewayClient;
         this.usuarioRepository = usuarioRepository;
         this.atendimentoExpiracaoService = atendimentoExpiracaoService;
+        this.pagamentoConfirmacaoService = pagamentoConfirmacaoService;
     }
 
     @Transactional
@@ -192,14 +195,35 @@ public class PagamentoService {
         }
 
         AsaasPagamentoGatewayResponse gatewayResponse = asaasGatewayClient.consultarPagamento(pagamento.getGatewayPaymentId());
-        pagamento.atualizarConsultaGateway(
-                paraStatusM5A(gatewayResponse.statusGateway()),
-                gatewayResponse.valorTaxaGateway(),
-                gatewayResponse.valorLiquidoRecebido(),
-                gatewayResponse.urlPagamento(),
-                gatewayResponse.pixCopiaECola(),
-                gatewayResponse.payloadResumo()
-        );
+        StatusPagamento statusGateway = paraStatusConsultaGateway(gatewayResponse.statusGateway());
+        if (statusGateway == StatusPagamento.PAGO) {
+            pagamento.confirmarViaConsultaGateway(
+                    gatewayResponse.valorTaxaGateway(),
+                    gatewayResponse.valorLiquidoRecebido(),
+                    gatewayResponse.urlPagamento(),
+                    gatewayResponse.pixCopiaECola(),
+                    gatewayResponse.payloadResumo()
+            );
+            pagamentoConfirmacaoService.processarPagamentoConfirmado(
+                    pagamento,
+                    new PagamentoConfirmacaoService.ConfirmacaoPagamentoContext(
+                            "consultar-status",
+                            "CONSULTAR_STATUS",
+                            gatewayResponse.gatewayPaymentId(),
+                            gatewayResponse.statusGateway(),
+                            referenciaExternaEsperada(pagamento)
+                    )
+            );
+        } else {
+            pagamento.atualizarConsultaGateway(
+                    statusGateway,
+                    gatewayResponse.valorTaxaGateway(),
+                    gatewayResponse.valorLiquidoRecebido(),
+                    gatewayResponse.urlPagamento(),
+                    gatewayResponse.pixCopiaECola(),
+                    gatewayResponse.payloadResumo()
+            );
+        }
         return PagamentoMapper.paraDto(pagamento);
     }
 
@@ -428,5 +452,30 @@ public class PagamentoService {
             case "REFUNDED" -> StatusPagamento.ESTORNADO;
             default -> StatusPagamento.PENDENTE;
         };
+    }
+
+    private StatusPagamento paraStatusConsultaGateway(String statusGateway) {
+        if (statusGateway == null || statusGateway.isBlank()) {
+            return StatusPagamento.PENDENTE;
+        }
+        return switch (statusGateway) {
+            case "RECEIVED", "CONFIRMED" -> StatusPagamento.PAGO;
+            case "RECEIVED_IN_CASH" -> StatusPagamento.AGUARDANDO_CONFIRMACAO;
+            case "DELETED", "REFUND_REQUESTED", "CHARGEBACK_REQUESTED", "CHARGEBACK_DISPUTE",
+                    "AWAITING_CHARGEBACK_REVERSAL" -> StatusPagamento.CANCELADO;
+            case "REFUNDED" -> StatusPagamento.ESTORNADO;
+            case "OVERDUE" -> StatusPagamento.FALHOU;
+            default -> StatusPagamento.PENDENTE;
+        };
+    }
+
+    private String referenciaExternaEsperada(Pagamento pagamento) {
+        if (pagamento.getSolicitacao() != null) {
+            return "solicitacao-" + pagamento.getSolicitacao().getId();
+        }
+        if (pagamento.getAtendimento() != null) {
+            return "atendimento-" + pagamento.getAtendimento().getId();
+        }
+        return null;
     }
 }

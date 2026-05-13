@@ -278,7 +278,12 @@ export function ClientePagamentoSolicitacaoPage() {
               ? async () => {
                   setFeedback(null);
                   await consultarStatusPagamento(requireToken(token), pagamento.id);
-                  await Promise.all([pagamentoQuery.refetch(), solicitacaoQuery.refetch()]);
+                  await Promise.all([
+                    pagamentoQuery.refetch(),
+                    solicitacaoQuery.refetch(),
+                    queryClient.invalidateQueries({ queryKey: queryKeys.solicitacoes }),
+                    queryClient.invalidateQueries({ queryKey: ['cliente', 'pagamentos', 'atendimentos'] }),
+                  ]);
                 }
               : null
           }

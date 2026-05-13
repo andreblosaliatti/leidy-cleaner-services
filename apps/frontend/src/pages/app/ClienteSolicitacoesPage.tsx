@@ -6,7 +6,6 @@ import { FormAlert } from '../../components/ui/FormAlert';
 import { StateBox } from '../../components/ui/PageState';
 import { useAuth } from '../../features/auth/useAuth';
 import { listarMeusEnderecos } from '../../features/cliente/enderecos/enderecoApi';
-import type { Endereco } from '../../features/cliente/enderecos/types';
 import { SolicitacaoForm } from '../../features/cliente/solicitacoes/SolicitacaoForm';
 import { SolicitacaoList } from '../../features/cliente/solicitacoes/SolicitacaoList';
 import { formatDateTime } from '../../features/cliente/solicitacoes/SolicitacaoCard';
@@ -43,6 +42,10 @@ type Feedback = {
   title: string;
   message: string;
   details?: string[];
+};
+
+type SolicitationRedirectState = {
+  feedback?: Feedback;
 };
 
 export function ClienteSolicitacoesPage() {
@@ -105,12 +108,19 @@ export function ClienteSolicitacoesPage() {
   const createMutation = useMutation({
     mutationFn: (payload: SolicitacaoFaxinaRequest) => criarSolicitacao(requireToken(token), payload),
     onSuccess: async (solicitacao) => {
-      await queryClient.invalidateQueries({ queryKey: queryKeys.solicitacoes });
-      setSelectedId(solicitacao.id);
-      setFeedback({
-        tone: 'success',
-        title: 'Solicitação criada',
-        message: 'A solicitação foi registrada e já aparece na sua lista.',
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.solicitacoes }),
+        queryClient.invalidateQueries({ queryKey: ['admin', 'dashboard', 'indicadores'] }),
+      ]);
+      navigate(`/app/cliente/solicitacoes/${solicitacao.id}/profissionais`, {
+        replace: true,
+        state: {
+          feedback: {
+            tone: 'success',
+            title: 'Solicitacao criada',
+            message: 'Solicitação criada. Agora escolha uma profissional.',
+          },
+        } satisfies SolicitationRedirectState,
       });
     },
     onError: handleMutationError,
@@ -128,8 +138,8 @@ export function ClienteSolicitacoesPage() {
       setSelectedId(solicitacao.id);
       setFeedback({
         tone: 'success',
-        title: 'Solicitação cancelada',
-        message: 'A solicitação foi atualizada para o status cancelado.',
+        title: 'Solicitacao cancelada',
+        message: 'A solicitacao foi atualizada para o status cancelado.',
       });
     },
     onError: handleMutationError,
@@ -151,7 +161,7 @@ export function ClienteSolicitacoesPage() {
 
     setFeedback({
       tone: 'error',
-      title: 'Não foi possível concluir',
+      title: 'Nao foi possivel concluir',
       message: getApiErrorMessage(error),
       details: error instanceof ApiError ? error.errors : [],
     });
@@ -163,7 +173,7 @@ export function ClienteSolicitacoesPage() {
   }
 
   function handleCancel(solicitacao: SolicitacaoFaxina) {
-    const confirmed = window.confirm(`Cancelar a solicitação #${solicitacao.id}?`);
+    const confirmed = window.confirm(`Cancelar a solicitacao #${solicitacao.id}?`);
 
     if (confirmed) {
       cancelMutation.mutate(solicitacao.id);
@@ -181,9 +191,10 @@ export function ClienteSolicitacoesPage() {
     <div className="grid gap-5">
       <section className="rounded-lg border border-cyan-100 bg-white p-5 shadow-sm md:p-7">
         <p className="text-xs font-black uppercase tracking-[0.16em] text-cyan-700">Cliente</p>
-        <h1 className="mt-3 text-3xl font-black tracking-normal text-slate-900 md:text-4xl">Minhas solicitações</h1>
+        <h1 className="mt-3 text-3xl font-black tracking-normal text-slate-900 md:text-4xl">Minhas solicitacoes</h1>
         <p className="mt-3 max-w-3xl text-base leading-7 text-slate-600">
-          Crie e acompanhe solicitações de faxina usando seus endereços cadastrados. Validação de elegibilidade, status e cancelamento fica no backend.
+          Crie e acompanhe solicitacoes de faxina usando seus enderecos cadastrados. Validacao de elegibilidade, status e
+          cancelamento fica no backend.
         </p>
       </section>
 
@@ -191,20 +202,21 @@ export function ClienteSolicitacoesPage() {
 
       <section className="rounded-lg border border-slate-100 bg-white p-5 shadow-sm md:p-6" id="nova-solicitacao">
         <div className="mb-5">
-          <h2 className="text-2xl font-black text-slate-900">Nova solicitação</h2>
+          <h2 className="text-2xl font-black text-slate-900">Nova solicitacao</h2>
           <p className="mt-2 text-sm leading-6 text-slate-600">
-            Escolha um endereço cadastrado. A região operacional será definida pelo bairro em Porto Alegre ou pela cidade no litoral atendido.
+            Escolha um endereco cadastrado. A regiao operacional sera definida pelo bairro em Porto Alegre ou pela cidade no
+            litoral atendido.
           </p>
         </div>
 
         {(enderecosQuery.isLoading || regioesQuery.isLoading) && (
-          <StateBox tone="loading" title="Carregando dados" description="Buscando seus endereços e regiões ativas." />
+          <StateBox tone="loading" title="Carregando dados" description="Buscando seus enderecos e regioes ativas." />
         )}
 
         {(enderecosQuery.isError || regioesQuery.isError) && !protectedError && (
           <FormAlert
             tone="error"
-            title="Não foi possível preparar o formulário"
+            title="Nao foi possivel preparar o formulario"
             message={getApiErrorMessage(enderecosQuery.error ?? regioesQuery.error)}
             details={
               enderecosQuery.error instanceof ApiError
@@ -218,9 +230,9 @@ export function ClienteSolicitacoesPage() {
 
         {enderecosQuery.isSuccess && enderecos.length === 0 && (
           <div className="rounded-lg border border-amber-100 bg-amber-50 p-5 text-sm leading-6 text-amber-900">
-            Cadastre um endereço antes de criar uma solicitação.{' '}
+            Cadastre um endereco antes de criar uma solicitacao.{' '}
             <Link className="font-black underline" to="/app/cliente/enderecos">
-              Ir para meus endereços
+              Ir para meus enderecos
             </Link>
           </div>
         )}
@@ -239,22 +251,22 @@ export function ClienteSolicitacoesPage() {
       <section className="grid gap-4">
         <div>
           <h2 className="text-2xl font-black text-slate-900">Acompanhamento</h2>
-          <p className="mt-2 text-sm leading-6 text-slate-600">Veja o status das suas solicitações e abra os detalhes quando precisar.</p>
+          <p className="mt-2 text-sm leading-6 text-slate-600">Veja o status das suas solicitacoes e abra os detalhes quando precisar.</p>
         </div>
 
-        {solicitacoesQuery.isLoading && <StateBox tone="loading" title="Carregando solicitações" description="Buscando suas solicitações cadastradas." />}
+        {solicitacoesQuery.isLoading && <StateBox tone="loading" title="Carregando solicitacoes" description="Buscando suas solicitacoes cadastradas." />}
 
         {solicitacoesQuery.isError && !protectedError && (
           <FormAlert
             tone="error"
-            title="Não foi possível carregar solicitações"
+            title="Nao foi possivel carregar solicitacoes"
             message={getApiErrorMessage(solicitacoesQuery.error)}
             details={solicitacoesQuery.error instanceof ApiError ? solicitacoesQuery.error.errors : []}
           />
         )}
 
         {solicitacoesQuery.isSuccess && solicitacoes.length === 0 && (
-          <StateBox tone="empty" title="Nenhuma solicitação cadastrada" description="Crie sua primeira solicitação usando o formulário acima." />
+          <StateBox tone="empty" title="Nenhuma solicitacao cadastrada" description="Crie sua primeira solicitacao usando o formulario acima." />
         )}
 
         {solicitacoes.length > 0 && (
@@ -275,11 +287,11 @@ export function ClienteSolicitacoesPage() {
                     ? getContexto(solicitacoes.find((solicitacao) => solicitacao.id === selectedId) ?? solicitacoes[0])
                     : undefined
               }
-              isLoading={detalheQuery.isLoading}
-              solicitacao={detalheQuery.data ?? null}
               error={detalheQuery.error}
-              onCancel={handleCancel}
               isCancelling={Boolean(selectedId && cancellingId === selectedId)}
+              isLoading={detalheQuery.isLoading}
+              onCancel={handleCancel}
+              solicitacao={detalheQuery.data ?? null}
             />
           </div>
         )}
@@ -304,15 +316,15 @@ function SolicitacaoDetailPanel({
   solicitacao: SolicitacaoFaxina | null;
 }) {
   if (!solicitacao && !isLoading && !error) {
-    return <StateBox title="Detalhes" description="Selecione uma solicitação para ver mais informações." />;
+    return <StateBox description="Selecione uma solicitacao para ver mais informacoes." title="Detalhes" />;
   }
 
   if (isLoading) {
-    return <StateBox tone="loading" title="Carregando detalhes" description="Buscando dados completos da solicitação." />;
+    return <StateBox tone="loading" title="Carregando detalhes" description="Buscando dados completos da solicitacao." />;
   }
 
   if (error) {
-    return <FormAlert tone="error" title="Não foi possível carregar detalhes" message={getApiErrorMessage(error)} />;
+    return <FormAlert tone="error" title="Nao foi possivel carregar detalhes" message={getApiErrorMessage(error)} />;
   }
 
   if (!solicitacao) {
@@ -324,7 +336,7 @@ function SolicitacaoDetailPanel({
   return (
     <aside className="self-start rounded-lg border border-slate-100 bg-white p-5 shadow-sm">
       <div className="flex flex-wrap items-center gap-2">
-        <h2 className="text-xl font-black text-slate-900">Solicitação #{solicitacao.id}</h2>
+        <h2 className="text-xl font-black text-slate-900">Solicitacao #{solicitacao.id}</h2>
         <span className={`rounded-lg px-3 py-1 text-xs font-black uppercase tracking-[0.1em] ${statusInfo.className}`}>
           {statusInfo.label}
         </span>
@@ -333,19 +345,16 @@ function SolicitacaoDetailPanel({
       <dl className="mt-5 grid gap-4 text-sm">
         <DetailItem label="Tipo" value={getTipoServicoLabel(solicitacao.tipoServico)} />
         <DetailItem label="Data desejada" value={formatDateTime(solicitacao.dataHoraDesejada)} />
-        <DetailItem label="Duração estimada" value={`${solicitacao.duracaoEstimadaHoras} horas`} />
-        <DetailItem
-          label="Endereço"
-          value={getSolicitacaoEnderecoLabel(solicitacao, contexto)}
-        />
-        <DetailItem label="Bairro/região" value={getSolicitacaoRegiaoLabel(solicitacao, contexto)} />
-        <DetailItem label="Valor do serviço" value={formatServiceValue(solicitacao.valorServico)} />
-        {solicitacao.observacoes && <DetailItem label="Observações" value={solicitacao.observacoes} />}
+        <DetailItem label="Duracao estimada" value={`${solicitacao.duracaoEstimadaHoras} horas`} />
+        <DetailItem label="Endereco" value={getSolicitacaoEnderecoLabel(solicitacao, contexto)} />
+        <DetailItem label="Bairro/regiao" value={getSolicitacaoRegiaoLabel(solicitacao, contexto)} />
+        <DetailItem label="Valor do servico" value={formatServiceValue(solicitacao.valorServico)} />
+        {solicitacao.observacoes && <DetailItem label="Observacoes" value={solicitacao.observacoes} />}
       </dl>
 
       {solicitacao.status === 'NAO_ACEITA_CREDITO_GERADO' && (
         <div className="mt-5 rounded-lg border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm leading-6 text-emerald-900">
-          Esta solicitação gerou uma solicitação de reposição equivalente. Ela pode ser usada em uma nova solicitação compatível.
+          Esta solicitacao gerou uma solicitacao de reposicao equivalente. Ela pode ser usada em uma nova solicitacao compativel.
         </div>
       )}
 
@@ -365,7 +374,7 @@ function SolicitacaoDetailPanel({
             type="button"
             onClick={() => onCancel(solicitacao)}
           >
-            {isCancelling ? 'Cancelando...' : 'Cancelar solicitação'}
+            {isCancelling ? 'Cancelando...' : 'Cancelar solicitacao'}
           </button>
         </div>
       )}
@@ -393,7 +402,6 @@ function DetailItem({ label, value }: { label: string; value: string }) {
   );
 }
 
-
 function formatCurrency(value: number) {
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
@@ -402,9 +410,7 @@ function formatCurrency(value: number) {
 }
 
 function formatServiceValue(value: number | null | undefined) {
-  return value === null || value === undefined
-    ? 'Valor será calculado conforme a duração informada.'
-    : formatCurrency(value);
+  return value === null || value === undefined ? 'Valor sera calculado conforme a duracao informada.' : formatCurrency(value);
 }
 
 function requireToken(token: string | null) {
@@ -412,7 +418,7 @@ function requireToken(token: string | null) {
     throw new ApiError({
       status: 401,
       code: 'UNAUTHENTICATED',
-      message: 'Sessão expirada. Entre novamente.',
+      message: 'Sessao expirada. Entre novamente.',
     });
   }
 
@@ -424,7 +430,7 @@ function requireSelectedId(selectedId: number | null) {
     throw new ApiError({
       status: 400,
       code: 'SOLICITACAO_NOT_SELECTED',
-      message: 'Selecione uma solicitação.',
+      message: 'Selecione uma solicitacao.',
     });
   }
 

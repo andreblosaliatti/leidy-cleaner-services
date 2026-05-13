@@ -135,7 +135,7 @@ export function SolicitacaoForm({ enderecos, regioes, isSubmitting = false, onSu
 
   return (
     <form className="grid gap-5" noValidate onSubmit={handleSubmit(handleValidSubmit)}>
-      <div className="grid gap-5">
+      <fieldset className="grid gap-5" disabled={isSubmitting}>
         <label className="block" htmlFor="enderecoId">
           <span className="text-sm font-black text-slate-800">Endereco</span>
           <select
@@ -170,9 +170,9 @@ export function SolicitacaoForm({ enderecos, regioes, isSubmitting = false, onSu
         )}
 
         {regiaoError && <p className="rounded-lg border border-red-100 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800">{regiaoError}</p>}
-      </div>
+      </fieldset>
 
-      <div className="grid gap-5 lg:grid-cols-[1fr_1fr_0.7fr]">
+      <fieldset className="grid gap-5 lg:grid-cols-[1fr_1fr_0.7fr]" disabled={isSubmitting}>
         <label className="block" htmlFor="tipoServico">
           <span className="text-sm font-black text-slate-800">Tipo de servico</span>
           <select
@@ -202,7 +202,7 @@ export function SolicitacaoForm({ enderecos, regioes, isSubmitting = false, onSu
           registration={register('duracaoEstimadaHoras')}
           type="number"
         />
-      </div>
+      </fieldset>
 
       <div className="rounded-lg border border-slate-100 bg-slate-50 px-4 py-3 text-sm font-semibold leading-6 text-slate-700">
         Valor final sempre sera recalculado pelo backend no momento da criacao.
@@ -249,6 +249,7 @@ export function SolicitacaoForm({ enderecos, regioes, isSubmitting = false, onSu
         label="Observacoes"
         placeholder="Detalhes sobre acesso, preferencias ou cuidados no local"
         registration={register('observacoes')}
+        disabled={isSubmitting}
       />
 
       <div className="flex justify-end">

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import { FormAlert } from '../../components/ui/FormAlert';
 import { StateBox } from '../../components/ui/PageState';
@@ -36,10 +36,15 @@ type Feedback = {
   details?: string[];
 };
 
+type SelecaoProfissionaisLocationState = {
+  feedback?: Feedback;
+};
+
 export function ClienteSelecionarProfissionaisPage() {
   const { id } = useParams();
   const solicitacaoId = Number(id);
   const { token, logout } = useAuth();
+  const location = useLocation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
@@ -86,6 +91,17 @@ export function ClienteSelecionarProfissionaisPage() {
       navigate('/entrar', { replace: true });
     }
   }, [logout, navigate, protectedError]);
+
+  useEffect(() => {
+    const navigationState = location.state as SelecaoProfissionaisLocationState | null;
+
+    if (!navigationState?.feedback) {
+      return;
+    }
+
+    setFeedback(navigationState.feedback);
+    navigate(location.pathname, { replace: true, state: null });
+  }, [location.pathname, location.state, navigate]);
 
   const submitMutation = useMutation({
     mutationFn: (profissionalIds: number[]) => selecionarProfissionais(requireToken(token), solicitacaoId, { profissionalIds }),

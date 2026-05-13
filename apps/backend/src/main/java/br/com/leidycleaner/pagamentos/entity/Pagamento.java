@@ -187,6 +187,27 @@ public class Pagamento {
         this.payloadResumo = limparOpcional(payloadResumo);
     }
 
+    public void confirmarViaConsultaGateway(
+            BigDecimal valorTaxaGateway,
+            BigDecimal valorLiquidoRecebido,
+            String urlPagamento,
+            String pixCopiaECola,
+            String payloadResumo
+    ) {
+        if (status == StatusPagamento.ESTORNADO) {
+            return;
+        }
+        this.status = StatusPagamento.PAGO;
+        this.valorTaxaGateway = valorTaxaGateway;
+        this.valorLiquidoRecebido = valorLiquidoRecebido;
+        this.urlPagamento = limparOpcional(urlPagamento);
+        this.pixCopiaECola = limparOpcional(pixCopiaECola);
+        this.payloadResumo = limparOpcional(payloadResumo);
+        if (recebidoEm == null) {
+            this.recebidoEm = OffsetDateTime.now();
+        }
+    }
+
     public boolean aplicarStatusWebhook(StatusPagamento novoStatus, String payloadResumo) {
         if (novoStatus == null) {
             return false;

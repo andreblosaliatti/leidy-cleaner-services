@@ -3184,6 +3184,92 @@ class SolicitacaoFaxinaIntegrationTest {
     }
 
     @Test
+    void consultarStatusDaSolicitacaoConfirmaPagamentoECriaConvite() throws Exception {
+        SolicitacaoSelecionada solicitacao = criarSolicitacaoAguardandoPagamento(
+                "m5.consultar-status-solicitacao",
+                proximoCpf()
+        );
+        mockarCriacaoAsaas("pay_m5_consultar_status_solicitacao", "PENDING", "https://asaas.local/pay_m5_consultar_status_solicitacao", null);
+        Long pagamentoId = criarPagamentoPorSolicitacao(solicitacao.tokenCliente(), solicitacao.solicitacaoId(), "PIX");
+        given(asaasGatewayClient.consultarPagamento("pay_m5_consultar_status_solicitacao"))
+                .willReturn(new AsaasPagamentoGatewayResponse(
+                        "pay_m5_consultar_status_solicitacao",
+                        "RECEIVED",
+                        new BigDecimal("4.50"),
+                        new BigDecimal("175.50"),
+                        "https://asaas.local/pay_m5_consultar_status_solicitacao",
+                        "pix-copia-e-cola",
+                        "{\"id\":\"pay_m5_consultar_status_solicitacao\",\"status\":\"RECEIVED\"}"
+                ));
+
+        mockMvc.perform(post("/api/v1/pagamentos/{id}/consultar-status", pagamentoId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + solicitacao.tokenCliente()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.status").value("PAGO"))
+                .andExpect(jsonPath("$.data.solicitacaoId").value(solicitacao.solicitacaoId()))
+                .andExpect(jsonPath("$.data.atendimentoId").isEmpty())
+                .andExpect(jsonPath("$.data.webhookProcessado").value(false));
+
+        assertThat(pagamentoRepository.findById(pagamentoId))
+                .isPresent()
+                .get()
+                .satisfies(pagamento -> {
+                    assertThat(pagamento.getStatus().name()).isEqualTo("PAGO");
+                    assertThat(pagamento.getRecebidoEm()).isNotNull();
+                    assertThat(pagamento.getAtendimento()).isNull();
+                    assertThat(pagamento.isWebhookProcessado()).isFalse();
+                });
+        assertThat(solicitacaoFaxinaRepository.findById(solicitacao.solicitacaoId()))
+                .isPresent()
+                .get()
+                .extracting(solicitacaoPersistida -> solicitacaoPersistida.getStatus().name())
+                .isEqualTo("PAGA_AGUARDANDO_ACEITE");
+        assertThat(conviteProfissionalRepository.findBySolicitacaoId(solicitacao.solicitacaoId()))
+                .singleElement()
+                .satisfies(convite -> assertThat(convite.getProfissional().getId()).isEqualTo(solicitacao.profissionalId()));
+        assertThat(atendimentoFaxinaRepository.findBySolicitacaoId(solicitacao.solicitacaoId())).isEmpty();
+    }
+
+    @Test
+    void consultarStatusDaSolicitacaoNaoDuplicaConviteQuandoChamadoDuasVezes() throws Exception {
+        SolicitacaoSelecionada solicitacao = criarSolicitacaoAguardandoPagamento(
+                "m5.consultar-status-solicitacao-duplicado",
+                proximoCpf()
+        );
+        mockarCriacaoAsaas("pay_m5_consultar_status_solicitacao_duplicado", "PENDING", "https://asaas.local/pay_m5_consultar_status_solicitacao_duplicado", null);
+        Long pagamentoId = criarPagamentoPorSolicitacao(solicitacao.tokenCliente(), solicitacao.solicitacaoId(), "PIX");
+        given(asaasGatewayClient.consultarPagamento("pay_m5_consultar_status_solicitacao_duplicado"))
+                .willReturn(new AsaasPagamentoGatewayResponse(
+                        "pay_m5_consultar_status_solicitacao_duplicado",
+                        "RECEIVED",
+                        new BigDecimal("4.50"),
+                        new BigDecimal("175.50"),
+                        "https://asaas.local/pay_m5_consultar_status_solicitacao_duplicado",
+                        "pix-copia-e-cola",
+                        "{\"id\":\"pay_m5_consultar_status_solicitacao_duplicado\",\"status\":\"RECEIVED\"}"
+                ));
+
+        mockMvc.perform(post("/api/v1/pagamentos/{id}/consultar-status", pagamentoId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + solicitacao.tokenCliente()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status").value("PAGO"));
+
+        mockMvc.perform(post("/api/v1/pagamentos/{id}/consultar-status", pagamentoId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + solicitacao.tokenCliente()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status").value("PAGO"));
+
+        assertThat(conviteProfissionalRepository.findBySolicitacaoId(solicitacao.solicitacaoId())).hasSize(1);
+        assertThat(atendimentoFaxinaRepository.findBySolicitacaoId(solicitacao.solicitacaoId())).isEmpty();
+        assertThat(pagamentoRepository.findById(pagamentoId))
+                .isPresent()
+                .get()
+                .extracting(pagamento -> pagamento.getStatus().name())
+                .isEqualTo("PAGO");
+    }
+
+    @Test
     void webhookPaymentConfirmedDaSolicitacaoSemProfissionalSelecionadaFalhaSemCriarConvite() throws Exception {
         SolicitacaoSelecionada solicitacao = criarSolicitacaoAguardandoPagamento(
                 "m5.webhook-solicitacao-sem-selecao",
@@ -4688,7 +4774,7 @@ class SolicitacaoFaxinaIntegrationTest {
     }
 
     @Test
-    void consultarStatusReconsultaGatewaySemConfirmarPagamentoDefinitivamente() throws Exception {
+    void consultarStatusConfirmaPagamentoDeAtendimentoQuandoGatewayRetornaRecebido() throws Exception {
         AtendimentoCriado atendimento = criarAtendimentoAguardandoPagamento("m5a.reconsulta", "75622233344");
         mockarCriacaoAsaas("pay_m5a_reconsulta", "PENDING", "https://asaas.local/pay_m5a_reconsulta", null);
         Long pagamentoId = criarPagamento(atendimento.tokenCliente(), atendimento.atendimentoId(), "PIX");
@@ -4707,7 +4793,7 @@ class SolicitacaoFaxinaIntegrationTest {
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + atendimento.tokenCliente()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.status").value("AGUARDANDO_CONFIRMACAO"))
+                .andExpect(jsonPath("$.data.status").value("PAGO"))
                 .andExpect(jsonPath("$.data.valorTaxaGateway").value(4.50))
                 .andExpect(jsonPath("$.data.valorLiquidoRecebido").value(175.50))
                 .andExpect(jsonPath("$.data.pixCopiaECola").value("pix-copia-e-cola"))
@@ -4717,13 +4803,13 @@ class SolicitacaoFaxinaIntegrationTest {
                 .isPresent()
                 .get()
                 .extracting(atendimentoPersistido -> atendimentoPersistido.getStatus().name())
-                .isEqualTo("AGUARDANDO_PAGAMENTO");
+                .isEqualTo("CONFIRMADO");
         assertThat(pagamentoRepository.findById(pagamentoId))
                 .isPresent()
                 .get()
                 .satisfies(pagamento -> {
-                    assertThat(pagamento.getStatus().name()).isEqualTo("AGUARDANDO_CONFIRMACAO");
-                    assertThat(pagamento.getRecebidoEm()).isNull();
+                    assertThat(pagamento.getStatus().name()).isEqualTo("PAGO");
+                    assertThat(pagamento.getRecebidoEm()).isNotNull();
                     assertThat(pagamento.isWebhookProcessado()).isFalse();
                 });
     }

@@ -1,12 +1,12 @@
 import { Link } from 'react-router-dom';
 
+import { getSolicitacaoEnderecoLabel, getSolicitacaoRegiaoLabel } from './solicitacaoDisplay';
 import {
   canRequestCancellation,
   canSelectProfessionals,
   getStatusSolicitacaoInfo,
   getTipoServicoLabel,
 } from './solicitacaoLabels';
-import { getSolicitacaoEnderecoLabel, getSolicitacaoRegiaoLabel } from './solicitacaoDisplay';
 import type { SolicitacaoContexto, SolicitacaoFaxina } from './types';
 
 type SolicitacaoCardProps = {
@@ -35,17 +35,17 @@ export function SolicitacaoCard({
         selected ? 'border-cyan-200 ring-2 ring-cyan-100' : 'border-slate-100 hover:border-cyan-100',
       ].join(' ')}
     >
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-lg font-black text-slate-900">Solicitação #{solicitacao.id}</h2>
+            <h2 className="text-lg font-black text-slate-900">Solicitacao #{solicitacao.id}</h2>
             <span className={`rounded-lg px-3 py-1 text-xs font-black uppercase tracking-[0.1em] ${statusInfo.className}`}>
               {statusInfo.label}
             </span>
           </div>
           <p className="mt-2 text-sm font-semibold text-slate-700">{getTipoServicoLabel(solicitacao.tipoServico)}</p>
           <p className="mt-2 text-sm leading-6 text-slate-600">
-            {formatDateTime(solicitacao.dataHoraDesejada)} · {solicitacao.duracaoEstimadaHoras}h estimadas
+            {formatDateTime(solicitacao.dataHoraDesejada)} - {solicitacao.duracaoEstimadaHoras}h estimadas
           </p>
           <p className="mt-1 text-sm leading-6 text-slate-500">{getSolicitacaoEnderecoLabel(solicitacao, contexto)}</p>
           <p className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
@@ -53,7 +53,7 @@ export function SolicitacaoCard({
           </p>
         </div>
 
-        <div className="flex shrink-0 flex-wrap gap-2">
+        <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap lg:w-auto lg:justify-end">
           <button
             className="min-h-10 rounded-lg border border-slate-200 px-4 text-sm font-black text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-700"
             type="button"
