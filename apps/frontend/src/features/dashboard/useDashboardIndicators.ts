@@ -17,8 +17,10 @@ import { buscarIndicadoresAdmin, type AdminDashboardIndicadores } from './dashbo
 const activeSolicitacaoStatuses = new Set<StatusSolicitacao>([
   'CRIADA',
   'AGUARDANDO_SELECAO',
+  'AGUARDANDO_PAGAMENTO',
   'CONVITES_ENVIADOS',
   'AGUARDANDO_ACEITE',
+  'PAGA_AGUARDANDO_ACEITE',
   'ACEITA',
   'PAGA',
   'EM_EXECUCAO',

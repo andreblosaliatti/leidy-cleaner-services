@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 
 import { AuthenticatedLayout } from '../layouts/AuthenticatedLayout';
+import { ProfessionalMobileLayout } from '../layouts/ProfessionalMobileLayout';
 import { PublicLayout } from '../layouts/PublicLayout';
 import { AdminAtendimentoDetalhePage } from '../pages/app/AdminAtendimentoDetalhePage';
 import { AdminAtendimentosPage } from '../pages/app/AdminAtendimentosPage';
@@ -23,6 +24,7 @@ import { ClienteDashboardPage } from '../pages/app/ClienteDashboardPage';
 import { ClienteEnderecosPage } from '../pages/app/ClienteEnderecosPage';
 import { ClientePagamentoPage } from '../pages/app/ClientePagamentoPage';
 import { ClientePagamentoRetornoPage } from '../pages/app/ClientePagamentoRetornoPage';
+import { ClientePagamentoSolicitacaoPage } from '../pages/app/ClientePagamentoSolicitacaoPage';
 import { ClientePagamentosPage } from '../pages/app/ClientePagamentosPage';
 import { ClienteSelecionarProfissionaisPage } from '../pages/app/ClienteSelecionarProfissionaisPage';
 import { ClienteSolicitacoesPage } from '../pages/app/ClienteSolicitacoesPage';
@@ -45,6 +47,12 @@ import { LoginPage } from '../pages/public/LoginPage';
 import { NotFoundPage } from '../pages/public/NotFoundPage';
 import { ProfessionalRegistrationPage } from '../pages/public/ProfessionalRegistrationPage';
 import { RegistrationChoicePage } from '../pages/public/RegistrationChoicePage';
+import { ProfessionalMobileAtendimentosPage } from '../pages/professional-mobile/ProfessionalMobileAtendimentosPage';
+import { ProfessionalMobileConviteDetalhePage } from '../pages/professional-mobile/ProfessionalMobileConviteDetalhePage';
+import { ProfessionalMobileConvitesPage } from '../pages/professional-mobile/ProfessionalMobileConvitesPage';
+import { ProfessionalMobileDisponibilidadePage } from '../pages/professional-mobile/ProfessionalMobileDisponibilidadePage';
+import { ProfessionalMobileHomePage } from '../pages/professional-mobile/ProfessionalMobileHomePage';
+import { ProfessionalMobilePerfilPage } from '../pages/professional-mobile/ProfessionalMobilePerfilPage';
 import { AppHomeRedirect } from '../routes/AppHomeRedirect';
 import { RequireAuth } from '../routes/RequireAuth';
 import { RequireProfile } from '../routes/RequireProfile';
@@ -66,6 +74,16 @@ export function App() {
         <Route path="profissional" element={<ProfessionalRegistrationPage />} />
       </Route>
       <Route element={<RequireAuth />}>
+        <Route element={<RequireProfile profile="PROFISSIONAL" />}>
+          <Route path="profissional/app" element={<ProfessionalMobileLayout />}>
+            <Route index element={<ProfessionalMobileHomePage />} />
+            <Route path="convites" element={<ProfessionalMobileConvitesPage />} />
+            <Route path="convites/:id" element={<ProfessionalMobileConviteDetalhePage />} />
+            <Route path="atendimentos" element={<ProfessionalMobileAtendimentosPage />} />
+            <Route path="perfil" element={<ProfessionalMobilePerfilPage />} />
+            <Route path="disponibilidade" element={<ProfessionalMobileDisponibilidadePage />} />
+          </Route>
+        </Route>
         <Route path="app" element={<AuthenticatedLayout />}>
           <Route index element={<AppHomeRedirect />} />
           <Route path="ocorrencias" element={<OcorrenciasPage />} />
@@ -80,6 +98,7 @@ export function App() {
               <Route path="pagamentos" element={<ClientePagamentosPage />} />
               <Route path="pagamentos/retorno" element={<ClientePagamentoRetornoPage />} />
               <Route path="pagamentos/atendimento/:atendimentoId" element={<ClientePagamentoPage />} />
+              <Route path="pagamentos/solicitacao/:solicitacaoId" element={<ClientePagamentoSolicitacaoPage />} />
               <Route path="atendimentos" element={<ClienteAtendimentosPage />} />
               <Route path="atendimentos/:id" element={<ClienteAtendimentoDetalhePage />} />
             </Route>

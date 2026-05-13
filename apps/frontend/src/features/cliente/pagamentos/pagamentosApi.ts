@@ -1,5 +1,12 @@
 import { ApiError, apiRequest } from '../../../services/apiClient';
-import type { AtendimentoPagamento, CheckoutPagamento, CheckoutPagamentoRequest, Pagamento, PixQrCodePagamento } from './types';
+import type {
+  AtendimentoPagamento,
+  CheckoutPagamento,
+  CheckoutPagamentoRequest,
+  CriarPagamentoSolicitacaoRequest,
+  Pagamento,
+  PixQrCodePagamento,
+} from './types';
 
 export function listarMeusAtendimentosParaPagamento(token: string) {
   return apiRequest<AtendimentoPagamento[]>('/atendimentos/meus', {
@@ -44,6 +51,13 @@ export function buscarPagamentoPorAtendimento(token: string, atendimentoId: numb
   });
 }
 
+export function buscarPagamentoPorSolicitacao(token: string, solicitacaoId: number) {
+  return apiRequest<Pagamento>(`/pagamentos/solicitacao/${solicitacaoId}`, {
+    method: 'GET',
+    token,
+  });
+}
+
 export async function buscarPagamentoPorAtendimentoOuNull(token: string, atendimentoId: number) {
   try {
     return await buscarPagamentoPorAtendimento(token, atendimentoId);
@@ -54,6 +68,26 @@ export async function buscarPagamentoPorAtendimentoOuNull(token: string, atendim
 
     throw error;
   }
+}
+
+export async function buscarPagamentoPorSolicitacaoOuNull(token: string, solicitacaoId: number) {
+  try {
+    return await buscarPagamentoPorSolicitacao(token, solicitacaoId);
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) {
+      return null;
+    }
+
+    throw error;
+  }
+}
+
+export function criarPagamentoSolicitacao(token: string, payload: CriarPagamentoSolicitacaoRequest) {
+  return apiRequest<Pagamento>('/pagamentos', {
+    method: 'POST',
+    token,
+    body: JSON.stringify(payload),
+  });
 }
 
 export function consultarStatusPagamento(token: string, pagamentoId: number) {

@@ -343,6 +343,12 @@ function SolicitacaoDetailPanel({
         {solicitacao.observacoes && <DetailItem label="Observações" value={solicitacao.observacoes} />}
       </dl>
 
+      {solicitacao.status === 'NAO_ACEITA_CREDITO_GERADO' && (
+        <div className="mt-5 rounded-lg border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm leading-6 text-emerald-900">
+          Esta solicitação gerou uma solicitação de reposição equivalente. Ela pode ser usada em uma nova solicitação compatível.
+        </div>
+      )}
+
       {['CRIADA', 'AGUARDANDO_SELECAO', 'CONVITES_ENVIADOS', 'AGUARDANDO_ACEITE'].includes(solicitacao.status) && (
         <div className="mt-5 grid gap-3">
           {canSelectProfessionals(solicitacao.status) && (
@@ -361,6 +367,17 @@ function SolicitacaoDetailPanel({
           >
             {isCancelling ? 'Cancelando...' : 'Cancelar solicitação'}
           </button>
+        </div>
+      )}
+
+      {['AGUARDANDO_PAGAMENTO', 'PAGA_AGUARDANDO_ACEITE'].includes(solicitacao.status) && (
+        <div className="mt-5">
+          <Link
+            className="inline-flex min-h-10 items-center justify-center rounded-lg bg-cyan-700 px-4 text-sm font-black text-white transition hover:bg-cyan-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-700"
+            to={`/app/cliente/pagamentos/solicitacao/${solicitacao.id}`}
+          >
+            {solicitacao.status === 'AGUARDANDO_PAGAMENTO' ? 'Ir para pagamento' : 'Ver pagamento e status'}
+          </Link>
         </div>
       )}
     </aside>

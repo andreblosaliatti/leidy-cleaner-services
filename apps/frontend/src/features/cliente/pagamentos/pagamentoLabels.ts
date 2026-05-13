@@ -4,6 +4,7 @@ export const metodoPagamentoLabels: Record<MetodoPagamento, string> = {
   PIX: 'Pix',
   BOLETO: 'Boleto',
   CARTAO_CREDITO: 'Cartao de credito',
+  CREDITO_SOLICITACAO: 'Solicitacao de reposicao',
 };
 
 export const tipoServicoPagamentoLabels: Record<TipoServicoPagamento, string> = {
@@ -82,6 +83,18 @@ export function getStatusPagamentoDescription(status: StatusPagamento) {
   };
 
   return descriptions[status];
+}
+
+export function getGatewayPagamentoLabel(gateway: string | null | undefined) {
+  if (gateway === 'INTERNO') {
+    return 'Interno';
+  }
+
+  if (gateway === 'ASAAS') {
+    return 'Asaas';
+  }
+
+  return gateway ?? 'Nao informado';
 }
 
 export function canRecheckPagamento(status: StatusPagamento) {

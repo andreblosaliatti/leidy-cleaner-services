@@ -1,8 +1,8 @@
 export type StatusPagamento = 'PENDENTE' | 'AGUARDANDO_CONFIRMACAO' | 'PAGO' | 'FALHOU' | 'CANCELADO' | 'ESTORNADO';
 
-export type MetodoPagamento = 'PIX' | 'BOLETO' | 'CARTAO_CREDITO';
+export type MetodoPagamento = 'PIX' | 'BOLETO' | 'CARTAO_CREDITO' | 'CREDITO_SOLICITACAO';
 
-export type GatewayPagamento = 'ASAAS';
+export type GatewayPagamento = 'ASAAS' | 'INTERNO';
 
 export type StatusAtendimentoPagamento =
   | 'AGUARDANDO_PAGAMENTO'
@@ -56,7 +56,8 @@ export type CheckoutPagamento = {
 
 export type Pagamento = {
   id: number;
-  atendimentoId: number;
+  atendimentoId: number | null;
+  solicitacaoId: number | null;
   gateway: GatewayPagamento;
   gatewayPaymentId: string;
   metodoPagamento: MetodoPagamento;
@@ -76,4 +77,9 @@ export type PixQrCodePagamento = {
   encodedImage: string | null;
   payload: string | null;
   expirationDate: string | null;
+};
+
+export type CriarPagamentoSolicitacaoRequest = {
+  solicitacaoId: number;
+  metodoPagamento: Exclude<MetodoPagamento, 'CREDITO_SOLICITACAO'>;
 };

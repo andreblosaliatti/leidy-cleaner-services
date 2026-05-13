@@ -496,22 +496,22 @@ Adaptar o fluxo visual do cliente ao novo domínio.
 - [ ] Remover UI de ordem de escolha.
 - [ ] Remover texto “escolha até 3”.
 - [ ] Após selecionar profissional, redirecionar para pagamento da solicitação.
-- [ ] Tela de pagamento usa `solicitacaoId`, não `atendimentoId`.
-- [ ] Polling de pagamento continua funcionando.
-- [ ] QR Code/Pix aparece apenas enquanto pagamento está pendente.
-- [ ] Após pagamento confirmado, mostrar “Pagamento confirmado. Aguardando aceite da profissional”.
-- [ ] Solicitação detalhe mostra estados novos.
-- [ ] Mostrar mensagem clara antes do pagamento: se a profissional não aceitar, a cliente recebe 1 crédito de reposição para solicitação equivalente.
-- [ ] Mostrar estado de crédito gerado se a profissional recusar/expirar.
+- [x] Tela de pagamento usa `solicitacaoId`, não `atendimentoId`.
+- [x] Polling de pagamento continua funcionando.
+- [x] QR Code/Pix aparece apenas enquanto pagamento está pendente.
+- [x] Após pagamento confirmado, mostrar “Pagamento confirmado. Aguardando aceite da profissional”.
+- [x] Solicitação detalhe mostra estados novos.
+- [x] Mostrar mensagem clara antes do pagamento: se a profissional não aceitar, a cliente recebe 1 crédito de reposição para solicitação equivalente.
+- [x] Mostrar estado de crédito gerado se a profissional recusar/expirar.
 - [ ] Se atendimento for criado, exibir link para atendimento.
 
 ### Critérios de aceite
 
 - [ ] Cliente não consegue selecionar mais de uma profissional pela UI.
-- [ ] Cliente entende que está pagando antes do aceite.
-- [ ] Cliente entende que recusa/expiração vira crédito.
-- [ ] Pagamento atualiza automaticamente por polling.
-- [ ] Frontend não marca pagamento como pago localmente.
+- [x] Cliente entende que está pagando antes do aceite.
+- [x] Cliente entende que recusa/expiração vira crédito.
+- [x] Pagamento atualiza automaticamente por polling.
+- [x] Frontend não marca pagamento como pago localmente.
 
 ### Validação
 

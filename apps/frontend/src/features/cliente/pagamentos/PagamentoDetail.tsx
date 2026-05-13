@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import {
   formatDateTime,
   formatCurrency,
+  getGatewayPagamentoLabel,
   getMetodoPagamentoLabel,
   getStatusPagamentoDescription,
 } from './pagamentoLabels';
@@ -11,6 +12,8 @@ import { PagamentoStatusBadge } from './PagamentoStatusBadge';
 import type { Pagamento, PixQrCodePagamento } from './types';
 
 type PagamentoDetailProps = {
+  backHref?: string;
+  backLabel?: string;
   isPixQrCodeLoading?: boolean;
   isRefreshingStatus?: boolean;
   onRefreshStatus?: (() => void) | null;
@@ -20,6 +23,8 @@ type PagamentoDetailProps = {
 };
 
 export function PagamentoDetail({
+  backHref = '/app/cliente/pagamentos',
+  backLabel = 'Voltar para pagamentos',
   isPixQrCodeLoading = false,
   isRefreshingStatus = false,
   onRefreshStatus = null,
@@ -30,6 +35,7 @@ export function PagamentoDetail({
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
   const isPaid = pagamento.status === 'PAGO';
   const isPix = pagamento.metodoPagamento === 'PIX';
+  const isInternalCreditPayment = pagamento.metodoPagamento === 'CREDITO_SOLICITACAO' || pagamento.gateway === 'INTERNO';
   const isWaitingWebhook = pagamento.status === 'PENDENTE' || pagamento.status === 'AGUARDANDO_CONFIRMACAO';
   const requiresSupport = pagamento.status === 'CANCELADO' || pagamento.status === 'FALHOU' || pagamento.status === 'ESTORNADO';
   const pixPayload = pixQrCode?.payload ?? pagamento.pixCopiaECola ?? null;
@@ -60,7 +66,11 @@ export function PagamentoDetail({
             <PagamentoStatusBadge status={pagamento.status} />
           </div>
           <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
-            {isWaitingWebhook ? 'Aguardando confirmacao do pagamento pelo webhook.' : getStatusPagamentoDescription(pagamento.status)}
+            {isInternalCreditPayment && isPaid
+              ? 'Pagamento realizado com solicitacao de reposicao.'
+              : isWaitingWebhook
+                ? 'Aguardando confirmacao do pagamento pelo webhook.'
+                : getStatusPagamentoDescription(pagamento.status)}
           </p>
         </div>
         {onRefreshStatus && isWaitingWebhook && (
@@ -76,16 +86,20 @@ export function PagamentoDetail({
       </div>
 
       <dl className="mt-6 grid gap-4 text-sm md:grid-cols-2 xl:grid-cols-3">
-        <div>
-          <dt className="text-xs font-black uppercase tracking-[0.12em] text-slate-500">Atendimento relacionado</dt>
-          <dd className="mt-1 flex flex-wrap items-center gap-2 font-semibold leading-6 text-slate-800">
-            #{pagamento.atendimentoId}
-            <Link className="text-sm font-black text-cyan-700 hover:text-cyan-800" to={`/app/cliente/atendimentos/${pagamento.atendimentoId}`}>
-              Ver atendimento
-            </Link>
-          </dd>
-        </div>
+        {pagamento.atendimentoId && (
+          <div>
+            <dt className="text-xs font-black uppercase tracking-[0.12em] text-slate-500">Atendimento relacionado</dt>
+            <dd className="mt-1 flex flex-wrap items-center gap-2 font-semibold leading-6 text-slate-800">
+              #{pagamento.atendimentoId}
+              <Link className="text-sm font-black text-cyan-700 hover:text-cyan-800" to={`/app/cliente/atendimentos/${pagamento.atendimentoId}`}>
+                Ver atendimento
+              </Link>
+            </dd>
+          </div>
+        )}
+        {pagamento.solicitacaoId && <DetailItem label="Solicitacao relacionada" value={`#${pagamento.solicitacaoId}`} />}
         <DetailItem label="Metodo" value={getMetodoPagamentoLabel(pagamento.metodoPagamento)} />
+        <DetailItem label="Gateway" value={getGatewayPagamentoLabel(pagamento.gateway)} />
         <DetailItem label="Valor" value={formatCurrency(pagamento.valorBruto)} />
         <DetailItem label="Criado em" value={formatDateTime(pagamento.criadoEm)} />
         <DetailItem label="Recebido em" value={formatDateTime(pagamento.recebidoEm)} />
@@ -95,7 +109,7 @@ export function PagamentoDetail({
       <div className="mt-6 grid gap-4">
         {isPaid && (
           <div className="rounded-lg border border-green-100 bg-green-50 p-4 text-sm font-semibold leading-6 text-green-800">
-            Pagamento confirmado pelo backend.
+            {isInternalCreditPayment ? 'Pagamento realizado com solicitacao de reposicao.' : 'Pagamento confirmado pelo backend.'}
           </div>
         )}
 
@@ -194,9 +208,9 @@ export function PagamentoDetail({
         <div className="flex flex-wrap gap-3">
           <Link
             className="inline-flex min-h-10 items-center justify-center rounded-lg border border-slate-200 px-4 text-sm font-black text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-700"
-            to="/app/cliente/pagamentos"
+            to={backHref}
           >
-            Voltar para pagamentos
+            {backLabel}
           </Link>
         </div>
       </div>

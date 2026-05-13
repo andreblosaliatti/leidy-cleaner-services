@@ -3,18 +3,21 @@ import type { StatusSolicitacao, TipoServico } from './types';
 export const tipoServicoOptions: Array<{ value: TipoServico; label: string }> = [
   { value: 'FAXINA_RESIDENCIAL', label: 'Faxina residencial' },
   { value: 'FAXINA_COMERCIAL', label: 'Faxina comercial' },
-  { value: 'FAXINA_CONDOMINIO', label: 'Faxina de condomínio' },
+  { value: 'FAXINA_CONDOMINIO', label: 'Faxina de condominio' },
   { value: 'FAXINA_EVENTO', label: 'Faxina para evento' },
 ];
 
 export const statusSolicitacaoLabels: Record<StatusSolicitacao, string> = {
   CRIADA: 'Criada',
-  AGUARDANDO_SELECAO: 'Aguardando seleção',
+  AGUARDANDO_SELECAO: 'Aguardando selecao',
+  AGUARDANDO_PAGAMENTO: 'Aguardando pagamento',
   CONVITES_ENVIADOS: 'Convites enviados',
   AGUARDANDO_ACEITE: 'Aguardando aceite',
+  PAGA_AGUARDANDO_ACEITE: 'Aguardando aceite da profissional',
+  NAO_ACEITA_CREDITO_GERADO: 'Reposicao disponivel',
   ACEITA: 'Aceita',
   PAGA: 'Paga',
-  EM_EXECUCAO: 'Em execução',
+  EM_EXECUCAO: 'Em execucao',
   FINALIZADA: 'Finalizada',
   CANCELADA: 'Cancelada',
   EXPIRADA: 'Expirada',
@@ -28,8 +31,11 @@ export function getStatusSolicitacaoInfo(status: StatusSolicitacao) {
   const classNameByStatus: Record<StatusSolicitacao, string> = {
     CRIADA: 'bg-slate-100 text-slate-700',
     AGUARDANDO_SELECAO: 'bg-amber-50 text-amber-800',
+    AGUARDANDO_PAGAMENTO: 'bg-amber-50 text-amber-800',
     CONVITES_ENVIADOS: 'bg-blue-50 text-blue-800',
     AGUARDANDO_ACEITE: 'bg-blue-50 text-blue-800',
+    PAGA_AGUARDANDO_ACEITE: 'bg-blue-50 text-blue-800',
+    NAO_ACEITA_CREDITO_GERADO: 'bg-emerald-50 text-emerald-800',
     ACEITA: 'bg-green-50 text-green-700',
     PAGA: 'bg-green-50 text-green-700',
     EM_EXECUCAO: 'bg-purple-50 text-purple-800',
