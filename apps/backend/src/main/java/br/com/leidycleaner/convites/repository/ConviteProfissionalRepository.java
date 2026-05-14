@@ -6,9 +6,11 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.repository.query.Param;
 
 import br.com.leidycleaner.convites.entity.ConviteProfissional;
+import br.com.leidycleaner.convites.entity.StatusConvite;
 import jakarta.persistence.LockModeType;
 
 public interface ConviteProfissionalRepository extends JpaRepository<ConviteProfissional, Long> {
@@ -77,6 +79,19 @@ public interface ConviteProfissionalRepository extends JpaRepository<ConviteProf
             where convite.id = :id
             """)
     Optional<ConviteProfissional> findByIdForUpdate(@Param("id") Long id);
+
+    @Query("""
+            select convite.id
+            from ConviteProfissional convite
+            where convite.status in :statuses
+              and convite.expiraEm <= :agora
+            order by convite.expiraEm asc, convite.id asc
+            """)
+    List<Long> findExpiredRespondableIds(
+            @Param("statuses") List<StatusConvite> statuses,
+            @Param("agora") java.time.OffsetDateTime agora,
+            Pageable pageable
+    );
 
     List<ConviteProfissional> findBySolicitacaoId(Long solicitacaoId);
 

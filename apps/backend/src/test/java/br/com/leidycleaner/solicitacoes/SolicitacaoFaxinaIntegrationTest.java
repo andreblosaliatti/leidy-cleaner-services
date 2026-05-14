@@ -47,7 +47,9 @@ import br.com.leidycleaner.atendimentos.repository.AtendimentoFaxinaRepository;
 import br.com.leidycleaner.atendimentos.repository.CheckpointServicoRepository;
 import br.com.leidycleaner.avaliacoes.repository.AvaliacaoProfissionalRepository;
 import br.com.leidycleaner.convites.entity.ConviteProfissional;
+import br.com.leidycleaner.convites.entity.StatusConvite;
 import br.com.leidycleaner.convites.repository.ConviteProfissionalRepository;
+import br.com.leidycleaner.convites.service.ConviteExpiracaoService;
 import br.com.leidycleaner.convites.service.ConviteProfissionalService;
 import br.com.leidycleaner.creditos.entity.CreditoSolicitacao;
 import br.com.leidycleaner.creditos.entity.StatusCreditoSolicitacao;
@@ -89,6 +91,7 @@ class SolicitacaoFaxinaIntegrationTest {
     private final SolicitacaoFaxinaRepository solicitacaoFaxinaRepository;
     private final SolicitacaoProfissionalSelecionadoRepository solicitacaoProfissionalSelecionadoRepository;
     private final ConviteProfissionalRepository conviteProfissionalRepository;
+    private final ConviteExpiracaoService conviteExpiracaoService;
     private final ConviteProfissionalService conviteProfissionalService;
     private final AtendimentoFaxinaRepository atendimentoFaxinaRepository;
     private final CheckpointServicoRepository checkpointServicoRepository;
@@ -131,6 +134,14 @@ class SolicitacaoFaxinaIntegrationTest {
     ) {
     }
 
+    private record ConviteLegadoPreparado(
+            String tokenCliente,
+            String tokenProfissional,
+            Long solicitacaoId,
+            Long conviteId
+    ) {
+    }
+
     @Autowired
     SolicitacaoFaxinaIntegrationTest(
             MockMvc mockMvc,
@@ -140,6 +151,7 @@ class SolicitacaoFaxinaIntegrationTest {
             SolicitacaoFaxinaRepository solicitacaoFaxinaRepository,
             SolicitacaoProfissionalSelecionadoRepository solicitacaoProfissionalSelecionadoRepository,
             ConviteProfissionalRepository conviteProfissionalRepository,
+            ConviteExpiracaoService conviteExpiracaoService,
             ConviteProfissionalService conviteProfissionalService,
             AtendimentoFaxinaRepository atendimentoFaxinaRepository,
             CheckpointServicoRepository checkpointServicoRepository,
@@ -160,6 +172,7 @@ class SolicitacaoFaxinaIntegrationTest {
         this.solicitacaoFaxinaRepository = solicitacaoFaxinaRepository;
         this.solicitacaoProfissionalSelecionadoRepository = solicitacaoProfissionalSelecionadoRepository;
         this.conviteProfissionalRepository = conviteProfissionalRepository;
+        this.conviteExpiracaoService = conviteExpiracaoService;
         this.conviteProfissionalService = conviteProfissionalService;
         this.atendimentoFaxinaRepository = atendimentoFaxinaRepository;
         this.checkpointServicoRepository = checkpointServicoRepository;
@@ -1674,6 +1687,95 @@ class SolicitacaoFaxinaIntegrationTest {
                 .andExpect(jsonPath("$.code").value("CONVITE_STATUS_INCOMPATIVEL"));
 
         assertThat(quantidadeCreditosSolicitacaoGerados(convitePago.pagamentoId())).isEqualTo(1);
+    }
+
+    @Test
+    void processadorAutomaticoExpiraConvitePagoEPermaneceIdempotente() throws Exception {
+        ConvitePagoPreparado convitePago = criarConvitePagoProntoParaAceite("m7.scheduler-expira-paga", proximoCpf());
+        expirarConvite(convitePago.conviteId());
+
+        conviteExpiracaoService.processarConvitesExpirados();
+        conviteExpiracaoService.processarConvitesExpirados();
+
+        assertThat(conviteProfissionalRepository.findById(convitePago.conviteId()))
+                .isPresent()
+                .get()
+                .extracting(ConviteProfissional::getStatus)
+                .isEqualTo(StatusConvite.EXPIRADO);
+        assertThat(solicitacaoFaxinaRepository.findById(convitePago.solicitacaoId()))
+                .isPresent()
+                .get()
+                .extracting(solicitacao -> solicitacao.getStatus().name())
+                .isEqualTo("NAO_ACEITA_CREDITO_GERADO");
+        assertThat(quantidadeCreditosSolicitacaoGerados(convitePago.pagamentoId())).isEqualTo(1);
+        assertThat(atendimentoFaxinaRepository.findBySolicitacaoId(convitePago.solicitacaoId())).isEmpty();
+        assertThat(pagamentoRepository.findById(convitePago.pagamentoId()))
+                .isPresent()
+                .get()
+                .satisfies(pagamento -> {
+                    assertThat(pagamento.getStatus().name()).isEqualTo("PAGO");
+                    assertThat(pagamento.getAtendimento()).isNull();
+                });
+    }
+
+    @Test
+    void processadorAutomaticoNaoProcessaConvitePagoNaoExpirado() throws Exception {
+        ConvitePagoPreparado convitePago = criarConvitePagoProntoParaAceite("m7.scheduler-nao-expirado", proximoCpf());
+
+        conviteExpiracaoService.processarConvitesExpirados();
+        assertThat(conviteProfissionalRepository.findById(convitePago.conviteId()))
+                .isPresent()
+                .get()
+                .extracting(ConviteProfissional::getStatus)
+                .isEqualTo(StatusConvite.ENVIADO);
+        assertThat(solicitacaoFaxinaRepository.findById(convitePago.solicitacaoId()))
+                .isPresent()
+                .get()
+                .extracting(solicitacao -> solicitacao.getStatus().name())
+                .isEqualTo("PAGA_AGUARDANDO_ACEITE");
+        assertThat(quantidadeCreditosSolicitacaoGerados(convitePago.pagamentoId())).isZero();
+        assertThat(atendimentoFaxinaRepository.findBySolicitacaoId(convitePago.solicitacaoId())).isEmpty();
+    }
+
+    @Test
+    void processadorAutomaticoNaoExpiraConviteAceito() throws Exception {
+        ConvitePagoPreparado convitePago = criarConvitePagoProntoParaAceite("m7.scheduler-ja-aceito", proximoCpf());
+
+        mockMvc.perform(post("/api/v1/convites/{id}/aceitar", convitePago.conviteId())
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + convitePago.tokenProfissional()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.conviteStatus").value("ACEITO"))
+                .andExpect(jsonPath("$.data.atendimentoStatus").value("CONFIRMADO"));
+
+        expirarConvite(convitePago.conviteId());
+
+        conviteExpiracaoService.processarConvitesExpirados();
+        assertThat(conviteProfissionalRepository.findById(convitePago.conviteId()))
+                .isPresent()
+                .get()
+                .extracting(ConviteProfissional::getStatus)
+                .isEqualTo(StatusConvite.ACEITO);
+        assertThat(quantidadeCreditosSolicitacaoGerados(convitePago.pagamentoId())).isZero();
+        assertThat(atendimentoFaxinaRepository.findBySolicitacaoId(convitePago.solicitacaoId())).isPresent();
+    }
+
+    @Test
+    void processadorAutomaticoMantemFluxoLegadoSeguroSemCriarCredito() throws Exception {
+        ConviteLegadoPreparado conviteLegado = criarConviteLegadoProntoParaExpirar("m7.scheduler-legado", proximoCpf());
+        expirarConvite(conviteLegado.conviteId());
+
+        conviteExpiracaoService.processarConvitesExpirados();
+        assertThat(conviteProfissionalRepository.findById(conviteLegado.conviteId()))
+                .isPresent()
+                .get()
+                .extracting(ConviteProfissional::getStatus)
+                .isEqualTo(StatusConvite.EXPIRADO);
+        assertThat(solicitacaoFaxinaRepository.findById(conviteLegado.solicitacaoId()))
+                .isPresent()
+                .get()
+                .extracting(solicitacao -> solicitacao.getStatus().name())
+                .isEqualTo("CONVITES_ENVIADOS");
+        assertThat(atendimentoFaxinaRepository.findBySolicitacaoId(conviteLegado.solicitacaoId())).isEmpty();
     }
 
     @Test
@@ -5605,6 +5707,28 @@ class SolicitacaoFaxinaIntegrationTest {
                 conviteId,
                 pagamentoId
         );
+    }
+
+    private ConviteLegadoPreparado criarConviteLegadoProntoParaExpirar(String prefixoEmail, String cpf) throws Exception {
+        String tokenCliente = criarClienteELogar(prefixoEmail + "-cliente@example.com");
+        Long regiaoId = ultimaRegiaoId();
+        Long solicitacaoId = criarSolicitacao(tokenCliente, criarEndereco(tokenCliente), regiaoId, "FAXINA_RESIDENCIAL");
+        ProfissionalConfigurada profissional = criarProfissionalConfiguradaComToken(
+                prefixoEmail + "-profissional@example.com",
+                cpf,
+                "Profissional " + prefixoEmail,
+                "ATIVA",
+                "APROVADO",
+                true,
+                "APROVADO",
+                List.of(regiaoId),
+                "QUINTA",
+                "08:00",
+                "12:00"
+        );
+        selecionarProfissionais(tokenCliente, solicitacaoId, List.of(profissional.perfilId()));
+        Long conviteId = criarConvitesLegadosParaTeste(solicitacaoId, List.of(profissional.perfilId())).getFirst();
+        return new ConviteLegadoPreparado(tokenCliente, profissional.tokenProfissional(), solicitacaoId, conviteId);
     }
 
     private void expirarConvite(Long conviteId) {

@@ -27,3 +27,6 @@ app:
       - http://172.*.*.*:5173
   asaas:
     webhook-token: test-webhook-token
+  convites:
+    expiracao:
+      scheduler-enabled: false

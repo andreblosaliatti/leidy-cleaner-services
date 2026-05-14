@@ -56,6 +56,12 @@ app:
   pricing:
     hourly-rate: ${APP_PRICING_HOURLY_RATE:45.00}
     agency-commission-percent: ${APP_PRICING_AGENCY_COMMISSION_PERCENT:20.00}
+  convites:
+    expiracao:
+      scheduler-enabled: ${APP_CONVITES_EXPIRACAO_SCHEDULER_ENABLED:true}
+      fixed-delay-ms: ${APP_CONVITES_EXPIRACAO_FIXED_DELAY_MS:300000}
+      initial-delay-ms: ${APP_CONVITES_EXPIRACAO_INITIAL_DELAY_MS:60000}
+      batch-size: ${APP_CONVITES_EXPIRACAO_BATCH_SIZE:50}
 
 logging:
   level:

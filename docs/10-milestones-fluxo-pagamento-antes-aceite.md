@@ -785,7 +785,7 @@ Return blockers before commit.
 - [ ] Crédito duplicado por reprocessamento.
 - [ ] Frontend marcando pagamento como pago.
 - [ ] Seleção múltipla ainda possível no backend.
-- [ ] Expiração de convite apenas visual, sem processamento backend.
+- [x] Expiração de convite apenas visual, sem processamento backend.
 - [ ] Rotas frontend ainda baseadas somente em `atendimentoId`.
 - [ ] Admin sem visibilidade de pagamentos sem atendimento.
 - [ ] Documentação contradizendo o fluxo novo.

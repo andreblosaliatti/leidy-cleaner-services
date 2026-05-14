@@ -251,6 +251,11 @@ public class ConviteProfissionalService {
 
     @Transactional
     public boolean expirarConviteSeNecessario(Long conviteId) {
+        return processarExpiracaoAutomatica(conviteId).processado();
+    }
+
+    @Transactional
+    public ConviteExpiracaoResultado processarExpiracaoAutomatica(Long conviteId) {
         Long solicitacaoId = conviteProfissionalRepository.findSolicitacaoIdById(conviteId)
                 .orElseThrow(() -> new BusinessException("CONVITE_NOT_FOUND", "Convite nao encontrado", HttpStatus.NOT_FOUND));
         SolicitacaoFaxina solicitacao = solicitacaoFaxinaRepository.findByIdForUpdate(solicitacaoId)
@@ -261,17 +266,56 @@ public class ConviteProfissionalService {
         validarConvitePertenceASolicitacao(convite, solicitacao);
 
         OffsetDateTime agora = OffsetDateTime.now(clock);
-        if (!convite.expiradoEm(agora) || !convite.podeResponder()) {
-            return false;
+        Long pagamentoId = buscarPagamentoIdSeExistir(solicitacao.getId());
+        if (!convite.expiradoEm(agora)) {
+            return ConviteExpiracaoResultado.ignorado(
+                    convite.getId(),
+                    solicitacao.getId(),
+                    convite.getProfissional().getId(),
+                    pagamentoId,
+                    convite.getStatus(),
+                    solicitacao.getStatus(),
+                    "CONVITE_NAO_EXPIRADO"
+            );
+        }
+
+        if (!convite.podeResponder()) {
+            return ConviteExpiracaoResultado.ignorado(
+                    convite.getId(),
+                    solicitacao.getId(),
+                    convite.getProfissional().getId(),
+                    pagamentoId,
+                    convite.getStatus(),
+                    solicitacao.getStatus(),
+                    "CONVITE_STATUS_" + convite.getStatus().name()
+            );
         }
 
         if (solicitacao.getStatus() == StatusSolicitacao.PAGA_AGUARDANDO_ACEITE) {
             expirarConviteDeSolicitacaoPaga(solicitacao, convite, agora);
-            return true;
+            return ConviteExpiracaoResultado.processado(
+                    convite.getId(),
+                    solicitacao.getId(),
+                    convite.getProfissional().getId(),
+                    pagamentoId,
+                    true,
+                    convite.getStatus(),
+                    solicitacao.getStatus(),
+                    "CONVITE_PAGO_EXPIRADO_COM_CREDITO"
+            );
         }
 
         convite.expirar(agora);
-        return true;
+        return ConviteExpiracaoResultado.processado(
+                convite.getId(),
+                solicitacao.getId(),
+                convite.getProfissional().getId(),
+                pagamentoId,
+                false,
+                convite.getStatus(),
+                solicitacao.getStatus(),
+                "CONVITE_LEGADO_EXPIRADO"
+        );
     }
 
     private void validarPerfilProfissional(Long usuarioId) {
@@ -358,6 +402,12 @@ public class ConviteProfissionalService {
                 null,
                 null
         );
+    }
+
+    private Long buscarPagamentoIdSeExistir(Long solicitacaoId) {
+        return pagamentoRepository.findBySolicitacaoId(solicitacaoId)
+                .map(Pagamento::getId)
+                .orElse(null);
     }
 
     private void registrarLogOperacionalCredito(
