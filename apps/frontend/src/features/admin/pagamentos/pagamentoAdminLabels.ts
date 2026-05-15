@@ -1,8 +1,8 @@
-import type { MetodoPagamento, StatusPagamento } from './types';
+import type { GatewayPagamento, MetodoPagamento, StatusPagamento } from './types';
 
 export const statusPagamentoLabels: Record<StatusPagamento, string> = {
   PENDENTE: 'Pendente',
-  AGUARDANDO_CONFIRMACAO: 'Aguardando confirmação',
+  AGUARDANDO_CONFIRMACAO: 'Aguardando confirmacao',
   PAGO: 'Pago',
   FALHOU: 'Falhou',
   CANCELADO: 'Cancelado',
@@ -12,7 +12,13 @@ export const statusPagamentoLabels: Record<StatusPagamento, string> = {
 export const metodoPagamentoLabels: Record<MetodoPagamento, string> = {
   PIX: 'Pix',
   BOLETO: 'Boleto',
-  CARTAO_CREDITO: 'Cartão de crédito',
+  CARTAO_CREDITO: 'Cartao de credito',
+  CREDITO_SOLICITACAO: 'Credito de solicitacao',
+};
+
+export const gatewayPagamentoLabels: Record<GatewayPagamento, string> = {
+  ASAAS: 'Asaas',
+  INTERNO: 'Interno',
 };
 
 export function getStatusPagamentoInfo(status: StatusPagamento) {
@@ -35,13 +41,17 @@ export function getMetodoPagamentoLabel(metodo: MetodoPagamento) {
   return metodoPagamentoLabels[metodo] ?? metodo;
 }
 
+export function getGatewayPagamentoLabel(gateway: GatewayPagamento) {
+  return gatewayPagamentoLabels[gateway] ?? gateway;
+}
+
 export function getWebhookLabel(webhookProcessado: boolean) {
-  return webhookProcessado ? 'Processado' : 'Não processado';
+  return webhookProcessado ? 'Processado' : 'Nao processado';
 }
 
 export function formatCurrency(value: number | null | undefined) {
   if (value === null || value === undefined) {
-    return 'Não informado';
+    return 'Nao informado';
   }
 
   return new Intl.NumberFormat('pt-BR', {
@@ -52,7 +62,7 @@ export function formatCurrency(value: number | null | undefined) {
 
 export function formatDateTime(value: string | null | undefined) {
   if (!value) {
-    return 'Não informado';
+    return 'Nao informado';
   }
 
   return new Intl.DateTimeFormat('pt-BR', {

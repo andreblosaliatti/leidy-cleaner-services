@@ -66,6 +66,12 @@ export const emptyDashboardIndicators: DashboardIndicators = {
     atendimentosEmAnalise: 0,
     solicitacoesAbertas: 0,
     usuariosTotal: 0,
+    solicitacoesAguardandoPagamento: 0,
+    solicitacoesPagasAguardandoAceite: 0,
+    convitesVencidosPendentesProcessamento: 0,
+    creditosSolicitacaoDisponiveis: 0,
+    creditosSolicitacaoUtilizados: 0,
+    pagamentosInternosCreditoSolicitacao: 0,
   },
 };
 

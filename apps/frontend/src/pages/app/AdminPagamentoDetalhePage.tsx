@@ -42,7 +42,7 @@ export function AdminPagamentoDetalhePage() {
   if (!validId) {
     return (
       <div className="grid gap-5">
-        <FormAlert tone="error" title="Pagamento inválido" message="O identificador do pagamento não é válido." />
+        <FormAlert tone="error" title="Pagamento invalido" message="O identificador do pagamento nao e valido." />
         <Link className="font-black text-cyan-700 hover:text-cyan-800" to="/app/admin/pagamentos">
           Voltar para pagamentos
         </Link>
@@ -55,10 +55,10 @@ export function AdminPagamentoDetalhePage() {
       <section className="rounded-lg border border-cyan-100 bg-white p-5 shadow-sm md:p-7">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.16em] text-cyan-700">Administração</p>
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-cyan-700">Administracao</p>
             <h1 className="mt-3 text-3xl font-black tracking-normal text-slate-900 md:text-4xl">Detalhe do pagamento</h1>
             <p className="mt-3 max-w-3xl text-base leading-7 text-slate-600">
-              Consulte o estado operacional retornado pelo backend. Esta visão não força transições de pagamento.
+              Consulte o estado operacional retornado pelo backend. Esta visao nao forca transicoes de pagamento.
             </p>
           </div>
           <Link
@@ -72,8 +72,8 @@ export function AdminPagamentoDetalhePage() {
 
       <FormAlert
         tone="info"
-        title="Visão somente leitura"
-        message="A administração pode consultar pagamentos, mas a confirmação definitiva continua restrita ao webhook do backend."
+        title="Visao somente leitura"
+        message="A administracao pode consultar pagamentos, mas a confirmacao definitiva continua restrita ao webhook do backend."
       />
 
       {pagamentoQuery.isLoading && <StateBox tone="loading" title="Carregando pagamento" description="Buscando os dados operacionais." />}
@@ -81,7 +81,7 @@ export function AdminPagamentoDetalhePage() {
       {pagamentoQuery.isError && !protectedError && (
         <FormAlert
           tone="error"
-          title="Não foi possível carregar o pagamento"
+          title="Nao foi possivel carregar o pagamento"
           message={getApiErrorMessage(pagamentoQuery.error)}
           details={pagamentoQuery.error instanceof ApiError ? pagamentoQuery.error.errors : []}
         />
@@ -91,7 +91,7 @@ export function AdminPagamentoDetalhePage() {
         <FormAlert
           tone="info"
           title="Aguardando webhook"
-          message="O gateway retornou indício de pagamento, mas o status definitivo ainda depende do webhook processado pelo backend."
+          message="O gateway retornou indicio de pagamento, mas o status definitivo ainda depende do webhook processado pelo backend."
         />
       )}
 
@@ -100,13 +100,12 @@ export function AdminPagamentoDetalhePage() {
   );
 }
 
-
 function requireToken(token: string | null) {
   if (!token) {
     throw new ApiError({
       status: 401,
       code: 'UNAUTHENTICATED',
-      message: 'Sessão expirada. Entre novamente.',
+      message: 'Sessao expirada. Entre novamente.',
     });
   }
 

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import {
   formatCurrency,
   formatDateTime,
+  getGatewayPagamentoLabel,
   getMetodoPagamentoLabel,
   getWebhookLabel,
 } from './pagamentoAdminLabels';
@@ -18,7 +19,10 @@ export function AdminPagamentoCard({ pagamento }: { pagamento: PagamentoAdmin })
             <h2 className="text-lg font-black text-slate-900">Pagamento #{pagamento.id}</h2>
             <PagamentoAdminStatusBadge status={pagamento.status} />
           </div>
-          <p className="mt-2 text-sm font-semibold text-slate-700">Atendimento ID {pagamento.atendimentoId}</p>
+          <p className="mt-2 text-sm font-semibold text-slate-700">
+            {pagamento.atendimentoId ? `Atendimento ID ${pagamento.atendimentoId}` : 'Sem atendimento vinculado'}
+            {pagamento.solicitacaoId ? ` · Solicitacao ID ${pagamento.solicitacaoId}` : ''}
+          </p>
         </div>
 
         <Link
@@ -30,11 +34,11 @@ export function AdminPagamentoCard({ pagamento }: { pagamento: PagamentoAdmin })
       </div>
 
       <dl className="mt-5 grid gap-3 text-sm md:grid-cols-2 xl:grid-cols-4">
-        <DetailItem label="Gateway" value={pagamento.gateway} />
-        <DetailItem label="Método" value={getMetodoPagamentoLabel(pagamento.metodoPagamento)} />
+        <DetailItem label="Gateway" value={getGatewayPagamentoLabel(pagamento.gateway)} />
+        <DetailItem label="Metodo" value={getMetodoPagamentoLabel(pagamento.metodoPagamento)} />
         <DetailItem label="Valor bruto" value={formatCurrency(pagamento.valorBruto)} />
         <DetailItem label="Taxa gateway" value={formatCurrency(pagamento.valorTaxaGateway)} />
-        <DetailItem label="Valor líquido" value={formatCurrency(pagamento.valorLiquidoRecebido)} />
+        <DetailItem label="Valor liquido" value={formatCurrency(pagamento.valorLiquidoRecebido)} />
         <DetailItem label="Recebido em" value={formatDateTime(pagamento.recebidoEm)} />
         <DetailItem label="Webhook" value={getWebhookLabel(pagamento.webhookProcessado)} />
       </dl>

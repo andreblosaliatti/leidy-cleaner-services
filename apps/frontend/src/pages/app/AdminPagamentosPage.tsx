@@ -88,10 +88,10 @@ export function AdminPagamentosPage() {
       <section className="rounded-lg border border-cyan-100 bg-white p-5 shadow-sm md:p-7">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.16em] text-cyan-700">Administração</p>
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-cyan-700">Administracao</p>
             <h1 className="mt-3 text-3xl font-black tracking-normal text-slate-900 md:text-4xl">Pagamentos</h1>
             <p className="mt-3 max-w-3xl text-base leading-7 text-slate-600">
-              Consulte pagamentos vinculados a atendimentos. Esta visão é somente leitura e não altera status.
+              Consulte pagamentos vinculados a solicitacoes ou atendimentos. Esta visao e somente leitura e nao altera status.
             </p>
           </div>
           <Link
@@ -126,7 +126,7 @@ export function AdminPagamentosPage() {
         </label>
 
         <label className="grid w-full gap-2 text-sm font-bold text-slate-700 sm:min-w-[min(100%,13rem)] sm:flex-1">
-          Método
+          Metodo
           <select
             className="min-h-11 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-700"
             value={draftFilters.metodoPagamento}
@@ -166,7 +166,7 @@ export function AdminPagamentosPage() {
       </form>
 
       <div className="rounded-lg border border-blue-100 bg-blue-50 p-4 text-sm leading-6 text-blue-900">
-        A confirmação definitiva de pagamento continua dependendo do webhook processado pelo backend.
+        A confirmacao definitiva de pagamento continua dependendo do webhook processado pelo backend.
       </div>
 
       {pagamentosQuery.isLoading && <StateBox tone="loading" title="Carregando pagamentos" description="Buscando registros operacionais." />}
@@ -174,7 +174,7 @@ export function AdminPagamentosPage() {
       {pagamentosQuery.isError && !protectedError && (
         <FormAlert
           tone="error"
-          title="Não foi possível carregar pagamentos"
+          title="Nao foi possivel carregar pagamentos"
           message={getApiErrorMessage(pagamentosQuery.error)}
           details={pagamentosQuery.error instanceof ApiError ? pagamentosQuery.error.errors : []}
         />
@@ -211,7 +211,6 @@ function FilterInput({ label, onChange, value }: { label: string; onChange: (val
   );
 }
 
-
 function normalizePositiveInteger(value: string) {
   const parsed = Number(value);
   return Number.isInteger(parsed) && parsed > 0 ? String(parsed) : '';
@@ -232,7 +231,7 @@ function requireToken(token: string | null) {
     throw new ApiError({
       status: 401,
       code: 'UNAUTHENTICATED',
-      message: 'Sessão expirada. Entre novamente.',
+      message: 'Sessao expirada. Entre novamente.',
     });
   }
 

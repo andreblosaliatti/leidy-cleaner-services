@@ -11,6 +11,12 @@ export type AdminDashboardIndicadores = {
   atendimentosEmAnalise: number;
   solicitacoesAbertas: number;
   usuariosTotal: number;
+  solicitacoesAguardandoPagamento: number;
+  solicitacoesPagasAguardandoAceite: number;
+  convitesVencidosPendentesProcessamento: number;
+  creditosSolicitacaoDisponiveis: number;
+  creditosSolicitacaoUtilizados: number;
+  pagamentosInternosCreditoSolicitacao: number;
 };
 
 export function buscarIndicadoresAdmin(token: string) {

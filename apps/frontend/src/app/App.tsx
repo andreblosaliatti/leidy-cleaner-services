@@ -6,6 +6,9 @@ import { PublicLayout } from '../layouts/PublicLayout';
 import { AdminAtendimentoDetalhePage } from '../pages/app/AdminAtendimentoDetalhePage';
 import { AdminAtendimentosPage } from '../pages/app/AdminAtendimentosPage';
 import { AdminConfiguracaoPrecosPage } from '../pages/app/AdminConfiguracaoPrecosPage';
+import { AdminCreditoSolicitacaoDetalhePage } from '../pages/app/AdminCreditoSolicitacaoDetalhePage';
+import { AdminCreditosSolicitacaoPage } from '../pages/app/AdminCreditosSolicitacaoPage';
+import { AdminConvitesMonitoramentoPage } from '../pages/app/AdminConvitesMonitoramentoPage';
 import { AdminDashboardPage } from '../pages/app/AdminDashboardPage';
 import { AdminOcorrenciaDetalhePage } from '../pages/app/AdminOcorrenciaDetalhePage';
 import { AdminOcorrenciasPage } from '../pages/app/AdminOcorrenciasPage';
@@ -128,6 +131,9 @@ export function App() {
               <Route path="atendimentos/:id" element={<AdminAtendimentoDetalhePage />} />
               <Route path="pagamentos" element={<AdminPagamentosPage />} />
               <Route path="pagamentos/:id" element={<AdminPagamentoDetalhePage />} />
+              <Route path="creditos-solicitacao" element={<AdminCreditosSolicitacaoPage />} />
+              <Route path="creditos-solicitacao/:id" element={<AdminCreditoSolicitacaoDetalhePage />} />
+              <Route path="convites/monitoramento" element={<AdminConvitesMonitoramentoPage />} />
               <Route path="configuracoes/precos" element={<AdminConfiguracaoPrecosPage />} />
               <Route path="solicitacoes" element={<AdminSolicitacoesPage />} />
               <Route path="solicitacoes/:id" element={<AdminSolicitacaoDetalhePage />} />

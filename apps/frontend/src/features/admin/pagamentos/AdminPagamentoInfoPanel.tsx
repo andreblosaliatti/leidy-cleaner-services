@@ -1,6 +1,7 @@
 import {
   formatCurrency,
   formatDateTime,
+  getGatewayPagamentoLabel,
   getMetodoPagamentoLabel,
   getWebhookLabel,
 } from './pagamentoAdminLabels';
@@ -16,25 +17,22 @@ export function AdminPagamentoInfoPanel({ pagamento }: { pagamento: PagamentoAdm
       </div>
 
       <dl className="mt-6 grid gap-4 text-sm md:grid-cols-2 xl:grid-cols-3">
-        <DetailItem label="Atendimento" value={`ID ${pagamento.atendimentoId}`} />
-        <DetailItem label="Gateway" value={pagamento.gateway} />
+        <DetailItem label="Atendimento" value={pagamento.atendimentoId ? `ID ${pagamento.atendimentoId}` : 'Nao vinculado'} />
+        <DetailItem label="Solicitacao" value={pagamento.solicitacaoId ? `ID ${pagamento.solicitacaoId}` : 'Nao vinculada'} />
+        <DetailItem label="Gateway" value={getGatewayPagamentoLabel(pagamento.gateway)} />
         <DetailItem label="ID gateway" value={pagamento.gatewayPaymentId} />
-        <DetailItem label="Método" value={getMetodoPagamentoLabel(pagamento.metodoPagamento)} />
+        <DetailItem label="Metodo" value={getMetodoPagamentoLabel(pagamento.metodoPagamento)} />
         <DetailItem label="Valor bruto" value={formatCurrency(pagamento.valorBruto)} />
         <DetailItem label="Taxa gateway" value={formatCurrency(pagamento.valorTaxaGateway)} />
-        <DetailItem label="Valor líquido" value={formatCurrency(pagamento.valorLiquidoRecebido)} />
+        <DetailItem label="Valor liquido" value={formatCurrency(pagamento.valorLiquidoRecebido)} />
         <DetailItem label="Recebido em" value={formatDateTime(pagamento.recebidoEm)} />
         <DetailItem label="Webhook" value={getWebhookLabel(pagamento.webhookProcessado)} />
       </dl>
 
       {(pagamento.urlPagamento || pagamento.pixCopiaECola) && (
         <div className="mt-6 grid gap-4">
-          {pagamento.urlPagamento && (
-            <ReadOnlyBlock label="URL de pagamento" value={pagamento.urlPagamento} />
-          )}
-          {pagamento.pixCopiaECola && (
-            <ReadOnlyBlock label="Pix copia e cola" value={pagamento.pixCopiaECola} multiline />
-          )}
+          {pagamento.urlPagamento && <ReadOnlyBlock label="URL de pagamento" value={pagamento.urlPagamento} />}
+          {pagamento.pixCopiaECola && <ReadOnlyBlock label="Pix copia e cola" value={pagamento.pixCopiaECola} multiline />}
         </div>
       )}
     </section>

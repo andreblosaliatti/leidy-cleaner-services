@@ -31,16 +31,16 @@ export function AdminDashboardPage() {
   return (
     <div className="grid gap-5">
       <DashboardHeader
-        title="Administração"
-        description="Acompanhe pendências operacionais e acesse rapidamente as áreas de gestão."
+        title="Administracao"
+        description="Acompanhe pendencias operacionais e acesse rapidamente as areas de gestao."
       />
 
-      {isLoading && <StateBox tone="loading" title="Carregando indicadores" description="Buscando pendências operacionais." />}
+      {isLoading && <StateBox tone="loading" title="Carregando indicadores" description="Buscando pendencias operacionais." />}
 
       {isError && (
         <FormAlert
           tone="error"
-          title="Não foi possível carregar o resumo"
+          title="Nao foi possivel carregar o resumo"
           message={getApiErrorMessage(error)}
         />
       )}
@@ -49,8 +49,8 @@ export function AdminDashboardPage() {
         <>
           <section className="rounded-lg border border-slate-100 bg-white p-5 shadow-sm md:p-6">
             <div className="flex flex-col gap-2">
-              <p className="text-xs font-black uppercase tracking-[0.16em] text-cyan-700">Operação</p>
-              <h2 className="text-2xl font-black text-slate-900">Pendências que precisam de atenção</h2>
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-cyan-700">Operacao</p>
+              <h2 className="text-2xl font-black text-slate-900">Pendencias que precisam de atencao</h2>
             </div>
 
             {alerts.length > 0 ? (
@@ -68,7 +68,7 @@ export function AdminDashboardPage() {
               </div>
             ) : (
               <div className="mt-5 rounded-lg border border-green-100 bg-green-50 px-4 py-3 text-sm font-bold text-green-900">
-                Nenhuma pendência crítica no momento.
+                Nenhuma pendencia critica no momento.
               </div>
             )}
           </section>
@@ -116,38 +116,51 @@ function buildAlerts(indicadores: AdminDashboardIndicadores): AdminAlert[] {
   return [
     {
       count: indicadores.verificacoesPendentes,
-      label: formatCount(indicadores.verificacoesPendentes, 'verificação aguardando análise', 'verificações aguardando análise'),
+      label: formatCount(indicadores.verificacoesPendentes, 'verificacao aguardando analise', 'verificacoes aguardando analise'),
       href: '/app/admin/verificacoes',
     },
     {
       count: indicadores.profissionaisPendentes,
-      label: formatCount(indicadores.profissionaisPendentes, 'profissional aguardando aprovação', 'profissionais aguardando aprovação'),
+      label: formatCount(indicadores.profissionaisPendentes, 'profissional aguardando aprovacao', 'profissionais aguardando aprovacao'),
       href: '/app/admin/profissionais',
     },
     {
       count: indicadores.ocorrenciasAbertas,
-      label: formatCount(indicadores.ocorrenciasAbertas, 'ocorrência aberta', 'ocorrências abertas'),
+      label: formatCount(indicadores.ocorrenciasAbertas, 'ocorrencia aberta', 'ocorrencias abertas'),
       href: '/app/admin/ocorrencias',
     },
     {
       count: indicadores.ocorrenciasEmAnalise,
-      label: formatCount(indicadores.ocorrenciasEmAnalise, 'ocorrência em análise', 'ocorrências em análise'),
+      label: formatCount(indicadores.ocorrenciasEmAnalise, 'ocorrencia em analise', 'ocorrencias em analise'),
       href: '/app/admin/ocorrencias',
     },
     {
       count: indicadores.atendimentosEmAnalise,
-      label: formatCount(indicadores.atendimentosEmAnalise, 'atendimento em análise', 'atendimentos em análise'),
+      label: formatCount(indicadores.atendimentosEmAnalise, 'atendimento em analise', 'atendimentos em analise'),
       href: '/app/admin/atendimentos',
     },
     {
       count: pagamentosAtencao,
-      label: formatCount(pagamentosAtencao, 'pagamento exigindo atenção', 'pagamentos exigindo atenção'),
+      label: formatCount(pagamentosAtencao, 'pagamento exigindo atencao', 'pagamentos exigindo atencao'),
       href: '/app/admin/pagamentos',
     },
     {
-      count: indicadores.solicitacoesAbertas,
-      label: formatCount(indicadores.solicitacoesAbertas, 'solicitação aberta ou em andamento', 'solicitações abertas ou em andamento'),
-      href: '/app/admin/solicitacoes',
+      count: indicadores.solicitacoesPagasAguardandoAceite,
+      label: formatCount(
+        indicadores.solicitacoesPagasAguardandoAceite,
+        'solicitacao paga aguardando aceite',
+        'solicitacoes pagas aguardando aceite',
+      ),
+      href: '/app/admin/convites/monitoramento',
+    },
+    {
+      count: indicadores.convitesVencidosPendentesProcessamento,
+      label: formatCount(
+        indicadores.convitesVencidosPendentesProcessamento,
+        'convite vencido aguardando processamento',
+        'convites vencidos aguardando processamento',
+      ),
+      href: '/app/admin/convites/monitoramento',
     },
   ].filter((alert) => alert.count > 0);
 }
@@ -161,52 +174,94 @@ function buildCards(indicadores: AdminDashboardIndicadores): OperationalCard[] {
 
   return [
     {
-      title: 'Verificações',
+      title: 'Verificacoes',
       value: indicadores.verificacoesPendentes,
-      description: 'Documentos aguardando análise.',
-      cta: 'Revisar verificações',
+      description: 'Documentos aguardando analise.',
+      cta: 'Revisar verificacoes',
       href: '/app/admin/verificacoes',
     },
     {
       title: 'Profissionais',
       value: indicadores.profissionaisPendentes,
-      description: 'Perfis aguardando aprovação operacional.',
+      description: 'Perfis aguardando aprovacao operacional.',
       cta: 'Revisar profissionais',
       href: '/app/admin/profissionais',
     },
     {
-      title: 'Ocorrências',
+      title: 'Ocorrencias',
       value: ocorrenciasAtencao,
-      description: 'Registros abertos ou em análise.',
-      cta: 'Ver ocorrências',
+      description: 'Registros abertos ou em analise.',
+      cta: 'Ver ocorrencias',
       href: '/app/admin/ocorrencias',
     },
     {
       title: 'Pagamentos',
       value: pagamentosAtencao,
-      description: 'Pagamentos pendentes, aguardando confirmação ou falhos.',
+      description: 'Pagamentos pendentes, aguardando confirmacao ou falhos.',
+      cta: 'Ver pagamentos',
+      href: '/app/admin/pagamentos',
+    },
+    {
+      title: 'Solicitacoes',
+      value: indicadores.solicitacoesAbertas,
+      description: 'Solicitacoes abertas ou em andamento.',
+      cta: 'Ver solicitacoes',
+      href: '/app/admin/solicitacoes',
+    },
+    {
+      title: 'Aguardando pagamento',
+      value: indicadores.solicitacoesAguardandoPagamento,
+      description: 'Solicitacoes com profissional escolhida e pagamento ainda pendente.',
+      cta: 'Ver solicitacoes',
+      href: '/app/admin/solicitacoes',
+    },
+    {
+      title: 'Aguardando aceite',
+      value: indicadores.solicitacoesPagasAguardandoAceite,
+      description: 'Solicitacoes pagas esperando resposta da profissional.',
+      cta: 'Monitorar convites',
+      href: '/app/admin/convites/monitoramento',
+    },
+    {
+      title: 'Convites vencidos',
+      value: indicadores.convitesVencidosPendentesProcessamento,
+      description: 'Convites com expiracao vencida aguardando observacao operacional.',
+      cta: 'Revisar monitoramento',
+      href: '/app/admin/convites/monitoramento',
+    },
+    {
+      title: 'Reposicoes disponiveis',
+      value: indicadores.creditosSolicitacaoDisponiveis,
+      description: 'Creditos de solicitacao prontos para reutilizacao equivalente.',
+      cta: 'Ver reposicoes',
+      href: '/app/admin/creditos-solicitacao',
+    },
+    {
+      title: 'Reposicoes utilizadas',
+      value: indicadores.creditosSolicitacaoUtilizados,
+      description: 'Creditos de solicitacao ja utilizados em novas solicitacoes.',
+      cta: 'Ver reposicoes',
+      href: '/app/admin/creditos-solicitacao',
+    },
+    {
+      title: 'Pagamentos internos',
+      value: indicadores.pagamentosInternosCreditoSolicitacao,
+      description: 'Pagamentos internos registrados ao usar credito de solicitacao.',
       cta: 'Ver pagamentos',
       href: '/app/admin/pagamentos',
     },
     {
       title: 'Atendimentos',
       value: indicadores.atendimentosEmAnalise,
-      description: 'Atendimentos em análise operacional.',
+      description: 'Atendimentos em analise operacional.',
       cta: 'Ver atendimentos',
       href: '/app/admin/atendimentos',
     },
     {
-      title: 'Solicitações',
-      value: indicadores.solicitacoesAbertas,
-      description: 'Solicitações abertas ou em andamento.',
-      cta: 'Ver solicitações',
-      href: '/app/admin/solicitacoes',
-    },
-    {
-      title: 'Usuários',
+      title: 'Usuarios',
       value: indicadores.usuariosTotal,
-      description: 'Acesso rápido à gestão de contas cadastradas.',
-      cta: 'Ver usuários',
+      description: 'Acesso rapido a gestao de contas cadastradas.',
+      cta: 'Ver usuarios',
       href: '/app/admin/usuarios',
     },
   ];

@@ -41,6 +41,8 @@ const navigationByProfile: Record<TipoUsuario, NavigationItem[]> = {
     { label: 'Solicitacoes', href: '/app/admin/solicitacoes' },
     { label: 'Atendimentos', href: '/app/admin/atendimentos' },
     { label: 'Pagamentos', href: '/app/admin/pagamentos' },
+    { label: 'Monitoramento de convites', href: '/app/admin/convites/monitoramento' },
+    { label: 'Solicitacoes de reposicao', href: '/app/admin/creditos-solicitacao' },
     { label: 'Precos', href: '/app/admin/configuracoes/precos' },
     { label: 'Ocorrencias', href: '/app/admin/ocorrencias' },
   ],
@@ -272,6 +274,26 @@ function getSidebarBadge(profile: TipoUsuario, label: string, indicators: Return
       count,
       label: `${count} pagamentos exigem atencao`,
       tone: indicators.admin.pagamentosFalhos > 0 ? ('red' as NotificationBadgeTone) : ('yellow' as NotificationBadgeTone),
+    };
+  }
+
+  if (profile === 'ADMIN' && label === 'Monitoramento de convites') {
+    const count =
+      indicators.admin.convitesVencidosPendentesProcessamento +
+      indicators.admin.solicitacoesPagasAguardandoAceite;
+
+    return {
+      count,
+      label: `${count} convites ou solicitacoes aguardando acompanhamento`,
+      tone: indicators.admin.convitesVencidosPendentesProcessamento > 0 ? ('red' as NotificationBadgeTone) : ('yellow' as NotificationBadgeTone),
+    };
+  }
+
+  if (profile === 'ADMIN' && label === 'Solicitacoes de reposicao') {
+    return {
+      count: indicators.admin.creditosSolicitacaoDisponiveis,
+      label: `${indicators.admin.creditosSolicitacaoDisponiveis} solicitacoes de reposicao disponiveis`,
+      tone: 'yellow' as NotificationBadgeTone,
     };
   }
 

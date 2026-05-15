@@ -567,7 +567,9 @@ Dar visibilidade para suporte e operação.
 - [x] Admin vê solicitações aguardando pagamento.
 - [x] Admin vê solicitações pagas aguardando aceite.
 - [x] Admin vê solicitações com crédito gerado.
-- [x] Admin vê ledger/histórico de crédito do cliente.
+- [x] Admin vê créditos de solicitação e seus estados operacionais.
+- [x] Admin vê monitoramento de convites pagos aguardando aceite e convites vencidos.
+- [x] Admin vê links rápidos entre solicitação, pagamento e crédito de solicitação.
 - [ ] Logs diferenciam pagamento por solicitação e pagamento por atendimento legado.
 - [ ] Logs de webhook indicam external reference, pagamento localizado, solicitação localizada e convite criado.
 - [ ] Logs de crédito indicam idempotência sem duplicar crédito.
