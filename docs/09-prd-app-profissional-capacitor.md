@@ -82,12 +82,12 @@ O backend segue sendo a fonte de verdade para autorização, aceite transacional
 - [ ] Sessão autenticada
 - [ ] Dashboard mobile da profissional
 - [ ] Ativar/desativar recebimento de chamados
-- [ ] Visualizar perfil profissional
-- [ ] Editar dados permitidos do perfil
-- [ ] Visualizar status de aprovação
+- [x] Visualizar perfil profissional
+- [x] Editar dados permitidos do perfil
+- [x] Visualizar status de aprovação
 - [ ] Visualizar status de verificação documental
 - [ ] Enviar/atualizar documentos, se o backend permitir
-- [ ] Gerenciar regiões atendidas
+- [x] Gerenciar regiões atendidas
 - [ ] Gerenciar disponibilidade semanal
 - [x] Listar convites recebidos
 - [x] Ver detalhe do convite
@@ -95,8 +95,8 @@ O backend segue sendo a fonte de verdade para autorização, aceite transacional
 - [x] Recusar convite
 - [x] Visualizar atendimentos confirmados
 - [x] Visualizar detalhe do atendimento
-- [ ] Iniciar serviço
-- [ ] Finalizar serviço
+- [x] Iniciar serviço
+- [x] Finalizar serviço
 - [x] Visualizar checkpoints
 - [ ] Abrir ocorrência
 - [ ] Listar ocorrências da profissional
@@ -296,8 +296,8 @@ Cards principais:
 - [x] Valor estimado da profissional
 - [x] Checkpoint de início
 - [x] Checkpoint de fim
-- [ ] Botão iniciar
-- [ ] Botão finalizar
+- [x] Botão iniciar
+- [x] Botão finalizar
 - [ ] Botão abrir ocorrência
 
 ### 8.7 Disponibilidade
@@ -312,10 +312,10 @@ Cards principais:
 
 ### 8.8 Regiões atendidas
 
-- [ ] Listar regiões disponíveis
-- [ ] Marcar regiões atendidas
-- [ ] Salvar alterações
-- [ ] Mostrar erro se nenhuma região for selecionada, se aplicável
+- [x] Listar regiões disponíveis
+- [x] Marcar regiões atendidas
+- [x] Salvar alterações
+- [x] Mostrar erro se nenhuma região for selecionada, se aplicável
 
 ### 8.9 Verificação documental
 
@@ -336,11 +336,11 @@ Cards principais:
 
 ### 8.11 Perfil
 
-- [ ] Nome de exibição
+- [x] Nome de exibição
 - [ ] Telefone
-- [ ] Foto
-- [ ] Experiência
-- [ ] Descrição
+- [x] Foto
+- [x] Experiência
+- [x] Descrição
 - [ ] Dados bloqueados quando não puderem ser alterados
 
 ---
@@ -354,10 +354,10 @@ Cards principais:
 
 ### Profissional
 
-- [ ] `GET /api/v1/profissionais/me`
-- [ ] `PUT /api/v1/profissionais/me`
-- [ ] `GET /api/v1/profissionais/me/regioes`
-- [ ] `POST /api/v1/profissionais/me/regioes`
+- [x] `GET /api/v1/profissionais/me`
+- [x] `PUT /api/v1/profissionais/me`
+- [x] `GET /api/v1/profissionais/me/regioes`
+- [x] `POST /api/v1/profissionais/me/regioes`
 - [ ] `GET /api/v1/profissionais/me/disponibilidades`
 - [ ] `POST /api/v1/profissionais/me/disponibilidades`
 - [ ] `PUT /api/v1/profissionais/me/disponibilidades/{id}`
@@ -380,8 +380,8 @@ Cards principais:
 - [x] `GET /api/v1/atendimentos/meus`
 - [x] `GET /api/v1/atendimentos/{id}`
 - [x] `GET /api/v1/atendimentos/{id}/checkpoints`
-- [ ] `POST /api/v1/atendimentos/{id}/iniciar`
-- [ ] `POST /api/v1/atendimentos/{id}/finalizar`
+- [x] `POST /api/v1/atendimentos/{id}/iniciar`
+- [x] `POST /api/v1/atendimentos/{id}/finalizar`
 
 ### Ocorrências
 
@@ -612,19 +612,21 @@ Objetivo: permitir que a profissional opere o serviço.
 - [x] Exibir endereço e horário
 - [ ] Exibir observações
 - [x] Exibir valor estimado
-- [ ] Iniciar serviço
-- [ ] Finalizar serviço
+- [x] Iniciar serviço
+- [x] Finalizar serviço
 - [x] Exibir checkpoints
-- [ ] Tratar erro ao iniciar duas vezes
-- [ ] Tratar erro ao finalizar sem início
-- [ ] Tratar atendimento não confirmado
+- [x] Tratar erro ao iniciar duas vezes
+- [x] Tratar erro ao finalizar sem início
+- [x] Tratar atendimento não confirmado
 
 Critério de pronto:
 
 - [ ] Profissional inicia serviço pelo app
 - [ ] Profissional finaliza serviço pelo app
 - [ ] Checkpoints são persistidos
-- [ ] Regras críticas permanecem no backend
+- [x] Regras críticas permanecem no backend
+
+Observação: início/fim e refetch de checkpoints já foram implementados no frontend mobile, mas a validação operacional/manual desses fluxos ainda permanece pendente em `M11 — Testes e validação operacional`.
 
 ---
 
@@ -632,17 +634,17 @@ Critério de pronto:
 
 Objetivo: permitir manutenção básica da profissional pelo app.
 
-- [ ] Visualizar perfil
-- [ ] Editar dados permitidos
-- [ ] Visualizar status de aprovação
-- [ ] Listar regiões disponíveis
-- [ ] Salvar regiões atendidas
+- [x] Visualizar perfil
+- [x] Editar dados permitidos
+- [x] Visualizar status de aprovação
+- [x] Listar regiões disponíveis
+- [x] Salvar regiões atendidas
 - [ ] Listar disponibilidades
 - [ ] Criar disponibilidade
 - [ ] Editar disponibilidade
 - [ ] Remover disponibilidade
-- [ ] Tratar estados vazios
-- [ ] Tratar erros de validação
+- [x] Tratar estados vazios
+- [x] Tratar erros de validação
 
 Critério de pronto:
 

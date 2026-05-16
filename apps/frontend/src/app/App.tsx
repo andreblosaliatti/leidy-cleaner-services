@@ -58,6 +58,7 @@ import { ProfessionalMobileConvitesPage } from '../pages/professional-mobile/Pro
 import { ProfessionalMobileDisponibilidadePage } from '../pages/professional-mobile/ProfessionalMobileDisponibilidadePage';
 import { ProfessionalMobileHomePage } from '../pages/professional-mobile/ProfessionalMobileHomePage';
 import { ProfessionalMobilePerfilPage } from '../pages/professional-mobile/ProfessionalMobilePerfilPage';
+import { ProfessionalMobileRegioesPage } from '../pages/professional-mobile/ProfessionalMobileRegioesPage';
 import { AppHomeRedirect } from '../routes/AppHomeRedirect';
 import { RequireAuth } from '../routes/RequireAuth';
 import { RequireProfile } from '../routes/RequireProfile';
@@ -90,6 +91,7 @@ export function App() {
             <Route path="atendimentos" element={<ProfessionalMobileAtendimentosPage />} />
             <Route path="atendimentos/:id" element={<ProfessionalMobileAtendimentoDetalhePage />} />
             <Route path="perfil" element={<ProfessionalMobilePerfilPage />} />
+            <Route path="regioes" element={<ProfessionalMobileRegioesPage />} />
             <Route path="disponibilidade" element={<ProfessionalMobileDisponibilidadePage />} />
           </Route>
         </Route>

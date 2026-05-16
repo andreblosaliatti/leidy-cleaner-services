@@ -159,6 +159,12 @@ export function ProfessionalMobilePerfilPage() {
 
       <div className="grid gap-3">
         <Link
+          className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 text-sm font-black text-slate-700 transition hover:border-cyan-200 hover:bg-cyan-50 hover:text-cyan-700"
+          to="/profissional/app/regioes"
+        >
+          Gerenciar regioes atendidas
+        </Link>
+        <Link
           className="inline-flex min-h-12 items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 text-sm font-black text-slate-700 transition hover:border-cyan-200 hover:bg-cyan-50 hover:text-cyan-700"
           to="/app/profissional/perfil"
         >

@@ -236,7 +236,7 @@ export function ProfessionalMobileHomePage() {
 
       <section className="grid grid-cols-2 gap-3">
         <QuickActionLink href="/profissional/app/perfil" label="Perfil" description="Placeholder mobile com acesso rapido." />
-        <QuickActionLink href="/profissional/app/disponibilidade" label="Disponibilidade" description="Area preparada para a milestone seguinte." />
+        <QuickActionLink href="/profissional/app/regioes" label="Regioes" description="Escolha onde voce deseja receber chamados." />
       </section>
     </div>
   );

@@ -21,6 +21,7 @@ const titleByPath = [
   { matchPrefix: '/profissional/app/convites', title: 'Convites' },
   { matchPrefix: '/profissional/app/atendimentos', title: 'Atendimentos' },
   { matchPrefix: '/profissional/app/perfil', title: 'Perfil' },
+  { matchPrefix: '/profissional/app/regioes', title: 'Regioes' },
   { matchPrefix: '/profissional/app/disponibilidade', title: 'Disponibilidade' },
 ];
 
