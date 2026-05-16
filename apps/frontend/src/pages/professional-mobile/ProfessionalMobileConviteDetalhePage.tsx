@@ -89,6 +89,12 @@ export function ProfessionalMobileConviteDetalhePage() {
         return;
       }
 
+      if (shouldRefreshAfterActionError(error)) {
+        void queryClient.invalidateQueries({ queryKey: queryKeys.convites });
+        void queryClient.invalidateQueries({ queryKey: queryKeys.detalhe(conviteId) });
+        void conviteQuery.refetch();
+      }
+
       setFeedback({
         tone: 'error',
         title: buildErrorTitle(error),
@@ -255,11 +261,25 @@ function buildSuccessMessage(action: ConviteAction, response: ConviteResposta) {
 }
 
 function buildErrorTitle(error: unknown) {
-  if (error instanceof ApiError && error.status === 403) {
-    return 'Voce nao pode responder a este convite'
+  if (error instanceof ApiError) {
+    if (error.status === 403) {
+      return 'Voce nao pode responder a este convite';
+    }
+
+    if (error.code === 'CONVITE_EXPIRADO') {
+      return 'Convite expirado';
+    }
+
+    if (error.code === 'CONVITE_STATUS_INCOMPATIVEL' || error.code === 'ATENDIMENTO_JA_CRIADO' || error.status === 409) {
+      return 'Convite indisponivel';
+    }
+
+    if (error.code === 'CONVITE_NOT_FOUND' || error.status === 404) {
+      return 'Convite nao encontrado';
+    }
   }
 
-  return 'Nao foi possivel responder ao convite'
+  return 'Nao foi possivel responder ao convite';
 }
 
 function buildErrorMessage(error: unknown) {
@@ -276,12 +296,31 @@ function buildErrorMessage(error: unknown) {
       return 'Este convite nao esta mais disponivel para resposta.'
     }
 
+    if (error.status === 409) {
+      return 'Este convite nao esta mais disponivel para resposta.';
+    }
+
     if (error.code === 'CONVITE_NOT_FOUND' || error.status === 404) {
       return 'Este convite nao esta disponivel para sua conta.'
     }
   }
 
   return getApiErrorMessage(error)
+}
+
+function shouldRefreshAfterActionError(error: unknown) {
+  if (!(error instanceof ApiError)) {
+    return false;
+  }
+
+  return (
+    error.code === 'CONVITE_EXPIRADO' ||
+    error.code === 'CONVITE_STATUS_INCOMPATIVEL' ||
+    error.code === 'ATENDIMENTO_JA_CRIADO' ||
+    error.code === 'CONVITE_NOT_FOUND' ||
+    error.status === 404 ||
+    error.status === 409
+  );
 }
 
 function requireToken(token: string | null) {
