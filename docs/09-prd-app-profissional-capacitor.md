@@ -86,7 +86,7 @@ O backend segue sendo a fonte de verdade para autorização, aceite transacional
 - [x] Editar dados permitidos do perfil
 - [x] Visualizar status de aprovação
 - [x] Visualizar status de verificação documental
-- [ ] Enviar/atualizar documentos, se o backend permitir
+- [x] Enviar/atualizar documentos, se o backend permitir
 - [x] Gerenciar regiões atendidas
 - [x] Gerenciar disponibilidade semanal
 - [x] Listar convites recebidos
@@ -321,7 +321,7 @@ Cards principais:
 
 - [x] Mostrar status atual
 - [ ] Mostrar pendências
-- [ ] Permitir envio de documentos quando necessário
+- [x] Permitir envio de documentos quando necessário
 - [x] Exibir motivo de rejeição, se houver
 
 ### 8.10 Ocorrências
@@ -366,7 +366,7 @@ Cards principais:
 ### Verificação
 
 - [x] `GET /api/v1/verificacoes/minha`
-- [ ] `POST /api/v1/verificacoes/documentos`
+- [x] `POST /api/v1/verificacoes/documentos`
 
 ### Convites
 
@@ -661,18 +661,18 @@ Objetivo: permitir acompanhamento e envio básico de documentos.
 - [x] Exibir status da verificação
 - [ ] Exibir pendências
 - [x] Exibir motivo de rejeição
-- [ ] Enviar documento frente
-- [ ] Enviar documento verso, se aplicável
-- [ ] Enviar selfie
-- [ ] Enviar comprovante de residência
-- [ ] Validar tamanho/formato
-- [ ] Exibir progresso/feedback
-- [ ] Recarregar status após envio
+- [x] Enviar documento frente
+- [x] Enviar documento verso, se aplicável
+- [x] Enviar selfie
+- [x] Enviar comprovante de residência
+- [x] Validar tamanho/formato
+- [x] Exibir progresso/feedback
+- [x] Recarregar status após envio
 
 Critério de pronto:
 
 - [x] Profissional entende se está aprovada, pendente ou rejeitada
-- [ ] Profissional consegue reenviar documentos quando necessário
+- [x] Profissional consegue reenviar documentos quando necessário
 
 ---
 

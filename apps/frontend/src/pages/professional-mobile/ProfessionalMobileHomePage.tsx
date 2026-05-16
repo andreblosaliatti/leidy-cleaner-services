@@ -307,10 +307,10 @@ function getVerificationBody(verificacao: DocumentoVerificacao | undefined, veri
   }
 
   if (verificacaoNotFound) {
-    return 'Ainda nao ha verificacao registrada nesta conta. O fluxo completo de envio mobile entra em milestone posterior.';
+    return 'Ainda nao ha verificacao registrada nesta conta. Voce ja pode abrir o status documental para enviar seus arquivos pelo celular.';
   }
 
-  return 'Use este card para acompanhar seu status documental sem confirmar nada no frontend.';
+  return 'Use este card para acompanhar seu status documental e reenviar arquivos quando necessario, sempre com o backend definindo o status final.';
 }
 
 function getVerificationTone(verificacao: DocumentoVerificacao | undefined, verificacaoNotFound: boolean) {

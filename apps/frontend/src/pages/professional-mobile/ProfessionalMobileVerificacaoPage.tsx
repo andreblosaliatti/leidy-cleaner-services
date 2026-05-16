@@ -1,12 +1,13 @@
-import { useQuery } from '@tanstack/react-query';
-import { useEffect, useMemo } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { FormAlert } from '../../components/ui/FormAlert';
 import { StateBox } from '../../components/ui/PageState';
 import { useAuth } from '../../features/auth/useAuth';
-import { buscarMinhaVerificacao } from '../../features/profissional/perfil/profissionalApi';
-import type { DocumentoVerificacao, StatusVerificacao } from '../../features/profissional/perfil/types';
+import { buscarMinhaVerificacao, registrarDocumentoVerificacao } from '../../features/profissional/perfil/profissionalApi';
+import type { DocumentoVerificacao, DocumentoVerificacaoRequest, StatusVerificacao } from '../../features/profissional/perfil/types';
+import { VerificacaoDocumentalForm } from '../../features/profissional/verificacao/VerificacaoDocumentalForm';
 import { ApiError, getApiErrorMessage } from '../../services/apiClient';
 
 const queryKeys = {
@@ -16,6 +17,13 @@ const queryKeys = {
 export function ProfessionalMobileVerificacaoPage() {
   const { token, logout } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [feedback, setFeedback] = useState<{
+    tone: 'error' | 'success';
+    title: string;
+    message: string;
+    details?: string[];
+  } | null>(null);
 
   const verificacaoQuery = useQuery({
     queryKey: queryKeys.verificacao,
@@ -37,6 +45,36 @@ export function ProfessionalMobileVerificacaoPage() {
     }
   }, [logout, navigate, protectedError]);
 
+  const submitMutation = useMutation({
+    mutationFn: (payload: DocumentoVerificacaoRequest) => registrarDocumentoVerificacao(requireToken(token), payload),
+    onMutate: () => {
+      setFeedback(null);
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.verificacao });
+      await verificacaoQuery.refetch();
+      setFeedback({
+        tone: 'success',
+        title: 'Documentos enviados',
+        message: 'Seus arquivos foram enviados para analise com sucesso.',
+      });
+    },
+    onError: (error) => {
+      if (error instanceof ApiError && error.status === 401) {
+        logout();
+        navigate('/entrar', { replace: true });
+        return;
+      }
+
+      setFeedback({
+        tone: 'error',
+        title: buildSubmitErrorTitle(error),
+        message: buildSubmitErrorMessage(error),
+        details: error instanceof ApiError ? error.errors : [],
+      });
+    },
+  });
+
   const verificacaoNotFound = isVerificationNotFound(verificacaoQuery.error);
 
   return (
@@ -45,9 +83,11 @@ export function ProfessionalMobileVerificacaoPage() {
         <p className="text-xs font-black uppercase tracking-[0.18em] text-cyan-700">Verificacao</p>
         <h2 className="mt-3 text-2xl font-black text-slate-900">Status documental</h2>
         <p className="mt-3 text-sm leading-6 text-slate-600">
-          Acompanhe o andamento da sua verificacao sem depender da area desktop. O envio de documentos pelo celular entra no proximo slice.
+          Acompanhe o andamento da sua verificacao e envie ou atualize seus documentos sem depender da area desktop.
         </p>
       </section>
+
+      {feedback && <FormAlert tone={feedback.tone} title={feedback.title} message={feedback.message} details={feedback.details} />}
 
       {verificacaoQuery.isLoading && (
         <StateBox
@@ -85,10 +125,17 @@ export function ProfessionalMobileVerificacaoPage() {
       )}
 
       <section className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-sm">
-        <h3 className="text-lg font-black text-slate-900">Proximo passo</h3>
+        <h3 className="text-lg font-black text-slate-900">{getUploadSectionTitle(verificacaoQuery.data, verificacaoNotFound)}</h3>
         <p className="mt-2 text-sm leading-6 text-slate-600">
-          Nesta etapa voce pode apenas consultar o status e as observacoes da analise. O envio ou reenvio de arquivos pelo app entra no proximo slice do M5.
+          {getUploadSectionDescription(verificacaoQuery.data, verificacaoNotFound)}
         </p>
+
+        <div className="mt-5 rounded-[1.5rem] border border-slate-100 bg-slate-50 p-4">
+          <VerificacaoDocumentalForm
+            isSubmitting={submitMutation.isPending}
+            onSubmit={handleUploadSubmit}
+          />
+        </div>
       </section>
 
       <div className="grid gap-3">
@@ -107,6 +154,14 @@ export function ProfessionalMobileVerificacaoPage() {
       </div>
     </div>
   );
+
+  async function handleUploadSubmit(payload: DocumentoVerificacaoRequest) {
+    if (submitMutation.isPending) {
+      return;
+    }
+
+    await submitMutation.mutateAsync(payload);
+  }
 }
 
 function VerificationStatusCard({ verificacao }: { verificacao: DocumentoVerificacao }) {
@@ -257,6 +312,50 @@ function formatDateTime(value: string) {
 
 function isVerificationNotFound(error: unknown) {
   return error instanceof ApiError && error.status === 404 && error.code === 'VERIFICACAO_NOT_FOUND';
+}
+
+function getUploadSectionTitle(verificacao: DocumentoVerificacao | undefined, verificacaoNotFound: boolean) {
+  if (verificacaoNotFound) {
+    return 'Enviar documentos';
+  }
+
+  if (verificacao?.statusVerificacao === 'REJEITADO') {
+    return 'Reenviar documentos';
+  }
+
+  return 'Atualizar documentos';
+}
+
+function getUploadSectionDescription(verificacao: DocumentoVerificacao | undefined, verificacaoNotFound: boolean) {
+  if (verificacaoNotFound) {
+    return 'Preencha os dados abaixo para iniciar sua verificacao documental pelo celular.';
+  }
+
+  if (verificacao?.statusVerificacao === 'REJEITADO') {
+    return 'Se precisar corrigir a verificacao, envie novamente os dados e arquivos solicitados. O backend continua responsavel por atualizar o status final.';
+  }
+
+  if (verificacao?.statusVerificacao === 'APROVADO') {
+    return 'Caso precise atualizar algum arquivo, voce pode reenviar os documentos por aqui. O status continuara sendo definido pela analise do backend.';
+  }
+
+  return 'Voce pode reenviar os documentos sempre que precisar complementar ou atualizar as informacoes enviadas.';
+}
+
+function buildSubmitErrorTitle(error: unknown) {
+  if (error instanceof ApiError && error.status === 403) {
+    return 'Voce nao pode enviar documentos agora';
+  }
+
+  return 'Nao foi possivel enviar os documentos';
+}
+
+function buildSubmitErrorMessage(error: unknown) {
+  if (error instanceof ApiError && error.status === 403) {
+    return 'Sua conta nao tem permissao para atualizar a verificacao neste momento.';
+  }
+
+  return getApiErrorMessage(error);
 }
 
 function requireToken(token: string | null) {
