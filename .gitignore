@@ -37,3 +37,4 @@ infra/postgres-data/
 key.properties
 signing.properties
 local.properties
+google-services.json

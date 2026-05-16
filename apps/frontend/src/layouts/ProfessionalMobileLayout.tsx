@@ -3,6 +3,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { BrandMark } from '../components/public/BrandMark';
 import { getFirstName } from '../features/auth/session';
 import { useAuth } from '../features/auth/useAuth';
+import { useProfessionalPushNotifications } from '../features/notificacoes/useProfessionalPushNotifications';
 
 type MobileNavigationItem = {
   label: string;
@@ -28,9 +29,15 @@ const titleByPath = [
 ];
 
 export function ProfessionalMobileLayout() {
-  const { user, logout } = useAuth();
+  const { user, token, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+  useProfessionalPushNotifications({
+    enabled: user?.tipoUsuario === 'PROFISSIONAL',
+    authToken: token,
+    navigate,
+  });
 
   if (!user) {
     return null;

@@ -337,9 +337,42 @@ Consulta avaliações públicas ou operacionais conforme escopo da API.
 
 ---
 
-## 15. Regras transversais
+## 15. Notificações push
+
+### POST `/notificacoes/dispositivos`
+Profissional autenticada registra ou reativa o token de push do dispositivo.
+
+Regras:
+- restrito a usuária com papel `PROFISSIONAL`
+- recebe `plataforma` e `token`
+- `plataforma` aceita `ANDROID` nesta primeira fase
+- token vazio deve ser rejeitado
+- se o mesmo token já existir para a mesma usuária/plataforma, o backend reativa o registro e atualiza `ultimoUsoEm`
+- a resposta não expõe o token completo
+
+### DELETE `/notificacoes/dispositivos/{id}`
+Profissional autenticada desativa um dispositivo próprio.
+
+Regras:
+- exclusão lógica com `ativo = false`
+- somente a dona do dispositivo pode desativá-lo
+- não remove fisicamente o registro
+
+### POST `/notificacoes/teste`
+Profissional autenticada solicita um envio de teste.
+
+Regras:
+- usa abstração de provider de push
+- nesta primeira fase, o provider pode responder de forma controlada quando Firebase/FCM ainda não estiver configurado
+- não expõe tokens, segredos ou credenciais
+- falha de push não deve substituir validação do backend nem bloquear fluxos principais
+
+---
+
+## 16. Regras transversais
 
 - frontend nunca confirma pagamento
 - backend é a fonte de verdade para elegibilidade, pagamento, convite, atendimento e crédito
 - aceite deve continuar transacional
 - webhook e reconciliação devem ser idempotentes
+- push notification é apenas aviso operacional e não substitui consulta/autorização no backend

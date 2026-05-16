@@ -52,6 +52,7 @@ Módulos centrais:
 - `clientes`
 - `avaliacoes`
 - `ocorrencias`
+- `notificacoes`
 
 ---
 
@@ -147,6 +148,8 @@ O frontend não deve:
 - criar convite
 - criar atendimento
 - decidir equivalência de crédito
+
+Notificações push devem ser tratadas como aviso operacional. O app pode navegar para convite ou atendimento a partir do payload recebido, mas a tela carregada deve consultar o backend e respeitar autorização, status e regras de negócio persistidas.
 
 ---
 

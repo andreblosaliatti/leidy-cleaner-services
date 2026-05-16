@@ -391,9 +391,9 @@ Cards principais:
 
 ### Notificações — novos endpoints
 
-- [ ] `POST /api/v1/notificacoes/dispositivos`
-- [ ] `DELETE /api/v1/notificacoes/dispositivos/{id}`
-- [ ] `POST /api/v1/notificacoes/teste`
+- [x] `POST /api/v1/notificacoes/dispositivos`
+- [x] `DELETE /api/v1/notificacoes/dispositivos/{id}`
+- [x] `POST /api/v1/notificacoes/teste`
 
 ---
 
@@ -417,22 +417,22 @@ DispositivoPush
 
 Checklist:
 
-- [ ] Criar migration `dispositivos_push`
-- [ ] Criar entity `DispositivoPush`
-- [ ] Criar repository
-- [ ] Criar DTO de registro de dispositivo
-- [ ] Criar service de registro/desativação
-- [ ] Criar controller
-- [ ] Validar ownership
-- [ ] Impedir token duplicado ativo para o mesmo usuário
-- [ ] Permitir atualizar token existente
+- [x] Criar migration `dispositivos_push`
+- [x] Criar entity `DispositivoPush`
+- [x] Criar repository
+- [x] Criar DTO de registro de dispositivo
+- [x] Criar service de registro/desativação
+- [x] Criar controller
+- [x] Validar ownership
+- [x] Impedir token duplicado ativo para o mesmo usuário
+- [x] Permitir atualizar token existente
 
 ### 10.2 Serviço de notificação
 
-- [ ] Criar `NotificacaoPushService`
-- [ ] Criar abstração para provider
+- [x] Criar `NotificacaoPushService`
+- [x] Criar abstração para provider
 - [ ] Implementar envio via Firebase/FCM ou provider escolhido
-- [ ] Adicionar logs sem expor token completo
+- [x] Adicionar logs sem expor token completo
 - [ ] Tratar falha sem quebrar transação principal
 - [ ] Desativar token inválido quando provider retornar erro definitivo
 
@@ -769,21 +769,26 @@ Critério de pronto:
 Objetivo: permitir que a profissional seja avisada de eventos operacionais.
 
 - [ ] Escolher provider de push
-- [ ] Criar migration `dispositivos_push`
-- [ ] Criar endpoints de dispositivo
-- [ ] Registrar token no login
-- [ ] Atualizar token quando mudar
+- [x] Criar migration `dispositivos_push`
+- [x] Criar endpoints de dispositivo
+- [x] Registrar token no login
+- [x] Atualizar token quando mudar
 - [ ] Desativar token no logout, se aplicável
-- [ ] Solicitar permissão no app
-- [ ] Receber token no Android
+- [x] Solicitar permissão no app
+- [x] Receber token no Android
 - [ ] Receber token no iOS
-- [ ] Enviar notificação de teste
+- [x] Enviar notificação de teste
 - [ ] Enviar push ao criar convite
 - [ ] Enviar push ao confirmar atendimento
-- [ ] Abrir tela correta ao tocar na notificação
+- [x] Abrir tela correta ao tocar na notificação
 - [ ] Tratar push com app fechado
-- [ ] Tratar push com app aberto
-- [ ] Registrar falhas no backend
+- [x] Tratar push com app aberto
+- [x] Registrar falhas no backend
+
+Observação M9-A: esta fase implementa registro de dispositivo Android,
+endpoint seguro de teste com provider no-op, listeners no app profissional e
+navegação por payload. O envio real via Firebase/FCM e os disparos automáticos
+de eventos operacionais continuam pendentes.
 
 Critério de pronto:
 

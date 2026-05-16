@@ -149,6 +149,7 @@ Fluxo central:
 - `CheckpointServico`
 - `AvaliacaoProfissional`
 - `OcorrenciaAtendimento`
+- `DispositivoPush`
 
 ---
 
@@ -237,3 +238,4 @@ Uma profissional só pode aparecer como elegível se:
 - recusa ou expiração gerando `CreditoSolicitacao`
 - execução do serviço com checkpoints válidos
 - avaliação unilateral após atendimento finalizado
+- push operacional registra dispositivos da profissional, mas não substitui validação/autorização no backend
