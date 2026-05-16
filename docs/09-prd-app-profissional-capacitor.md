@@ -501,17 +501,22 @@ OCORRENCIA_ATUALIZADA
 ### 12.2 Android
 
 - [x] Gerar projeto Android
-- [ ] Abrir no Android Studio
+- [x] Abrir no Android Studio
 - [x] Configurar package name
 - [x] Configurar ícone
 - [x] Configurar splash screen
 - [ ] Configurar permissões
 - [ ] Testar em emulador
-- [ ] Testar em aparelho físico
-- [ ] Gerar build debug
+- [x] Testar em aparelho físico
+- [x] Gerar build debug
 - [ ] Gerar build release
 - [ ] Assinar build
 - [ ] Gerar AAB para Play Store
+
+Observação:
+- o build `debug` já pode ser gerado localmente pelo Android Studio com a assinatura de debug padrão do Android Gradle Plugin
+- a assinatura `release` ainda não está configurada no Gradle do projeto e deve permanecer local, com keystore e segredos fora do Git
+- ver [docs/13-android-build-and-signing.md](/home/andre/projects/leidy-cleaner-services/docs/13-android-build-and-signing.md)
 
 ### 12.3 iOS
 
@@ -706,12 +711,12 @@ Objetivo: transformar a experiência mobile em app Android instalável.
 - [x] Ajustar build output do Vite
 - [x] Rodar `npm run build`
 - [x] Rodar `npx cap sync android`
-- [ ] Abrir no Android Studio
+- [x] Abrir no Android Studio
 - [x] Configurar nome do app
 - [x] Configurar ícone
 - [x] Configurar splash
 - [ ] Testar em emulador
-- [ ] Testar em aparelho real
+- [x] Testar em aparelho real
 - [ ] Corrigir problemas de viewport
 - [ ] Corrigir problemas de teclado mobile
 - [ ] Corrigir problemas de safe area

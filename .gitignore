@@ -30,3 +30,10 @@ apps/backend/.mvn/wrapper/maven-wrapper.jar
 # Local data
 postgres-data/
 infra/postgres-data/
+
+# Android signing secrets / local Android config
+*.jks
+*.keystore
+key.properties
+signing.properties
+local.properties
