@@ -487,20 +487,20 @@ OCORRENCIA_ATUALIZADA
 
 ### 12.1 Configuração base
 
-- [ ] Instalar `@capacitor/core`
-- [ ] Instalar `@capacitor/cli`
-- [ ] Configurar `capacitor.config.ts`
-- [ ] Definir appId
-- [ ] Definir appName
-- [ ] Definir webDir correto
-- [ ] Adicionar Android
+- [x] Instalar `@capacitor/core`
+- [x] Instalar `@capacitor/cli`
+- [x] Configurar `capacitor.config.ts`
+- [x] Definir appId
+- [x] Definir appName
+- [x] Definir webDir correto
+- [x] Adicionar Android
 - [ ] Adicionar iOS
-- [ ] Rodar build web
-- [ ] Rodar sync
+- [x] Rodar build web
+- [x] Rodar sync
 
 ### 12.2 Android
 
-- [ ] Gerar projeto Android
+- [x] Gerar projeto Android
 - [ ] Abrir no Android Studio
 - [ ] Configurar package name
 - [ ] Configurar ícone
@@ -700,12 +700,12 @@ Critério de pronto:
 
 Objetivo: transformar a experiência mobile em app Android instalável.
 
-- [ ] Instalar Capacitor
-- [ ] Configurar `capacitor.config.ts`
-- [ ] Adicionar Android
-- [ ] Ajustar build output do Vite
-- [ ] Rodar `npm run build`
-- [ ] Rodar `npx cap sync android`
+- [x] Instalar Capacitor
+- [x] Configurar `capacitor.config.ts`
+- [x] Adicionar Android
+- [x] Ajustar build output do Vite
+- [x] Rodar `npm run build`
+- [x] Rodar `npx cap sync android`
 - [ ] Abrir no Android Studio
 - [ ] Configurar nome do app
 - [ ] Configurar ícone
