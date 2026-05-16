@@ -3,7 +3,10 @@ package br.com.leidycleaner.convites.service;
 import java.time.Clock;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,6 +14,11 @@ import org.springframework.transaction.annotation.Transactional;
 import br.com.leidycleaner.convites.entity.ConviteProfissional;
 import br.com.leidycleaner.convites.repository.ConviteProfissionalRepository;
 import br.com.leidycleaner.core.exception.BusinessException;
+import br.com.leidycleaner.notificacoes.entity.DispositivoPush;
+import br.com.leidycleaner.notificacoes.provider.EnviarPushCommand;
+import br.com.leidycleaner.notificacoes.provider.PushNotificationPayload;
+import br.com.leidycleaner.notificacoes.provider.PushNotificationProvider;
+import br.com.leidycleaner.notificacoes.repository.DispositivoPushRepository;
 import br.com.leidycleaner.solicitacoes.entity.SolicitacaoFaxina;
 import br.com.leidycleaner.solicitacoes.entity.SolicitacaoProfissionalSelecionado;
 import br.com.leidycleaner.solicitacoes.entity.StatusSolicitacao;
@@ -19,18 +27,25 @@ import br.com.leidycleaner.solicitacoes.repository.SolicitacaoProfissionalSeleci
 @Service
 public class ConviteSolicitacaoPagaService {
 
+    private static final Logger log = LoggerFactory.getLogger(ConviteSolicitacaoPagaService.class);
     private static final int HORAS_PARA_EXPIRAR = 24;
 
     private final ConviteProfissionalRepository conviteProfissionalRepository;
     private final SolicitacaoProfissionalSelecionadoRepository solicitacaoProfissionalSelecionadoRepository;
+    private final DispositivoPushRepository dispositivoPushRepository;
+    private final PushNotificationProvider pushNotificationProvider;
     private final Clock clock;
 
     public ConviteSolicitacaoPagaService(
             ConviteProfissionalRepository conviteProfissionalRepository,
-            SolicitacaoProfissionalSelecionadoRepository solicitacaoProfissionalSelecionadoRepository
+            SolicitacaoProfissionalSelecionadoRepository solicitacaoProfissionalSelecionadoRepository,
+            DispositivoPushRepository dispositivoPushRepository,
+            PushNotificationProvider pushNotificationProvider
     ) {
         this.conviteProfissionalRepository = conviteProfissionalRepository;
         this.solicitacaoProfissionalSelecionadoRepository = solicitacaoProfissionalSelecionadoRepository;
+        this.dispositivoPushRepository = dispositivoPushRepository;
+        this.pushNotificationProvider = pushNotificationProvider;
         this.clock = Clock.systemDefaultZone();
     }
 
@@ -90,6 +105,58 @@ public class ConviteSolicitacaoPagaService {
                 enviadoEm.plusHours(HORAS_PARA_EXPIRAR)
         );
         solicitacao.marcarPagaAguardandoAceite();
-        return conviteProfissionalRepository.save(convite);
+        ConviteProfissional conviteSalvo = conviteProfissionalRepository.save(convite);
+        
+        // Send push notification asynchronously without blocking convite creation
+        enviarPushNotificacaoConvite(selecionado.getProfissional().getId(), conviteSalvo.getId());
+        
+        return conviteSalvo;
+    }
+
+    private void enviarPushNotificacaoConvite(Long profissionalId, Long conviteId) {
+        try {
+            List<DispositivoPush> dispositivos = dispositivoPushRepository.findByUsuario_IdAndAtivoTrue(profissionalId);
+            
+            if (dispositivos.isEmpty()) {
+                log.debug("Nenhum dispositivo ativo encontrado para enviar push de convite ao profissional {}", profissionalId);
+                return;
+            }
+
+            PushNotificationPayload payload = new PushNotificationPayload(
+                    "Novo convite de faxina",
+                    "Você recebeu um novo convite para responder.",
+                    Map.of(
+                            "tipo", "CONVITE_RECEBIDO",
+                            "conviteId", conviteId.toString()
+                    )
+            );
+
+            for (DispositivoPush dispositivo : dispositivos) {
+                try {
+                    var resultado = pushNotificationProvider.enviar(new EnviarPushCommand(
+                            profissionalId,
+                            dispositivo.getPlataforma(),
+                            dispositivo.getToken(),
+                            payload
+                    ));
+                    
+                    if (resultado.enviado()) {
+                        log.debug("Push de convite enviado para profissionalId={} dispositivoId={}", 
+                                profissionalId, dispositivo.getId());
+                    } else {
+                        log.debug("Push de convite nao enviado para profissionalId={} dispositivoId={}: {}", 
+                                profissionalId, dispositivo.getId(), resultado.codigo());
+                    }
+                } catch (Exception e) {
+                    log.warn("Falha ao enviar push de convite para profissionalId={} dispositivoId={}: {}", 
+                            profissionalId, dispositivo.getId(), e.getMessage());
+                    // Continue to next device; do not throw
+                }
+            }
+        } catch (Exception e) {
+            // Log warning but do not throw; push is operational only, not critical
+            log.warn("Falha geral ao enviar notificacoes push de convite para profissionalId={}: {}", 
+                    profissionalId, e.getMessage());
+        }
     }
 }

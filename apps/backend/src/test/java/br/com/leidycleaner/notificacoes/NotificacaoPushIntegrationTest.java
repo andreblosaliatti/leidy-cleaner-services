@@ -8,6 +8,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -37,6 +40,7 @@ import br.com.leidycleaner.verificacao.repository.DocumentoVerificacaoRepository
 class NotificacaoPushIntegrationTest {
 
     private static final String SENHA = "senha-segura-123";
+    private static final AtomicInteger SEQUENCE = new AtomicInteger(1000);
 
     private final MockMvc mockMvc;
     private final ObjectMapper objectMapper;
@@ -64,10 +68,10 @@ class NotificacaoPushIntegrationTest {
 
     @Test
     void profissionalRegistraDispositivoAndroid() throws Exception {
-        String token = criarProfissionalELogar("push.profissional.registra@example.com", "71022233344");
+        AuthSession sessao = criarProfissionalELogar("push.profissional.registra");
 
         mockMvc.perform(post("/api/v1/notificacoes/dispositivos")
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + sessao.token())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -85,18 +89,18 @@ class NotificacaoPushIntegrationTest {
 
     @Test
     void registrarMesmoTokenReativaRegistroExistenteSemDuplicar() throws Exception {
-        String token = criarProfissionalELogar("push.profissional.duplica@example.com", "71122233344");
+        AuthSession sessao = criarProfissionalELogar("push.profissional.duplica");
         String pushToken = "fcm-token-reutilizado-456";
-        Long primeiroId = registrarDispositivo(token, pushToken);
+        Long primeiroId = registrarDispositivo(sessao.token(), pushToken);
 
         mockMvc.perform(delete("/api/v1/notificacoes/dispositivos/{id}", primeiroId)
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + sessao.token()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.ativo").value(false));
 
-        Long segundoId = registrarDispositivo(token, pushToken);
+        Long segundoId = registrarDispositivo(sessao.token(), pushToken);
 
-        Usuario usuario = usuarioRepository.findByEmail("push.profissional.duplica@example.com").orElseThrow();
+        Usuario usuario = usuarioRepository.findByEmail(sessao.email()).orElseThrow();
         assertThat(segundoId).isEqualTo(primeiroId);
         assertThat(dispositivoPushRepository.countByUsuario_IdAndPlataformaAndToken(
                 usuario.getId(),
@@ -108,12 +112,12 @@ class NotificacaoPushIntegrationTest {
 
     @Test
     void profissionalNaoDesativaDispositivoDeOutraProfissional() throws Exception {
-        String tokenDona = criarProfissionalELogar("push.profissional.dona@example.com", "71222233344");
-        String tokenOutra = criarProfissionalELogar("push.profissional.outra@example.com", "71322233344");
-        Long dispositivoId = registrarDispositivo(tokenDona, "fcm-token-dona-789");
+        AuthSession sessaoDona = criarProfissionalELogar("push.profissional.dona");
+        AuthSession sessaoOutra = criarProfissionalELogar("push.profissional.outra");
+        Long dispositivoId = registrarDispositivo(sessaoDona.token(), "fcm-token-dona-789");
 
         mockMvc.perform(delete("/api/v1/notificacoes/dispositivos/{id}", dispositivoId)
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenOutra))
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + sessaoOutra.token()))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.code").value("DISPOSITIVO_PUSH_FORBIDDEN"));
@@ -123,11 +127,11 @@ class NotificacaoPushIntegrationTest {
 
     @Test
     void profissionalDesativaProprioDispositivo() throws Exception {
-        String token = criarProfissionalELogar("push.profissional.desativa@example.com", "71422233344");
-        Long dispositivoId = registrarDispositivo(token, "fcm-token-desativa-000");
+        AuthSession sessao = criarProfissionalELogar("push.profissional.desativa");
+        Long dispositivoId = registrarDispositivo(sessao.token(), "fcm-token-desativa-000");
 
         mockMvc.perform(delete("/api/v1/notificacoes/dispositivos/{id}", dispositivoId)
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + sessao.token()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.ativo").value(false));
@@ -137,10 +141,10 @@ class NotificacaoPushIntegrationTest {
 
     @Test
     void clienteNaoRegistraDispositivoProfissional() throws Exception {
-        String tokenCliente = criarClienteELogar("push.cliente.negado@example.com", "71522233344");
+        AuthSession sessaoCliente = criarClienteELogar("push.cliente.negado");
 
         mockMvc.perform(post("/api/v1/notificacoes/dispositivos")
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenCliente)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + sessaoCliente.token())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -153,12 +157,12 @@ class NotificacaoPushIntegrationTest {
 
     @Test
     void envioTesteNaoExpoeTokenOuSegredos() throws Exception {
-        String token = criarProfissionalELogar("push.profissional.teste@example.com", "71622233344");
+        AuthSession sessao = criarProfissionalELogar("push.profissional.teste");
         String pushToken = "fcm-token-super-secreto-999";
-        registrarDispositivo(token, pushToken);
+        registrarDispositivo(sessao.token(), pushToken);
 
         String response = mockMvc.perform(post("/api/v1/notificacoes/teste")
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + sessao.token()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.providerConfigurado").value(false))
@@ -191,9 +195,8 @@ class NotificacaoPushIntegrationTest {
         return objectMapper.readTree(response).path("data").path("id").asLong();
     }
 
-    private String criarProfissionalELogar(String email, String cpf) throws Exception {
-        String cpfNormalizado = cpfComPrefixo(cpf);
-        String telefone = "+55519" + cpfNormalizado.substring(0, 8);
+    private AuthSession criarProfissionalELogar(String emailPrefixo) throws Exception {
+        DadosCadastro dados = dadosCadastroUnicos(emailPrefixo, "+55519");
 
         mockMvc.perform(post("/api/v1/usuarios/profissionais")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -210,16 +213,21 @@ class NotificacaoPushIntegrationTest {
                                   "experienciaAnos": 3,
                                   %s
                                 }
-                                """.formatted(email, telefone, SENHA, cpfNormalizado, camposAceiteJson())))
+                                """.formatted(
+                                dados.email(),
+                                dados.telefone(),
+                                SENHA,
+                                dados.cpf(),
+                                camposAceiteJson()
+                        )))
                 .andExpect(status().isCreated());
 
-        liberarProfissionalParaLogin(cpfNormalizado);
-        return login(email);
+        liberarProfissionalParaLogin(dados.cpf());
+        return new AuthSession(dados.email(), login(dados.email()));
     }
 
-    private String criarClienteELogar(String email, String cpf) throws Exception {
-        String cpfNormalizado = cpfComPrefixo(cpf);
-        String telefone = "+55518" + cpfNormalizado.substring(0, 8);
+    private AuthSession criarClienteELogar(String emailPrefixo) throws Exception {
+        DadosCadastro dados = dadosCadastroUnicos(emailPrefixo, "+55518");
 
         mockMvc.perform(post("/api/v1/usuarios/clientes")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -232,10 +240,36 @@ class NotificacaoPushIntegrationTest {
                                   "senha": "%s",
                                   %s
                                 }
-                                """.formatted(email, telefone, cpfNormalizado, SENHA, camposAceiteJson())))
+                                """.formatted(
+                                dados.email(),
+                                dados.telefone(),
+                                dados.cpf(),
+                                SENHA,
+                                camposAceiteJson()
+                        )))
                 .andExpect(status().isCreated());
 
-        return login(email);
+        return new AuthSession(dados.email(), login(dados.email()));
+    }
+
+    private DadosCadastro dadosCadastroUnicos(String emailPrefixo, String telefonePrefixo) {
+        String cpf = cpfComPrefixo(cpfBaseUnico());
+        String telefone = telefonePrefixo + cpf.substring(0, 8);
+        String email = emailUnico(emailPrefixo);
+
+        return new DadosCadastro(email, cpf, telefone);
+    }
+
+    private String emailUnico(String emailPrefixo) {
+        String prefixoSeguro = emailPrefixo.replaceAll("[^a-zA-Z0-9]", "").toLowerCase();
+        return prefixoSeguro + SEQUENCE.getAndIncrement() + System.nanoTime() + "@example.com";
+    }
+
+    private String cpfBaseUnico() {
+        long valor = Math.abs(System.nanoTime() + ThreadLocalRandom.current().nextLong(1_000_000L));
+        int sequencia = SEQUENCE.getAndIncrement();
+
+        return "9" + String.format("%010d", (valor + sequencia) % 10_000_000_000L);
     }
 
     private void liberarProfissionalParaLogin(String cpf) {
@@ -277,5 +311,11 @@ class NotificacaoPushIntegrationTest {
 
         JsonNode root = objectMapper.readTree(response);
         return root.path("data").path("accessToken").asText();
+    }
+
+    private record AuthSession(String email, String token) {
+    }
+
+    private record DadosCadastro(String email, String cpf, String telefone) {
     }
 }

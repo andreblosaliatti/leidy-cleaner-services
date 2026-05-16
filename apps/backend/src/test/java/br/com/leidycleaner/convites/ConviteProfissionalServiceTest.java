@@ -57,7 +57,9 @@ class ConviteProfissionalServiceTest {
     void criarConviteParaSolicitacaoPagaRejeitaMaisDeUmaProfissionalSelecionada() {
         ConviteSolicitacaoPagaService service = new ConviteSolicitacaoPagaService(
                 conviteProfissionalRepository,
-                solicitacaoProfissionalSelecionadoRepository
+                solicitacaoProfissionalSelecionadoRepository,
+                org.mockito.Mockito.mock(br.com.leidycleaner.notificacoes.repository.DispositivoPushRepository.class),
+                org.mockito.Mockito.mock(br.com.leidycleaner.notificacoes.provider.PushNotificationProvider.class)
         );
         SolicitacaoFaxina solicitacao = mock(SolicitacaoFaxina.class);
         given(solicitacao.getId()).willReturn(10L);
