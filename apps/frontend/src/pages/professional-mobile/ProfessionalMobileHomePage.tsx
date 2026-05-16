@@ -127,7 +127,7 @@ export function ProfessionalMobileHomePage() {
         <p className="text-xs font-black uppercase tracking-[0.18em] text-cyan-700">Inicio mobile</p>
         <h2 className="mt-3 text-2xl font-black text-slate-900">Resumo operacional</h2>
         <p className="mt-3 text-sm leading-6 text-slate-600">
-          Este primeiro slice foca em navegação mobile, cards de status e pontos de entrada seguros. Convites, atendimentos, perfil e disponibilidade completos entram nas proximas milestones.
+          Acompanhe seus convites, atendimentos e ajustes principais da rotina profissional em uma experiencia pensada para celular.
         </p>
       </section>
 
@@ -235,8 +235,8 @@ export function ProfessionalMobileHomePage() {
       </div>
 
       <section className="grid grid-cols-2 gap-3">
-        <QuickActionLink href="/profissional/app/perfil" label="Perfil" description="Placeholder mobile com acesso rapido." />
-        <QuickActionLink href="/profissional/app/regioes" label="Regioes" description="Escolha onde voce deseja receber chamados." />
+        <QuickActionLink href="/profissional/app/perfil" label="Perfil" description="Atualize seus dados profissionais permitidos." />
+        <QuickActionLink href="/profissional/app/disponibilidade" label="Agenda" description="Organize seus dias e horarios de atendimento." />
       </section>
     </div>
   );

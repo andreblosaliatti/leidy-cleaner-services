@@ -88,7 +88,7 @@ O backend segue sendo a fonte de verdade para autorização, aceite transacional
 - [ ] Visualizar status de verificação documental
 - [ ] Enviar/atualizar documentos, se o backend permitir
 - [x] Gerenciar regiões atendidas
-- [ ] Gerenciar disponibilidade semanal
+- [x] Gerenciar disponibilidade semanal
 - [x] Listar convites recebidos
 - [x] Ver detalhe do convite
 - [x] Aceitar convite
@@ -302,13 +302,13 @@ Cards principais:
 
 ### 8.7 Disponibilidade
 
-- [ ] Lista de dias da semana
-- [ ] Horário inicial
-- [ ] Horário final
-- [ ] Ativar/desativar faixa
-- [ ] Criar disponibilidade
-- [ ] Editar disponibilidade
-- [ ] Remover disponibilidade
+- [x] Lista de dias da semana
+- [x] Horário inicial
+- [x] Horário final
+- [x] Ativar/desativar faixa
+- [x] Criar disponibilidade
+- [x] Editar disponibilidade
+- [x] Remover disponibilidade
 
 ### 8.8 Regiões atendidas
 
@@ -358,10 +358,10 @@ Cards principais:
 - [x] `PUT /api/v1/profissionais/me`
 - [x] `GET /api/v1/profissionais/me/regioes`
 - [x] `POST /api/v1/profissionais/me/regioes`
-- [ ] `GET /api/v1/profissionais/me/disponibilidades`
-- [ ] `POST /api/v1/profissionais/me/disponibilidades`
-- [ ] `PUT /api/v1/profissionais/me/disponibilidades/{id}`
-- [ ] `DELETE /api/v1/profissionais/me/disponibilidades/{id}`
+- [x] `GET /api/v1/profissionais/me/disponibilidades`
+- [x] `POST /api/v1/profissionais/me/disponibilidades`
+- [x] `PUT /api/v1/profissionais/me/disponibilidades/{id}`
+- [x] `DELETE /api/v1/profissionais/me/disponibilidades/{id}`
 
 ### Verificação
 
@@ -639,17 +639,17 @@ Objetivo: permitir manutenção básica da profissional pelo app.
 - [x] Visualizar status de aprovação
 - [x] Listar regiões disponíveis
 - [x] Salvar regiões atendidas
-- [ ] Listar disponibilidades
-- [ ] Criar disponibilidade
-- [ ] Editar disponibilidade
-- [ ] Remover disponibilidade
+- [x] Listar disponibilidades
+- [x] Criar disponibilidade
+- [x] Editar disponibilidade
+- [x] Remover disponibilidade
 - [x] Tratar estados vazios
 - [x] Tratar erros de validação
 
 Critério de pronto:
 
-- [ ] Profissional consegue ajustar sua disponibilidade
-- [ ] Profissional consegue ajustar regiões
+- [x] Profissional consegue ajustar sua disponibilidade
+- [x] Profissional consegue ajustar regiões
 - [ ] Alterações refletem na elegibilidade
 
 ---

@@ -4,11 +4,18 @@ import type { DisponibilidadeProfissional } from '../perfil/types';
 type DisponibilidadeListProps = {
   disponibilidades: DisponibilidadeProfissional[];
   deletingId?: number | null;
+  disableActions?: boolean;
   onDelete: (disponibilidade: DisponibilidadeProfissional) => void;
   onEdit: (disponibilidade: DisponibilidadeProfissional) => void;
 };
 
-export function DisponibilidadeList({ disponibilidades, deletingId, onDelete, onEdit }: DisponibilidadeListProps) {
+export function DisponibilidadeList({
+  disponibilidades,
+  deletingId,
+  disableActions = false,
+  onDelete,
+  onEdit,
+}: DisponibilidadeListProps) {
   const orderedDisponibilidades = sortDisponibilidades(disponibilidades);
 
   return (
@@ -33,6 +40,7 @@ export function DisponibilidadeList({ disponibilidades, deletingId, onDelete, on
             <div className="flex gap-2">
               <button
                 className="min-h-10 rounded-lg border border-slate-200 px-4 text-sm font-black text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-700"
+                disabled={disableActions}
                 type="button"
                 onClick={() => onEdit(disponibilidade)}
               >
@@ -40,7 +48,7 @@ export function DisponibilidadeList({ disponibilidades, deletingId, onDelete, on
               </button>
               <button
                 className="min-h-10 rounded-lg border border-red-100 px-4 text-sm font-black text-red-700 transition hover:bg-red-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-600 disabled:cursor-not-allowed disabled:text-slate-400"
-                disabled={deletingId === disponibilidade.id}
+                disabled={disableActions || deletingId === disponibilidade.id}
                 type="button"
                 onClick={() => onDelete(disponibilidade)}
               >
