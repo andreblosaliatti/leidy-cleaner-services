@@ -99,7 +99,7 @@ O backend segue sendo a fonte de verdade para autorização, aceite transacional
 - [x] Finalizar serviço
 - [x] Visualizar checkpoints
 - [ ] Abrir ocorrência
-- [ ] Listar ocorrências da profissional
+- [x] Listar ocorrências da profissional
 - [ ] Receber notificações push
 - [ ] Abrir convite/atendimento ao tocar na notificação
 - [ ] Build Android
@@ -252,7 +252,7 @@ Cards principais:
 - [ ] Atendimento em andamento
 - [ ] Status da verificação
 - [ ] Atalho para disponibilidade
-- [ ] Atalho para ocorrências
+- [x] Atalho para ocorrências
 
 ### 8.3 Convites
 
@@ -326,13 +326,13 @@ Cards principais:
 
 ### 8.10 Ocorrências
 
-- [ ] Listar ocorrências
+- [x] Listar ocorrências
 - [ ] Abrir nova ocorrência
 - [ ] Selecionar atendimento
 - [ ] Selecionar tipo
 - [ ] Descrever problema
 - [ ] Enviar ocorrência
-- [ ] Acompanhar status
+- [x] Acompanhar status
 
 ### 8.11 Perfil
 
@@ -385,8 +385,8 @@ Cards principais:
 
 ### Ocorrências
 
-- [ ] `GET /api/v1/ocorrencias/meus`
-- [ ] `GET /api/v1/ocorrencias/{id}`
+- [x] `GET /api/v1/ocorrencias/meus`
+- [x] `GET /api/v1/ocorrencias/{id}`
 - [ ] `POST /api/v1/ocorrencias`
 
 ### Notificações — novos endpoints
@@ -680,13 +680,13 @@ Critério de pronto:
 
 Objetivo: permitir registro de problemas operacionais.
 
-- [ ] Listar ocorrências da profissional
+- [x] Listar ocorrências da profissional
 - [ ] Abrir ocorrência vinculada a atendimento
 - [ ] Selecionar tipo de ocorrência
 - [ ] Escrever descrição
 - [ ] Enviar ocorrência
-- [ ] Ver detalhe da ocorrência
-- [ ] Ver status da ocorrência
+- [x] Ver detalhe da ocorrência
+- [x] Ver status da ocorrência
 - [ ] Tratar erro de atendimento inválido
 
 Critério de pronto:

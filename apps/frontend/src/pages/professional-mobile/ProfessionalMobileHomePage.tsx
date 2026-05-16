@@ -237,6 +237,7 @@ export function ProfessionalMobileHomePage() {
       <section className="grid grid-cols-2 gap-3">
         <QuickActionLink href="/profissional/app/perfil" label="Perfil" description="Atualize seus dados profissionais permitidos." />
         <QuickActionLink href="/profissional/app/disponibilidade" label="Agenda" description="Organize seus dias e horarios de atendimento." />
+        <QuickActionLink href="/profissional/app/ocorrencias" label="Ocorrencias" description="Consulte os registros abertos e acompanhe o andamento." />
       </section>
     </div>
   );
