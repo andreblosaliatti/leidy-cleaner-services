@@ -89,10 +89,10 @@ O backend segue sendo a fonte de verdade para autorização, aceite transacional
 - [ ] Enviar/atualizar documentos, se o backend permitir
 - [ ] Gerenciar regiões atendidas
 - [ ] Gerenciar disponibilidade semanal
-- [ ] Listar convites recebidos
-- [ ] Ver detalhe do convite
-- [ ] Aceitar convite
-- [ ] Recusar convite
+- [x] Listar convites recebidos
+- [x] Ver detalhe do convite
+- [x] Aceitar convite
+- [x] Recusar convite
 - [ ] Visualizar atendimentos confirmados
 - [ ] Visualizar detalhe do atendimento
 - [ ] Iniciar serviço
@@ -256,26 +256,26 @@ Cards principais:
 
 ### 8.3 Convites
 
-- [ ] Lista de convites
-- [ ] Status do convite
-- [ ] Data/hora do serviço
-- [ ] Bairro/região
-- [ ] Duração
-- [ ] Valor estimado da profissional
-- [ ] Botão ver detalhes
+- [x] Lista de convites
+- [x] Status do convite
+- [x] Data/hora do serviço
+- [x] Bairro/região
+- [x] Duração
+- [x] Valor estimado da profissional
+- [x] Botão ver detalhes
 
 ### 8.4 Detalhe do convite
 
-- [ ] Tipo de serviço
-- [ ] Data e horário
-- [ ] Duração
-- [ ] Endereço ou região, conforme regra de privacidade
+- [x] Tipo de serviço
+- [x] Data e horário
+- [x] Duração
+- [x] Endereço ou região, conforme regra de privacidade
 - [ ] Observações
-- [ ] Valor estimado da profissional
-- [ ] Prazo de expiração
-- [ ] Botão aceitar
-- [ ] Botão recusar
-- [ ] Feedback após resposta
+- [x] Valor estimado da profissional
+- [x] Prazo de expiração
+- [x] Botão aceitar
+- [x] Botão recusar
+- [x] Feedback após resposta
 
 ### 8.5 Atendimentos
 
@@ -370,10 +370,10 @@ Cards principais:
 
 ### Convites
 
-- [ ] `GET /api/v1/convites/meus`
-- [ ] `GET /api/v1/convites/{id}`
-- [ ] `POST /api/v1/convites/{id}/aceitar`
-- [ ] `POST /api/v1/convites/{id}/recusar`
+- [x] `GET /api/v1/convites/meus`
+- [x] `GET /api/v1/convites/{id}`
+- [x] `POST /api/v1/convites/{id}/aceitar`
+- [x] `POST /api/v1/convites/{id}/recusar`
 
 ### Atendimentos
 
@@ -585,19 +585,19 @@ Objetivo: entregar o fluxo mais importante do app.
 - [x] Exibir detalhe do convite
 - [x] Exibir prazo/status
 - [x] Exibir valor estimado da profissional
-- [ ] Aceitar convite
-- [ ] Recusar convite
+- [x] Aceitar convite
+- [x] Recusar convite
 - [ ] Tratar convite expirado
 - [ ] Tratar convite já aceito por outra profissional
-- [ ] Tratar erro de permissão
-- [ ] Bloquear clique duplo visualmente
-- [ ] Atualizar lista após ação
+- [x] Tratar erro de permissão
+- [x] Bloquear clique duplo visualmente
+- [x] Atualizar lista após ação
 
 Critério de pronto:
 
-- [ ] Profissional aceita convite pelo mobile
-- [ ] Profissional recusa convite pelo mobile
-- [ ] Backend continua sendo a validação final
+- [x] Profissional aceita convite pelo mobile
+- [x] Profissional recusa convite pelo mobile
+- [x] Backend continua sendo a validação final
 - [ ] Teste manual cobre aceite concorrente
 
 ---

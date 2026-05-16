@@ -1,5 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
-import { useEffect, useMemo } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
 import { FormAlert } from '../../components/ui/FormAlert';
@@ -14,13 +14,23 @@ import {
   getTipoServicoLabel,
   isConviteAtivo,
 } from '../../features/profissional/convites/conviteLabels';
-import { buscarConvite } from '../../features/profissional/convites/convitesApi';
-import type { ConviteProfissional } from '../../features/profissional/convites/types';
+import { aceitarConvite, buscarConvite, recusarConvite } from '../../features/profissional/convites/convitesApi';
+import type { ConviteProfissional, ConviteResposta } from '../../features/profissional/convites/types';
 import { ApiError, getApiErrorMessage } from '../../services/apiClient';
 
 const queryKeys = {
+  convites: ['profissional', 'convites', 'mobile'],
   detalhe: (id: number) => ['profissional', 'convites', 'mobile', id],
 };
+
+type Feedback = {
+  tone: 'error' | 'success' | 'info';
+  title: string;
+  message: string;
+  details?: string[];
+};
+
+type ConviteAction = 'aceitar' | 'recusar';
 
 export function ProfessionalMobileConviteDetalhePage() {
   const { id } = useParams();
@@ -28,6 +38,9 @@ export function ProfessionalMobileConviteDetalhePage() {
   const validId = Number.isFinite(conviteId) && conviteId > 0;
   const { token, logout } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [feedback, setFeedback] = useState<Feedback | null>(null);
+  const [pendingAction, setPendingAction] = useState<ConviteAction | null>(null);
 
   const conviteQuery = useQuery({
     queryKey: validId ? queryKeys.detalhe(conviteId) : ['profissional', 'convites', 'mobile', 'invalid'],
@@ -47,6 +60,55 @@ export function ProfessionalMobileConviteDetalhePage() {
     }
   }, [logout, navigate, protectedError]);
 
+  const responseMutation = useMutation({
+    mutationFn: (action: ConviteAction) => {
+      const activeToken = requireToken(token);
+      return action === 'aceitar' ? aceitarConvite(activeToken, conviteId) : recusarConvite(activeToken, conviteId);
+    },
+    onMutate: (action) => {
+      setPendingAction(action);
+      setFeedback(null);
+    },
+    onSuccess: async (response, action) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.convites }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.detalhe(conviteId) }),
+        conviteQuery.refetch(),
+      ]);
+
+      setFeedback({
+        tone: 'success',
+        title: action === 'aceitar' ? 'Convite aceito' : 'Convite recusado',
+        message: buildSuccessMessage(action, response),
+      });
+    },
+    onError: (error) => {
+      if (error instanceof ApiError && error.status === 401) {
+        logout();
+        navigate('/entrar', { replace: true });
+        return;
+      }
+
+      setFeedback({
+        tone: 'error',
+        title: buildErrorTitle(error),
+        message: buildErrorMessage(error),
+        details: error instanceof ApiError ? error.errors : [],
+      });
+    },
+    onSettled: () => {
+      setPendingAction(null);
+    },
+  });
+
+  function handleRespond(action: ConviteAction) {
+    if (responseMutation.isPending) {
+      return;
+    }
+
+    responseMutation.mutate(action);
+  }
+
   if (!validId) {
     return (
       <div className="grid gap-4">
@@ -62,9 +124,11 @@ export function ProfessionalMobileConviteDetalhePage() {
         <p className="text-xs font-black uppercase tracking-[0.18em] text-cyan-700">Convite</p>
         <h2 className="mt-3 text-2xl font-black text-slate-900">Detalhe do convite</h2>
         <p className="mt-3 text-sm leading-6 text-slate-600">
-          Este slice mobile mostra somente consulta segura dos dados disponiveis no backend atual. As acoes de aceitar e recusar entram no proximo passo de M2.
+          Confira os detalhes do servico e responda ao convite quando ele ainda estiver disponivel.
         </p>
       </section>
+
+      {feedback && <FormAlert tone={feedback.tone} title={feedback.title} message={feedback.message} details={feedback.details} />}
 
       {conviteQuery.isLoading && (
         <StateBox tone="loading" title="Carregando convite" description="Buscando os dados completos deste convite." className="rounded-[1.75rem]" />
@@ -79,16 +143,33 @@ export function ProfessionalMobileConviteDetalhePage() {
         />
       )}
 
-      {conviteQuery.data && <ProfessionalMobileConviteDetailCard convite={conviteQuery.data} />}
+      {conviteQuery.data && (
+        <ProfessionalMobileConviteDetailCard
+          convite={conviteQuery.data}
+          isResponding={responseMutation.isPending}
+          pendingAction={pendingAction}
+          onRespond={handleRespond}
+        />
+      )}
 
       <MobileBackLink />
     </div>
   );
 }
 
-function ProfessionalMobileConviteDetailCard({ convite }: { convite: ConviteProfissional }) {
+function ProfessionalMobileConviteDetailCard({
+  convite,
+  isResponding,
+  onRespond,
+  pendingAction,
+}: {
+  convite: ConviteProfissional;
+  isResponding: boolean;
+  onRespond: (action: ConviteAction) => void;
+  pendingAction: ConviteAction | null;
+}) {
   const statusEfetivo = getStatusConviteEfetivo(convite);
-  const isAtivo = isConviteAtivo(convite);
+  const canRespond = isConviteAtivo(convite);
 
   return (
     <section className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-sm">
@@ -107,14 +188,38 @@ function ProfessionalMobileConviteDetailCard({ convite }: { convite: ConviteProf
         <MobileDetailItem label="Expira em" value={formatDateTime(convite.expiraEm)} />
       </div>
 
-      <div className="mt-5 rounded-[1.25rem] border border-slate-200 bg-slate-50 p-4">
-        <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Acoes</p>
-        <p className="mt-2 text-sm leading-6 text-slate-600">
-          {isAtivo
-            ? 'Aceitar e recusar convite ainda nao fazem parte deste primeiro slice de M2. Nesta etapa, a tela mobile esta focada em listagem e consulta detalhada.'
-            : 'Este convite esta em modo somente leitura neste slice mobile. As regras de resposta continuam protegidas no backend.'}
-        </p>
-      </div>
+      {canRespond ? (
+        <div className="mt-5 grid gap-3 border-t border-slate-100 pt-5">
+          <button
+            className="min-h-12 rounded-[1.25rem] bg-cyan-700 px-4 text-sm font-black text-white transition hover:bg-cyan-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600"
+            disabled={isResponding}
+            type="button"
+            onClick={() => onRespond('aceitar')}
+          >
+            {pendingAction === 'aceitar' ? 'Aceitando convite...' : 'Aceitar convite'}
+          </button>
+          <button
+            className="min-h-12 rounded-[1.25rem] border border-red-100 bg-white px-4 text-sm font-black text-red-700 transition hover:bg-red-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-600 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-400"
+            disabled={isResponding}
+            type="button"
+            onClick={() => onRespond('recusar')}
+          >
+            {pendingAction === 'recusar' ? 'Recusando convite...' : 'Recusar convite'}
+          </button>
+          <p className="text-sm leading-6 text-slate-500">Sua resposta sera confirmada somente apos o retorno do sistema.</p>
+        </div>
+      ) : (
+        <div className="mt-5">
+          <FormAlert
+            tone="info"
+            message={
+              statusEfetivo === 'EXPIRADO'
+                ? 'Este convite expirou e nao esta mais disponivel para resposta.'
+                : 'Este convite nao esta mais disponivel para resposta.'
+            }
+          />
+        </div>
+      )}
     </section>
   );
 }
@@ -137,6 +242,46 @@ function MobileBackLink() {
       Voltar para convites
     </Link>
   );
+}
+
+function buildSuccessMessage(action: ConviteAction, response: ConviteResposta) {
+  if (action === 'aceitar') {
+    return response.atendimentoId
+      ? `Convite aceito com sucesso. Atendimento #${response.atendimentoId} confirmado.`
+      : 'Convite aceito com sucesso.'
+  }
+
+  return 'Convite recusado com sucesso.'
+}
+
+function buildErrorTitle(error: unknown) {
+  if (error instanceof ApiError && error.status === 403) {
+    return 'Voce nao pode responder a este convite'
+  }
+
+  return 'Nao foi possivel responder ao convite'
+}
+
+function buildErrorMessage(error: unknown) {
+  if (error instanceof ApiError) {
+    if (error.status === 403) {
+      return 'Voce nao tem permissao para responder a este convite.'
+    }
+
+    if (error.code === 'CONVITE_EXPIRADO') {
+      return 'Este convite expirou e nao pode mais ser respondido.'
+    }
+
+    if (error.code === 'CONVITE_STATUS_INCOMPATIVEL' || error.code === 'ATENDIMENTO_JA_CRIADO') {
+      return 'Este convite nao esta mais disponivel para resposta.'
+    }
+
+    if (error.code === 'CONVITE_NOT_FOUND' || error.status === 404) {
+      return 'Este convite nao esta disponivel para sua conta.'
+    }
+  }
+
+  return getApiErrorMessage(error)
 }
 
 function requireToken(token: string | null) {
