@@ -52,6 +52,7 @@ import { PagamentoGatewayRetornoPage } from '../pages/public/PagamentoGatewayRet
 import { ProfessionalRegistrationPage } from '../pages/public/ProfessionalRegistrationPage';
 import { RegistrationChoicePage } from '../pages/public/RegistrationChoicePage';
 import { ProfessionalMobileAtendimentosPage } from '../pages/professional-mobile/ProfessionalMobileAtendimentosPage';
+import { ProfessionalMobileAtendimentoDetalhePage } from '../pages/professional-mobile/ProfessionalMobileAtendimentoDetalhePage';
 import { ProfessionalMobileConviteDetalhePage } from '../pages/professional-mobile/ProfessionalMobileConviteDetalhePage';
 import { ProfessionalMobileConvitesPage } from '../pages/professional-mobile/ProfessionalMobileConvitesPage';
 import { ProfessionalMobileDisponibilidadePage } from '../pages/professional-mobile/ProfessionalMobileDisponibilidadePage';
@@ -87,6 +88,7 @@ export function App() {
             <Route path="convites" element={<ProfessionalMobileConvitesPage />} />
             <Route path="convites/:id" element={<ProfessionalMobileConviteDetalhePage />} />
             <Route path="atendimentos" element={<ProfessionalMobileAtendimentosPage />} />
+            <Route path="atendimentos/:id" element={<ProfessionalMobileAtendimentoDetalhePage />} />
             <Route path="perfil" element={<ProfessionalMobilePerfilPage />} />
             <Route path="disponibilidade" element={<ProfessionalMobileDisponibilidadePage />} />
           </Route>

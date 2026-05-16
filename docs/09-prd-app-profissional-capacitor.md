@@ -93,11 +93,11 @@ O backend segue sendo a fonte de verdade para autorização, aceite transacional
 - [x] Ver detalhe do convite
 - [x] Aceitar convite
 - [x] Recusar convite
-- [ ] Visualizar atendimentos confirmados
-- [ ] Visualizar detalhe do atendimento
+- [x] Visualizar atendimentos confirmados
+- [x] Visualizar detalhe do atendimento
 - [ ] Iniciar serviço
 - [ ] Finalizar serviço
-- [ ] Visualizar checkpoints
+- [x] Visualizar checkpoints
 - [ ] Abrir ocorrência
 - [ ] Listar ocorrências da profissional
 - [ ] Receber notificações push
@@ -279,23 +279,23 @@ Cards principais:
 
 ### 8.5 Atendimentos
 
-- [ ] Lista de atendimentos confirmados
-- [ ] Lista de atendimentos em execução
-- [ ] Lista de atendimentos finalizados
-- [ ] Filtros simples por status
-- [ ] Empty state quando não houver atendimento
+- [x] Lista de atendimentos confirmados
+- [x] Lista de atendimentos em execução
+- [x] Lista de atendimentos finalizados
+- [x] Filtros simples por status
+- [x] Empty state quando não houver atendimento
 
 ### 8.6 Detalhe do atendimento
 
-- [ ] Status do atendimento
-- [ ] Cliente
-- [ ] Endereço
-- [ ] Data/hora
-- [ ] Tipo de serviço
+- [x] Status do atendimento
+- [x] Cliente
+- [x] Endereço
+- [x] Data/hora
+- [x] Tipo de serviço
 - [ ] Observações
-- [ ] Valor estimado da profissional
-- [ ] Checkpoint de início
-- [ ] Checkpoint de fim
+- [x] Valor estimado da profissional
+- [x] Checkpoint de início
+- [x] Checkpoint de fim
 - [ ] Botão iniciar
 - [ ] Botão finalizar
 - [ ] Botão abrir ocorrência
@@ -377,9 +377,9 @@ Cards principais:
 
 ### Atendimentos
 
-- [ ] `GET /api/v1/atendimentos/meus`
-- [ ] `GET /api/v1/atendimentos/{id}`
-- [ ] `GET /api/v1/atendimentos/{id}/checkpoints`
+- [x] `GET /api/v1/atendimentos/meus`
+- [x] `GET /api/v1/atendimentos/{id}`
+- [x] `GET /api/v1/atendimentos/{id}/checkpoints`
 - [ ] `POST /api/v1/atendimentos/{id}/iniciar`
 - [ ] `POST /api/v1/atendimentos/{id}/finalizar`
 
@@ -606,15 +606,15 @@ Critério de pronto:
 
 Objetivo: permitir que a profissional opere o serviço.
 
-- [ ] Listar atendimentos
-- [ ] Separar por status
-- [ ] Exibir detalhe do atendimento
-- [ ] Exibir endereço e horário
+- [x] Listar atendimentos
+- [x] Separar por status
+- [x] Exibir detalhe do atendimento
+- [x] Exibir endereço e horário
 - [ ] Exibir observações
-- [ ] Exibir valor estimado
+- [x] Exibir valor estimado
 - [ ] Iniciar serviço
 - [ ] Finalizar serviço
-- [ ] Exibir checkpoints
+- [x] Exibir checkpoints
 - [ ] Tratar erro ao iniciar duas vezes
 - [ ] Tratar erro ao finalizar sem início
 - [ ] Tratar atendimento não confirmado
