@@ -85,7 +85,7 @@ O backend segue sendo a fonte de verdade para autorização, aceite transacional
 - [x] Visualizar perfil profissional
 - [x] Editar dados permitidos do perfil
 - [x] Visualizar status de aprovação
-- [ ] Visualizar status de verificação documental
+- [x] Visualizar status de verificação documental
 - [ ] Enviar/atualizar documentos, se o backend permitir
 - [x] Gerenciar regiões atendidas
 - [x] Gerenciar disponibilidade semanal
@@ -319,10 +319,10 @@ Cards principais:
 
 ### 8.9 Verificação documental
 
-- [ ] Mostrar status atual
+- [x] Mostrar status atual
 - [ ] Mostrar pendências
 - [ ] Permitir envio de documentos quando necessário
-- [ ] Exibir motivo de rejeição, se houver
+- [x] Exibir motivo de rejeição, se houver
 
 ### 8.10 Ocorrências
 
@@ -365,7 +365,7 @@ Cards principais:
 
 ### Verificação
 
-- [ ] `GET /api/v1/verificacoes/minha`
+- [x] `GET /api/v1/verificacoes/minha`
 - [ ] `POST /api/v1/verificacoes/documentos`
 
 ### Convites
@@ -658,9 +658,9 @@ Critério de pronto:
 
 Objetivo: permitir acompanhamento e envio básico de documentos.
 
-- [ ] Exibir status da verificação
+- [x] Exibir status da verificação
 - [ ] Exibir pendências
-- [ ] Exibir motivo de rejeição
+- [x] Exibir motivo de rejeição
 - [ ] Enviar documento frente
 - [ ] Enviar documento verso, se aplicável
 - [ ] Enviar selfie
@@ -671,7 +671,7 @@ Objetivo: permitir acompanhamento e envio básico de documentos.
 
 Critério de pronto:
 
-- [ ] Profissional entende se está aprovada, pendente ou rejeitada
+- [x] Profissional entende se está aprovada, pendente ou rejeitada
 - [ ] Profissional consegue reenviar documentos quando necessário
 
 ---

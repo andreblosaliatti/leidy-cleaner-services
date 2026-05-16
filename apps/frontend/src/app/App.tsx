@@ -59,6 +59,7 @@ import { ProfessionalMobileDisponibilidadePage } from '../pages/professional-mob
 import { ProfessionalMobileHomePage } from '../pages/professional-mobile/ProfessionalMobileHomePage';
 import { ProfessionalMobilePerfilPage } from '../pages/professional-mobile/ProfessionalMobilePerfilPage';
 import { ProfessionalMobileRegioesPage } from '../pages/professional-mobile/ProfessionalMobileRegioesPage';
+import { ProfessionalMobileVerificacaoPage } from '../pages/professional-mobile/ProfessionalMobileVerificacaoPage';
 import { AppHomeRedirect } from '../routes/AppHomeRedirect';
 import { RequireAuth } from '../routes/RequireAuth';
 import { RequireProfile } from '../routes/RequireProfile';
@@ -93,6 +94,7 @@ export function App() {
             <Route path="perfil" element={<ProfessionalMobilePerfilPage />} />
             <Route path="regioes" element={<ProfessionalMobileRegioesPage />} />
             <Route path="disponibilidade" element={<ProfessionalMobileDisponibilidadePage />} />
+            <Route path="verificacao" element={<ProfessionalMobileVerificacaoPage />} />
           </Route>
         </Route>
         <Route path="app" element={<AuthenticatedLayout />}>

@@ -23,6 +23,7 @@ const titleByPath = [
   { matchPrefix: '/profissional/app/perfil', title: 'Perfil' },
   { matchPrefix: '/profissional/app/regioes', title: 'Regioes' },
   { matchPrefix: '/profissional/app/disponibilidade', title: 'Disponibilidade' },
+  { matchPrefix: '/profissional/app/verificacao', title: 'Verificacao' },
 ];
 
 export function ProfessionalMobileLayout() {

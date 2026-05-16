@@ -229,7 +229,7 @@ export function ProfessionalMobileHomePage() {
                 : 'Nenhum envio registrado'
           }
           body={getVerificationBody(verificacaoQuery.data, verificacaoNotFound)}
-          footer={<MobileCardLink href="/profissional/app/perfil" label="Abrir perfil mobile" />}
+          footer={<MobileCardLink href="/profissional/app/verificacao" label="Abrir status documental" />}
           tone={getVerificationTone(verificacaoQuery.data, verificacaoNotFound)}
         />
       </div>
