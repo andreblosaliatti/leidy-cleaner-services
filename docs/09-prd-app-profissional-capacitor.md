@@ -503,8 +503,8 @@ OCORRENCIA_ATUALIZADA
 - [x] Gerar projeto Android
 - [ ] Abrir no Android Studio
 - [x] Configurar package name
-- [ ] Configurar ícone
-- [ ] Configurar splash screen
+- [x] Configurar ícone
+- [x] Configurar splash screen
 - [ ] Configurar permissões
 - [ ] Testar em emulador
 - [ ] Testar em aparelho físico
@@ -708,8 +708,8 @@ Objetivo: transformar a experiência mobile em app Android instalável.
 - [x] Rodar `npx cap sync android`
 - [ ] Abrir no Android Studio
 - [x] Configurar nome do app
-- [ ] Configurar ícone
-- [ ] Configurar splash
+- [x] Configurar ícone
+- [x] Configurar splash
 - [ ] Testar em emulador
 - [ ] Testar em aparelho real
 - [ ] Corrigir problemas de viewport
