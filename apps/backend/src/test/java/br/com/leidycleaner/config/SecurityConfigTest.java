@@ -87,4 +87,28 @@ class SecurityConfigTest {
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
     }
+
+    @Test
+    void preCadastroCompletoComOriginLocalhostPermitidoRetorna400EmVezDe403() throws Exception {
+        mockMvc.perform(post("/api/v1/usuarios/profissionais/pre-cadastro-completo")
+                        .header("Origin", "http://localhost")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(header().string("Access-Control-Allow-Origin", "http://localhost"))
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
+    }
+
+    @Test
+    void preflightOptionsForProtectedEndpointWithCapacitorOriginReturnsCorsHeaders() throws Exception {
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options("/api/v1/usuarios/1/status")
+                        .header("Origin", "capacitor://localhost")
+                        .header("Access-Control-Request-Method", "PATCH"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Access-Control-Allow-Origin", "capacitor://localhost"))
+                .andExpect(header().string("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS"))
+                .andExpect(header().string("Access-Control-Allow-Headers", "Authorization,Content-Type,Accept,Origin"));
+    }
 }

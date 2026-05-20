@@ -15,8 +15,14 @@ public record SecurityProperties(
 
         if (corsAllowedOriginPatterns == null || corsAllowedOriginPatterns.length == 0) {
             corsAllowedOriginPatterns = new String[] {
+                    "http://localhost",
                     "http://localhost:*",
+                    "http://127.0.0.1",
                     "http://127.0.0.1:*",
+                    "capacitor://localhost",
+                    "capacitor://localhost:*",
+                    "ionic://localhost",
+                    "ionic://localhost:*",
                     "http://172.*.*.*:5173"
             };
         }

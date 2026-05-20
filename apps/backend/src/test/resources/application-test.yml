@@ -22,8 +22,12 @@ app:
       - /api/v1/usuarios/profissionais/pre-cadastro-completo
       - /api/v1/webhooks/**
     cors-allowed-origin-patterns:
+      - http://localhost
       - http://localhost:5173
+      - http://127.0.0.1
       - http://127.0.0.1:5173
+      - capacitor://localhost
+      - ionic://localhost
       - http://172.*.*.*:5173
   asaas:
     webhook-token: test-webhook-token
