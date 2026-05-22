@@ -30,6 +30,7 @@ export function LoginPage() {
   const { login, logout, status, user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const isProfessionalNativeApp = isNativeProfessionalApp();
   const [submitError, setSubmitError] = useState<{ message: string; details: string[] } | null>(null);
   const professionalAppOnlyMessage = useMemo(() => {
     const reason = new URLSearchParams(location.search).get('motivo');
@@ -63,7 +64,7 @@ export function LoginPage() {
   }
 
   if (user) {
-    if (isNativeProfessionalApp() && !isProfessionalAppUser(user)) {
+    if (isProfessionalNativeApp && !isProfessionalAppUser(user)) {
       return <Navigate to={buildProfessionalAppOnlyLoginPath()} replace />;
     }
 
@@ -76,7 +77,7 @@ export function LoginPage() {
     try {
       const authenticatedUser = await login(values);
 
-      if (isNativeProfessionalApp() && !isProfessionalAppUser(authenticatedUser)) {
+      if (isProfessionalNativeApp && !isProfessionalAppUser(authenticatedUser)) {
         logout();
         blurActiveElement();
         navigate(buildProfessionalAppOnlyLoginPath(), { replace: true });
@@ -100,7 +101,11 @@ export function LoginPage() {
     <AuthPageLayout
       eyebrow="Acesso seguro"
       title="Entre para acompanhar sua jornada na Leidy Cleaner Services."
-      description="Clientes, profissionais e administracao acessam uma area organizada conforme seu perfil."
+      description={
+        isProfessionalNativeApp
+          ? 'Use seu cadastro profissional para acessar convites, atendimentos e rotinas do app.'
+          : 'Clientes, profissionais e administracao acessam uma area organizada conforme seu perfil.'
+      }
     >
       <div>
         <h2 className="text-2xl font-black text-slate-900">Entrar</h2>
@@ -139,14 +144,16 @@ export function LoginPage() {
         </form>
 
         <div className="mt-6 grid gap-3 rounded-lg border border-slate-100 bg-slate-50 p-4 text-sm text-slate-600">
+          {!isProfessionalNativeApp && (
+            <p>
+              Ainda nao tem conta?{' '}
+              <Link className="font-black text-cyan-700 hover:text-cyan-800" to="/cadastro/cliente">
+                Criar conta de cliente
+              </Link>
+            </p>
+          )}
           <p>
-            Ainda nao tem conta?{' '}
-            <Link className="font-black text-cyan-700 hover:text-cyan-800" to="/cadastro/cliente">
-              Criar conta de cliente
-            </Link>
-          </p>
-          <p>
-            Atua com limpeza?{' '}
+            {isProfessionalNativeApp ? 'Ainda nao tem cadastro profissional? ' : 'Atua com limpeza? '}
             <Link className="font-black text-cyan-700 hover:text-cyan-800" to="/cadastro/profissional">
               Cadastrar como profissional
             </Link>

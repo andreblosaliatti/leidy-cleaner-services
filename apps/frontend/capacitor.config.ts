@@ -1,3 +1,5 @@
+/// <reference types="@capacitor/push-notifications" />
+
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
@@ -5,8 +7,13 @@ const config: CapacitorConfig = {
   appName: 'Leidy Cleaner Profissional',
   webDir: 'dist',
   server: {
-  androidScheme: 'http',
-},  
+    androidScheme: 'http',
+  },
+  plugins: {
+    PushNotifications: {
+      presentationOptions: ['sound', 'alert', 'banner', 'list'],
+    },
+  },
 };
 
 export default config;
