@@ -18,27 +18,27 @@ import {
 const howItWorksSteps = [
   {
     title: 'Crie seu cadastro',
-    description: 'Informe seus dados basicos para entrar na plataforma.',
+    description: 'Informe seus dados básicos para entrar na plataforma.',
   },
   {
-    title: 'Envie sua documentacao',
-    description: 'A equipe da Leidy Cleaner analisa suas informacoes para liberar seu perfil.',
+    title: 'Envie sua documentação',
+    description: 'A equipe da Leidy Cleaner analisa suas informações para liberar seu perfil.',
   },
   {
-    title: 'Escolha regioes e horarios',
-    description: 'Defina onde voce atende e quando esta disponivel.',
+    title: 'Escolha regiões e horários',
+    description: 'Defina onde você atende e quando está disponível.',
   },
   {
     title: 'Receba convites de faxina',
-    description: 'Quando surgir uma solicitacao compativel, voce recebe o convite no app.',
+    description: 'Quando surgir uma solicitação compatível, você recebe o convite no app.',
   },
   {
     title: 'Aceite ou recuse',
-    description: 'Voce decide se quer aceitar o chamado. Se aceitar, o atendimento aparece na sua area.',
+    description: 'Você decide se quer aceitar o chamado. Se aceitar, o atendimento aparece na sua área.',
   },
   {
-    title: 'Execute e acompanhe o servico',
-    description: 'Veja os detalhes, marque inicio, finalize e abra ocorrencia se precisar.',
+    title: 'Execute e acompanhe o serviço',
+    description: 'Veja os detalhes, marque início, finalize e abra ocorrência se precisar.',
   },
 ] as const;
 
@@ -49,28 +49,28 @@ const benefitCards = [
     icon: SparkleIcon,
   },
   {
-    title: 'Horarios e regioes',
-    description: 'Informe onde voce atende e em quais dias esta disponivel.',
+    title: 'Horários e regiões',
+    description: 'Informe onde você atende e em quais dias está disponível.',
     icon: ClipboardIcon,
   },
   {
     title: 'Atendimentos acompanhados',
-    description: 'Veja endereco, horario, detalhes do servico e status do atendimento.',
+    description: 'Veja endereço, horário, detalhes do serviço e status do atendimento.',
     icon: CheckCircleIcon,
   },
   {
-    title: 'Inicio e fim do servico',
-    description: 'Registre quando comecou e quando finalizou cada atendimento.',
+    title: 'Início e fim do serviço',
+    description: 'Registre quando começou e quando finalizou cada atendimento.',
     icon: ArrowRightIcon,
   },
   {
-    title: 'Status da verificacao',
-    description: 'Acompanhe se seu cadastro esta pendente, aprovado ou precisa de ajuste.',
+    title: 'Status da verificação',
+    description: 'Acompanhe se seu cadastro está pendente, aprovado ou precisa de ajuste.',
     icon: ShieldCheckIcon,
   },
   {
-    title: 'Ocorrencias',
-    description: 'Avise a equipe caso aconteca algum problema no atendimento.',
+    title: 'Ocorrências',
+    description: 'Avise a equipe caso aconteça algum problema no atendimento.',
     icon: HeadsetIcon,
   },
 ] as const;
@@ -78,15 +78,15 @@ const benefitCards = [
 const startChecklist = [
   {
     title: 'Cadastro analisado pela equipe',
-    description: 'A aprovacao nao e automatica.',
+    description: 'A aprovação não é automática.',
   },
   {
-    title: 'Voce controla sua disponibilidade',
+    title: 'Você controla sua disponibilidade',
     description: 'Pode ativar ou desativar o recebimento de chamados quando precisar.',
   },
   {
     title: 'App exclusivo para profissionais',
-    description: 'Clientes e administracao continuam usando suas proprias areas.',
+    description: 'Clientes e administração continuam usando suas próprias áreas.',
   },
 ] as const;
 
@@ -123,13 +123,13 @@ export function ProfessionalAppLandingPage() {
                 </h1>
 
                 <p className="mt-4 text-base leading-7 text-slate-700 sm:text-lg sm:leading-8">
-                  Acompanhe seus chamados, aceite ou recuse convites, veja seus atendimentos e registre inicio e fim do
-                  servico pelo app.
+                  Acompanhe seus chamados, aceite ou recuse convites, veja seus atendimentos e registre início e fim do
+                  serviço pelo app.
                 </p>
 
                 <p className="mt-4 text-sm leading-6 text-slate-600 sm:text-base sm:leading-7">
                   O app da Leidy Cleaner foi criado para profissionais cadastradas acompanharem sua rotina de trabalho
-                  com mais clareza, seguranca e praticidade.
+                  com mais clareza, segurança e praticidade.
                 </p>
 
                 <div className="mt-6 grid gap-3 sm:max-w-[360px]">
@@ -138,7 +138,7 @@ export function ProfessionalAppLandingPage() {
                 </div>
 
                 <p className="mt-4 text-sm font-semibold leading-6 text-slate-500">
-                  Seu cadastro passa por analise antes de voce comecar a receber chamados.
+                  Seu cadastro passa por análise antes de você começar a receber chamados.
                 </p>
               </div>
 
@@ -146,17 +146,17 @@ export function ProfessionalAppLandingPage() {
                 <HeroStatusCard
                   eyebrow="Convites"
                   title="Receba e responda no app"
-                  description="Novos convites aparecem de forma organizada para voce aceitar ou recusar com clareza."
+                  description="Novos convites aparecem de forma organizada para você aceitar ou recusar com clareza."
                 />
                 <HeroStatusCard
                   eyebrow="Atendimentos"
                   title="Acompanhe sua rotina"
-                  description="Veja horario, endereco, detalhes do servico e o status atual de cada atendimento."
+                  description="Veja horário, endereço, detalhes do serviço e o status atual de cada atendimento."
                 />
                 <HeroStatusCard
-                  eyebrow="Execucao"
+                  eyebrow="Execução"
                   title="Registre o que acontece em campo"
-                  description="Marque inicio, finalize o servico e abra ocorrencia quando precisar de apoio."
+                  description="Marque início, finalize o serviço e abra ocorrência quando precisar de apoio."
                 />
               </div>
             </div>
@@ -165,8 +165,8 @@ export function ProfessionalAppLandingPage() {
           <section className="px-4 py-6 sm:px-6">
             <div className="mx-auto w-full max-w-[1040px]">
               <SectionHeading
-                title="Como comecar a usar"
-                description="Tudo o que voce precisa para sair do cadastro inicial e chegar pronta para receber convites."
+                title="Como começar a usar"
+                description="Tudo o que você precisa para sair do cadastro inicial e chegar pronta para receber convites."
               />
 
               <ol className="mt-6 grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
@@ -187,7 +187,7 @@ export function ProfessionalAppLandingPage() {
             <div className="mx-auto w-full max-w-[1040px]">
               <SectionHeading
                 title="Tudo em um lugar para facilitar sua rotina"
-                description="A area profissional foi pensada para reduzir duvidas, organizar o dia e deixar os passos importantes mais visiveis."
+                description="A área profissional foi pensada para reduzir dúvidas, organizar o dia e deixar os passos importantes mais visíveis."
               />
 
               <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -207,8 +207,8 @@ export function ProfessionalAppLandingPage() {
           <section className="px-4 py-6 sm:px-6">
             <div className="mx-auto w-full max-w-[1040px] rounded-[2rem] border border-cyan-100 bg-[#f7fcfd] p-6 shadow-[0_18px_50px_rgba(15,23,42,0.06)] sm:p-8">
               <SectionHeading
-                title="Antes de comecar"
-                description="Para receber chamados, seu perfil precisa estar aprovado, com documentacao validada, regioes atendidas configuradas e disponibilidade cadastrada."
+                title="Antes de começar"
+                description="Para receber chamados, seu perfil precisa estar aprovado, com documentação validada, regiões atendidas configuradas e disponibilidade cadastrada."
               />
 
               <div className="mt-6 grid gap-4 md:grid-cols-3">
@@ -224,7 +224,7 @@ export function ProfessionalAppLandingPage() {
 
           <section className="px-4 pb-10 pt-6 sm:px-6">
             <div className="mx-auto w-full max-w-[1040px] rounded-[2rem] bg-cyan-600 px-6 py-7 text-white shadow-[0_20px_48px_rgba(8,145,178,0.28)] sm:px-8">
-              <h2 className="text-2xl font-black sm:text-3xl">Pronta para comecar?</h2>
+              <h2 className="text-2xl font-black sm:text-3xl">Pronta para começar?</h2>
               <p className="mt-3 max-w-2xl text-sm leading-7 text-cyan-50 sm:text-base">
                 Crie seu cadastro profissional ou entre para acompanhar seus convites e atendimentos.
               </p>
@@ -235,7 +235,7 @@ export function ProfessionalAppLandingPage() {
               </div>
 
               <p className="mt-5 text-sm leading-6 text-cyan-50">
-                Se voce e cliente e deseja solicitar uma faxina, acesse o site da Leidy Cleaner Services.
+                Se você é cliente e deseja solicitar uma faxina, acesse o site da Leidy Cleaner Services.
               </p>
 
               <div className="mt-3">
@@ -245,7 +245,7 @@ export function ProfessionalAppLandingPage() {
                   target={publicSiteIsExternal ? '_blank' : undefined}
                   rel={publicSiteIsExternal ? 'noreferrer' : undefined}
                 >
-                  Ir para o site publico
+                  Ir para o site público
                   <ArrowRightIcon className="h-5 w-5" />
                 </a>
               </div>

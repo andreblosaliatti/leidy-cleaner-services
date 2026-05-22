@@ -76,8 +76,8 @@ function toForegroundPushEvent(notification: PushNotificationSchema): Profession
   const atendimentoId = readDataValue(notification.data, 'atendimentoId');
 
   return {
-    title: notification.title?.trim() || 'Nova atualizacao operacional',
-    body: notification.body?.trim() || 'Voce recebeu uma nova atualizacao no app profissional.',
+    title: notification.title?.trim() || 'Nova atualização operacional',
+    body: notification.body?.trim() || 'Você recebeu uma nova atualização no app profissional.',
     tipo,
     conviteId,
     atendimentoId,

@@ -20,7 +20,7 @@ import { AuthPageLayout } from '../../layouts/AuthPageLayout';
 import { ApiError, getApiErrorMessage } from '../../services/apiClient';
 
 const loginSchema = z.object({
-  email: z.string().min(1, 'Informe seu email.').email('Informe um email valido.'),
+  email: z.string().min(1, 'Informe seu email.').email('Informe um email válido.'),
   senha: z.string().min(1, 'Informe sua senha.'),
 });
 
@@ -51,15 +51,15 @@ export function LoginPage() {
 
   if (status === 'loading') {
     return (
-      <AuthPageLayout
-        eyebrow="Acesso seguro"
-        title="Entre para acompanhar sua jornada na Leidy Cleaner Services."
-        description="Restaurando sua sessao antes de liberar o acesso."
-      >
-        <div className="rounded-lg border border-cyan-100 bg-white px-6 py-5 text-sm font-semibold text-slate-700 shadow-sm">
-          Carregando sua sessao...
-        </div>
-      </AuthPageLayout>
+        <AuthPageLayout
+          eyebrow="Acesso seguro"
+          title="Entre para acompanhar sua jornada na Leidy Cleaner Services."
+          description="Restaurando sua sessão antes de liberar o acesso."
+        >
+          <div className="rounded-lg border border-cyan-100 bg-white px-6 py-5 text-sm font-semibold text-slate-700 shadow-sm">
+            Carregando sua sessão...
+          </div>
+        </AuthPageLayout>
     );
   }
 
@@ -104,18 +104,18 @@ export function LoginPage() {
       description={
         isProfessionalNativeApp
           ? 'Use seu cadastro profissional para acessar convites, atendimentos e rotinas do app.'
-          : 'Clientes, profissionais e administracao acessam uma area organizada conforme seu perfil.'
+          : 'Clientes, profissionais e administração acessam uma área organizada conforme seu perfil.'
       }
     >
       <div>
         <h2 className="text-2xl font-black text-slate-900">Entrar</h2>
-        <p className="mt-2 text-sm leading-6 text-slate-600">Use o email e a senha cadastrados para acessar sua area.</p>
+        <p className="mt-2 text-sm leading-6 text-slate-600">Use o email e a senha cadastrados para acessar sua área.</p>
 
         <form className="mt-6 grid gap-5" noValidate onSubmit={handleSubmit(onSubmit)}>
           {professionalAppOnlyMessage && (
             <FormAlert tone="error" title="Acesso restrito" message={professionalAppOnlyMessage} />
           )}
-          {submitError && <FormAlert tone="error" title="Nao foi possivel entrar" message={submitError.message} details={submitError.details} />}
+          {submitError && <FormAlert tone="error" title="Não foi possível entrar" message={submitError.message} details={submitError.details} />}
 
           <TextInput
             autoComplete="email"
@@ -146,14 +146,14 @@ export function LoginPage() {
         <div className="mt-6 grid gap-3 rounded-lg border border-slate-100 bg-slate-50 p-4 text-sm text-slate-600">
           {!isProfessionalNativeApp && (
             <p>
-              Ainda nao tem conta?{' '}
+              Ainda não tem conta?{' '}
               <Link className="font-black text-cyan-700 hover:text-cyan-800" to="/cadastro/cliente">
                 Criar conta de cliente
               </Link>
             </p>
           )}
           <p>
-            {isProfessionalNativeApp ? 'Ainda nao tem cadastro profissional? ' : 'Atua com limpeza? '}
+            {isProfessionalNativeApp ? 'Ainda não tem cadastro profissional? ' : 'Atua com limpeza? '}
             <Link className="font-black text-cyan-700 hover:text-cyan-800" to="/cadastro/profissional">
               Cadastrar como profissional
             </Link>

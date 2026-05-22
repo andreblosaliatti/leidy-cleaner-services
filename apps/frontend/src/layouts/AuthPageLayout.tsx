@@ -17,7 +17,7 @@ export function AuthPageLayout({ eyebrow, title, description, children }: AuthPa
         <header className="flex flex-col items-start justify-between gap-3 border-b border-slate-100 px-4 py-4 sm:flex-row sm:items-center sm:gap-4 sm:px-5 sm:py-5 md:px-8">
           <BrandMark />
           <Link className="text-sm font-bold text-cyan-500 transition hover:text-cyan-600" to="/">
-            Voltar ao inicio
+            Voltar ao início
           </Link>
         </header>
 
@@ -28,7 +28,7 @@ export function AuthPageLayout({ eyebrow, title, description, children }: AuthPa
             <p className="mt-4 max-w-lg text-base leading-7 text-cyan-50 md:mt-5 md:text-lg md:leading-8">{description}</p>
             <div className="mt-8 grid gap-3 text-sm font-semibold text-cyan-50">
               <span className="rounded-lg bg-white/10 px-4 py-3">Profissionais verificadas e fluxo acompanhado</span>
-              <span className="rounded-lg bg-white/10 px-4 py-3">Contratacao organizada com seguranca operacional</span>
+              <span className="rounded-lg bg-white/10 px-4 py-3">Contratação organizada com segurança operacional</span>
               <span className="rounded-lg bg-white/10 px-4 py-3">Dados protegidos em cada etapa da jornada</span>
             </div>
           </section>

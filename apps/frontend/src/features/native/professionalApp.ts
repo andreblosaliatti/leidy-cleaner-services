@@ -32,5 +32,5 @@ export function buildProfessionalAppLoginPath(redirectTo = PROFESSIONAL_APP_HOME
 }
 
 export function getProfessionalAppOnlyMessage() {
-  return 'Este aplicativo e exclusivo para profissionais da Leidy Cleaner Services.';
+  return 'Este aplicativo é exclusivo para profissionais da Leidy Cleaner Services.';
 }

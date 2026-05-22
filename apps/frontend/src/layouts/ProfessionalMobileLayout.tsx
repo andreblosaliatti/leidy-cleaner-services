@@ -18,7 +18,7 @@ type MobileNavigationItem = {
 };
 
 const mobileNavigationItems: MobileNavigationItem[] = [
-  { label: 'Inicio', href: '/profissional/app' },
+  { label: 'Início', href: '/profissional/app' },
   { label: 'Convites', href: '/profissional/app/convites' },
   { label: 'Atend.', href: '/profissional/app/atendimentos' },
   { label: 'Perfil', href: '/profissional/app/perfil' },
@@ -29,10 +29,10 @@ const titleByPath = [
   { matchPrefix: '/profissional/app/convites', title: 'Convites' },
   { matchPrefix: '/profissional/app/atendimentos', title: 'Atendimentos' },
   { matchPrefix: '/profissional/app/perfil', title: 'Perfil' },
-  { matchPrefix: '/profissional/app/regioes', title: 'Regioes' },
+  { matchPrefix: '/profissional/app/regioes', title: 'Regiões' },
   { matchPrefix: '/profissional/app/disponibilidade', title: 'Disponibilidade' },
-  { matchPrefix: '/profissional/app/verificacao', title: 'Verificacao' },
-  { matchPrefix: '/profissional/app/ocorrencias', title: 'Ocorrencias' },
+  { matchPrefix: '/profissional/app/verificacao', title: 'Verificação' },
+  { matchPrefix: '/profissional/app/ocorrencias', title: 'Ocorrências' },
 ];
 
 export function ProfessionalMobileLayout() {
@@ -87,7 +87,7 @@ export function ProfessionalMobileLayout() {
     return null;
   }
 
-  const pageTitle = titleByPath.find((item) => location.pathname.startsWith(item.matchPrefix))?.title ?? 'Inicio';
+  const pageTitle = titleByPath.find((item) => location.pathname.startsWith(item.matchPrefix))?.title ?? 'Início';
   const firstName = getFirstName(user.nomeCompleto) || 'Profissional';
   const foregroundTargetPath = foregroundPushEvent?.targetPath ?? null;
 
@@ -105,7 +105,7 @@ export function ProfessionalMobileLayout() {
               <BrandMark compact />
               <p className="mt-4 text-xs font-black uppercase tracking-[0.18em] text-cyan-700">App profissional</p>
               <h1 className="mt-2 text-2xl font-black text-slate-900">{pageTitle}</h1>
-              <p className="mt-1 text-sm text-slate-600">Ola, {firstName}. Experiencia mobile dedicada para sua rotina.</p>
+              <p className="mt-1 text-sm text-slate-600">Olá, {firstName}. Experiência mobile dedicada para sua rotina.</p>
             </div>
             <button
               className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 text-sm font-black text-slate-700 transition hover:border-cyan-200 hover:bg-cyan-50 hover:text-cyan-700"
