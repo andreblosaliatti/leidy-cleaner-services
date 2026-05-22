@@ -1,21 +1,20 @@
 import { useEffect } from 'react';
-import type { NavigateFunction } from 'react-router-dom';
 
 import { setupProfessionalPushNotifications } from './professionalPushService';
 
 type UseProfessionalPushNotificationsOptions = {
   enabled: boolean;
+  userId: number | null;
   authToken: string | null;
-  navigate: NavigateFunction;
 };
 
 export function useProfessionalPushNotifications({
   enabled,
+  userId,
   authToken,
-  navigate,
 }: UseProfessionalPushNotificationsOptions) {
   useEffect(() => {
-    if (!enabled || !authToken) {
+    if (!enabled || !authToken || !userId) {
       return undefined;
     }
 
@@ -24,7 +23,7 @@ export function useProfessionalPushNotifications({
 
     void setupProfessionalPushNotifications({
       authToken,
-      navigateTo: (path) => navigate(path),
+      userId,
     }).then((registeredCleanup) => {
       if (cancelled) {
         void registeredCleanup();
@@ -40,5 +39,5 @@ export function useProfessionalPushNotifications({
         void cleanup();
       }
     };
-  }, [authToken, enabled, navigate]);
+  }, [authToken, enabled, userId]);
 }

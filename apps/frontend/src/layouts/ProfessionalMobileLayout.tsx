@@ -1,8 +1,15 @@
+import { useEffect, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 
+import { FormAlert } from '../components/ui/FormAlert';
 import { BrandMark } from '../components/public/BrandMark';
 import { getFirstName } from '../features/auth/session';
 import { useAuth } from '../features/auth/useAuth';
+import {
+  subscribeToForegroundPushEvents,
+  type ProfessionalForegroundPushEvent,
+} from '../features/notificacoes/pushNotificationRouting';
 import { useProfessionalPushNotifications } from '../features/notificacoes/useProfessionalPushNotifications';
 
 type MobileNavigationItem = {
@@ -32,12 +39,49 @@ export function ProfessionalMobileLayout() {
   const { user, token, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const queryClient = useQueryClient();
+  const [foregroundPushEvent, setForegroundPushEvent] = useState<ProfessionalForegroundPushEvent | null>(null);
 
   useProfessionalPushNotifications({
     enabled: user?.tipoUsuario === 'PROFISSIONAL',
+    userId: user?.id ?? null,
     authToken: token,
-    navigate,
   });
+
+  useEffect(() => {
+    const unsubscribe = subscribeToForegroundPushEvents((event) => {
+      if (user?.tipoUsuario !== 'PROFISSIONAL') {
+        return;
+      }
+
+      if (event.tipo === 'CONVITE_RECEBIDO' || event.conviteId) {
+        void queryClient.invalidateQueries({ queryKey: ['profissional', 'convites'] });
+      }
+
+      if (event.atendimentoId) {
+        void queryClient.invalidateQueries({ queryKey: ['atendimentos', 'meus', 'profissional'] });
+        void queryClient.invalidateQueries({ queryKey: ['atendimentos', 'profissional'] });
+      }
+
+      setForegroundPushEvent(event);
+    });
+
+    return unsubscribe;
+  }, [queryClient, user?.tipoUsuario]);
+
+  useEffect(() => {
+    if (!foregroundPushEvent) {
+      return undefined;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setForegroundPushEvent(null);
+    }, 8000);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [foregroundPushEvent]);
 
   if (!user) {
     return null;
@@ -73,6 +117,27 @@ export function ProfessionalMobileLayout() {
         </header>
 
         <main className="flex-1 px-4 pb-[calc(6.5rem+env(safe-area-inset-bottom))] pt-4">
+          {foregroundPushEvent && (
+            <div className="mb-4 grid gap-3">
+              <FormAlert
+                tone="info"
+                title={foregroundPushEvent.title}
+                message={foregroundPushEvent.body}
+              />
+              {foregroundPushEvent.targetPath && (
+                <button
+                  className="inline-flex min-h-12 items-center justify-center rounded-2xl border border-cyan-200 bg-cyan-50 px-4 text-sm font-black text-cyan-800 transition hover:bg-cyan-100"
+                  type="button"
+                  onClick={() => {
+                    setForegroundPushEvent(null);
+                    navigate(foregroundPushEvent.targetPath);
+                  }}
+                >
+                  Abrir agora
+                </button>
+              )}
+            </div>
+          )}
           <Outlet />
         </main>
       </div>

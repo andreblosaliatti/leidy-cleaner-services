@@ -41,18 +41,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const sessionRequestRef = useRef<{ token: string; promise: Promise<UsuarioAutenticado> } | null>(null);
   const sessionRevisionRef = useRef(0);
   const [token, setToken] = useState<string | null>(() => authStorage.getToken());
-  const [user, setUser] = useState<UsuarioAutenticado | null>(null);
-  const [status, setStatus] = useState<AuthStatus>(() => (authStorage.getToken() ? 'loading' : 'anonymous'));
+  const [user, setUser] = useState<UsuarioAutenticado | null>(() => authStorage.getUser());
+  const [status, setStatus] = useState<AuthStatus>(() => {
+    if (!authStorage.isHydrated()) {
+      return 'loading';
+    }
+
+    return authStorage.getToken() ? 'loading' : 'anonymous';
+  });
 
   const clearSession = useCallback(() => {
     sessionRevisionRef.current += 1;
     sessionRequestRef.current = null;
-    authStorage.clearToken();
+    void authStorage.clearSession().catch(() => undefined);
     queryClient.clear();
     setToken(null);
     setUser(null);
     setStatus('anonymous');
   }, [queryClient]);
+
+  const applyAuthenticatedSession = useCallback((activeToken: string, currentUser: UsuarioAutenticado) => {
+    setToken(activeToken);
+    setUser(currentUser);
+    setStatus('authenticated');
+    void authStorage.setSession(activeToken, currentUser).catch(() => undefined);
+  }, []);
 
   const loadCurrentUser = useCallback((activeToken: string) => {
     if (sessionRequestRef.current?.token === activeToken) {
@@ -72,7 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const hydrateUser = useCallback(
-    async (activeToken: string | null) => {
+    async (activeToken: string | null, fallbackUser?: UsuarioAutenticado | null) => {
       if (!activeToken) {
         clearSession();
         return null;
@@ -88,9 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return null;
         }
 
-        setToken(activeToken);
-        setUser(currentUser);
-        setStatus('authenticated');
+        applyAuthenticatedSession(activeToken, currentUser);
         return currentUser;
       } catch (error) {
         if (sessionRevisionRef.current !== requestRevision || authStorage.getToken() !== activeToken) {
@@ -102,45 +113,66 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return null;
         }
 
-        setStatus((currentStatus) =>
-          currentStatus === 'loading' ? (token === activeToken && user ? 'authenticated' : 'anonymous') : currentStatus,
-        );
+        const restoredUser = fallbackUser ?? authStorage.getUser() ?? (token === activeToken ? user : null);
+
+        if (restoredUser) {
+          setToken(activeToken);
+          setUser(restoredUser);
+          setStatus('authenticated');
+          return restoredUser;
+        }
+
+        setStatus('anonymous');
         throw error;
       }
     },
-    [clearSession, loadCurrentUser, token, user],
+    [applyAuthenticatedSession, clearSession, loadCurrentUser, token, user],
   );
 
   useEffect(() => {
     let isActive = true;
 
     async function loadSession() {
-      const storedToken = authStorage.getToken();
       const requestRevision = sessionRevisionRef.current;
+      const storedSession = await authStorage.hydrate();
 
-      if (!storedToken) {
-        if (isActive) {
-          clearSession();
-        }
+      if (!isActive || sessionRevisionRef.current !== requestRevision) {
         return;
       }
 
-      try {
-        const currentUser = await loadCurrentUser(storedToken);
+      if (!storedSession.token) {
+        clearSession();
+        return;
+      }
 
-        if (isActive && sessionRevisionRef.current === requestRevision && authStorage.getToken() === storedToken) {
-          setToken(storedToken);
-          setUser(currentUser);
-          setStatus('authenticated');
+      setToken(storedSession.token);
+      setUser(storedSession.user);
+      setStatus('loading');
+
+      try {
+        const currentUser = await loadCurrentUser(storedSession.token);
+
+        if (isActive && sessionRevisionRef.current === requestRevision && authStorage.getToken() === storedSession.token) {
+          applyAuthenticatedSession(storedSession.token, currentUser);
         }
       } catch (error) {
-        if (isActive && sessionRevisionRef.current === requestRevision && authStorage.getToken() === storedToken) {
-          if (isUnauthorized(error)) {
-            clearSession();
-          } else {
-            setStatus((currentStatus) => (currentStatus === 'loading' ? 'anonymous' : currentStatus));
-          }
+        if (!isActive || sessionRevisionRef.current !== requestRevision || authStorage.getToken() !== storedSession.token) {
+          return;
         }
+
+        if (isUnauthorized(error)) {
+          clearSession();
+          return;
+        }
+
+        if (storedSession.user) {
+          setToken(storedSession.token);
+          setUser(storedSession.user);
+          setStatus('authenticated');
+          return;
+        }
+
+        setStatus('anonymous');
       }
     }
 
@@ -149,29 +181,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       isActive = false;
     };
-  }, [clearSession, loadCurrentUser]);
+  }, [applyAuthenticatedSession, clearSession, loadCurrentUser]);
 
   useEffect(() => {
+    if (typeof window === 'undefined') {
+      return undefined;
+    }
+
     function handleStorage(event: StorageEvent) {
       if (event.storageArea !== window.localStorage || (event.key && !AUTH_STORAGE_KEYS.includes(event.key))) {
         return;
       }
 
-      const storedToken = authStorage.getToken();
+      const storedSession = authStorage.syncFromBrowserStorage();
 
-      if (!storedToken) {
+      if (!storedSession.token) {
         clearSession();
         return;
       }
 
-      if (storedToken !== token) {
+      if (storedSession.token !== token || (!user && storedSession.user)) {
         sessionRevisionRef.current += 1;
         sessionRequestRef.current = null;
         queryClient.clear();
-        setToken(storedToken);
-        setUser(null);
+        setToken(storedSession.token);
+        setUser(storedSession.user);
         setStatus('loading');
-        void hydrateUser(storedToken).catch(() => undefined);
+        void hydrateUser(storedSession.token, storedSession.user).catch(() => undefined);
       }
     }
 
@@ -180,7 +216,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       window.removeEventListener('storage', handleStorage);
     };
-  }, [clearSession, hydrateUser, queryClient, token]);
+  }, [clearSession, hydrateUser, queryClient, token, user]);
 
   const login = useCallback(async (payload: AuthLoginRequest) => {
     const response = await loginRequest(payload);
@@ -189,7 +225,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     sessionRequestRef.current = null;
     queryClient.clear();
 
-    authStorage.setToken(response.accessToken);
+    await authStorage.setSession(response.accessToken, response.usuario);
     setToken(response.accessToken);
     setUser(response.usuario);
     setStatus('authenticated');
@@ -197,7 +233,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return response.usuario;
   }, [queryClient]);
 
-  const refreshUser = useCallback(() => hydrateUser(token), [hydrateUser, token]);
+  const refreshUser = useCallback(() => hydrateUser(token, user), [hydrateUser, token, user]);
 
   const value = useMemo<AuthContextValue>(
     () => ({

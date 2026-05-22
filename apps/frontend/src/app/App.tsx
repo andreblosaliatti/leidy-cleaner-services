@@ -65,6 +65,7 @@ import { ProfessionalMobileRegioesPage } from '../pages/professional-mobile/Prof
 import { ProfessionalMobileVerificacaoPage } from '../pages/professional-mobile/ProfessionalMobileVerificacaoPage';
 import { AppHomeRedirect } from '../routes/AppHomeRedirect';
 import { RequireAuth } from '../routes/RequireAuth';
+import { RequireProfessionalAppProfile } from '../routes/RequireProfessionalAppProfile';
 import { RequireProfile } from '../routes/RequireProfile';
 
 export function App() {
@@ -87,7 +88,7 @@ export function App() {
         <Route path="profissional" element={<ProfessionalRegistrationPage />} />
       </Route>
       <Route element={<RequireAuth />}>
-        <Route element={<RequireProfile profile="PROFISSIONAL" />}>
+        <Route element={<RequireProfessionalAppProfile />}>
           <Route path="profissional/app" element={<ProfessionalMobileLayout />}>
             <Route index element={<ProfessionalMobileHomePage />} />
             <Route path="convites" element={<ProfessionalMobileConvitesPage />} />

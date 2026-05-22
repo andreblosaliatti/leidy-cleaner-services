@@ -1,25 +1,32 @@
-import { Capacitor, type PluginListenerHandle } from '@capacitor/core';
+import type { PluginListenerHandle } from '@capacitor/core';
 import {
   PushNotifications,
-  type ActionPerformed,
   type PushNotificationSchema,
   type Token,
 } from '@capacitor/push-notifications';
 
 import { registrarDispositivoPush } from './notificacoesApi';
+import { isNativeAndroidPushEnvironment, publishForegroundPushEvent } from './pushNotificationRouting';
 
 type ProfessionalPushSetupOptions = {
   authToken: string;
-  navigateTo: (path: string) => void;
+  userId: number;
 };
 
 type PushCleanup = () => Promise<void>;
+type RegisteredPushTarget = {
+  userId: number;
+  pushToken: string;
+};
+
+let lastRegisteredPushTarget: RegisteredPushTarget | null = null;
+let pendingPushRegistrationKey: string | null = null;
 
 export async function setupProfessionalPushNotifications({
   authToken,
-  navigateTo,
+  userId,
 }: ProfessionalPushSetupOptions): Promise<PushCleanup> {
-  if (!isAndroidNativeEnvironment()) {
+  if (!isNativeAndroidPushEnvironment()) {
     return async () => undefined;
   }
 
@@ -40,7 +47,7 @@ export async function setupProfessionalPushNotifications({
 
     handles.push(
       await PushNotifications.addListener('registration', (token) => {
-        void handleRegistration(authToken, token);
+        void handleRegistration(authToken, userId, token);
       }),
     );
     handles.push(
@@ -53,11 +60,6 @@ export async function setupProfessionalPushNotifications({
         handleNotificationReceived(notification);
       }),
     );
-    handles.push(
-      await PushNotifications.addListener('pushNotificationActionPerformed', (action) => {
-        handleNotificationAction(action, navigateTo);
-      }),
-    );
 
     await PushNotifications.register();
     return cleanup;
@@ -68,61 +70,43 @@ export async function setupProfessionalPushNotifications({
   }
 }
 
-function isAndroidNativeEnvironment() {
-  return (
-    Capacitor.isNativePlatform()
-    && Capacitor.getPlatform() === 'android'
-    && Capacitor.isPluginAvailable('PushNotifications')
-  );
-}
+async function handleRegistration(authToken: string, userId: number, pushToken: Token) {
+  const pushRegistrationKey = `${userId}:${pushToken.value}`;
 
-async function handleRegistration(authToken: string, pushToken: Token) {
+  if (lastRegisteredPushTarget?.userId === userId && lastRegisteredPushTarget.pushToken === pushToken.value) {
+    return;
+  }
+
+  if (pendingPushRegistrationKey === pushRegistrationKey) {
+    return;
+  }
+
+  pendingPushRegistrationKey = pushRegistrationKey;
+
   try {
     await registrarDispositivoPush(authToken, {
       plataforma: 'ANDROID',
       token: pushToken.value,
     });
+    lastRegisteredPushTarget = {
+      userId,
+      pushToken: pushToken.value,
+    };
   } catch (error) {
     logPushWarning('Nao foi possivel salvar este dispositivo para notificacoes.', error);
+  } finally {
+    if (pendingPushRegistrationKey === pushRegistrationKey) {
+      pendingPushRegistrationKey = null;
+    }
   }
 }
 
-function handleNotificationReceived(_notification: PushNotificationSchema) {
+function handleNotificationReceived(notification: PushNotificationSchema) {
+  publishForegroundPushEvent(notification);
+
   if (import.meta.env.DEV) {
     console.info('[push] Notificacao recebida no app profissional.');
   }
-}
-
-function handleNotificationAction(action: ActionPerformed, navigateTo: (path: string) => void) {
-  const data = action.notification.data;
-  const conviteId = readPayloadId(data, 'conviteId');
-  const atendimentoId = readPayloadId(data, 'atendimentoId');
-
-  if (conviteId) {
-    navigateTo(`/profissional/app/convites/${encodeURIComponent(conviteId)}`);
-    return;
-  }
-
-  if (atendimentoId) {
-    navigateTo(`/profissional/app/atendimentos/${encodeURIComponent(atendimentoId)}`);
-  }
-}
-
-function readPayloadId(data: PushNotificationSchema['data'], key: string) {
-  if (!data || typeof data !== 'object') {
-    return null;
-  }
-
-  const value = data[key];
-  if (typeof value === 'string' && value.trim()) {
-    return value.trim();
-  }
-
-  if (typeof value === 'number' && Number.isFinite(value)) {
-    return String(value);
-  }
-
-  return null;
 }
 
 function logPushWarning(message: string, error?: unknown) {

@@ -1,7 +1,12 @@
 import { Navigate } from 'react-router-dom';
 
-import { getDashboardPath } from '../features/auth/session';
 import { useAuth } from '../features/auth/useAuth';
+import {
+  buildProfessionalAppOnlyLoginPath,
+  getPreferredAuthenticatedPath,
+  isNativeProfessionalApp,
+  isProfessionalAppUser,
+} from '../features/native/professionalApp';
 
 export function AppHomeRedirect() {
   const { user } = useAuth();
@@ -10,5 +15,9 @@ export function AppHomeRedirect() {
     return <Navigate to="/entrar" replace />;
   }
 
-  return <Navigate to={getDashboardPath(user)} replace />;
+  if (isNativeProfessionalApp() && !isProfessionalAppUser(user)) {
+    return <Navigate to={buildProfessionalAppOnlyLoginPath()} replace />;
+  }
+
+  return <Navigate to={getPreferredAuthenticatedPath(user)} replace />;
 }
