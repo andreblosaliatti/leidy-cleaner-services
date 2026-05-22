@@ -1,0 +1,24 @@
+# Leidy Cleaner Services
+
+URL: https://www.cleanerleidy.com.br
+
+Leidy Cleaner Services e uma plataforma para intermediacao de servicos de limpeza, conectando clientes que precisam contratar faxina com profissionais previamente cadastradas e verificadas.
+
+## Publico principal
+
+- Clientes que desejam solicitar servicos de limpeza.
+- Profissionais de limpeza que desejam se cadastrar para receber convites de atendimento.
+
+## Paginas publicas importantes
+
+- / - pagina publica principal da Leidy Cleaner Services.
+- /app-profissional - pagina de apresentacao do app exclusivo para profissionais.
+- /cadastro/profissional - cadastro de profissional.
+
+## Areas privadas
+
+As areas de cliente, profissional, admin, pagamentos, solicitacoes, convites e atendimentos exigem autenticacao e nao devem ser tratadas como conteudo publico.
+
+## Observacoes
+
+O sistema possui fluxos operacionais privados para solicitacao, convite, aceite, pagamento, execucao do servico e avaliacao. Esses fluxos nao devem ser inferidos como paginas publicas do site.

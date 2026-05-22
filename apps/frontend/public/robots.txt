@@ -1,0 +1,23 @@
+User-agent: *
+Allow: /
+
+Disallow: /entrar
+Disallow: /cliente
+Disallow: /cliente/
+Disallow: /profissional
+Disallow: /profissional/
+Disallow: /profissional/app
+Disallow: /admin
+Disallow: /admin/
+Disallow: /solicitacoes
+Disallow: /solicitacoes/
+Disallow: /atendimentos
+Disallow: /atendimentos/
+Disallow: /convites
+Disallow: /convites/
+Disallow: /pagamentos
+Disallow: /pagamentos/
+Disallow: /api
+Disallow: /api/
+
+Sitemap: https://www.cleanerleidy.com.br/sitemap.xml
