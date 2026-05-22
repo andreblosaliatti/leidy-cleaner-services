@@ -6025,7 +6025,7 @@ class SolicitacaoFaxinaIntegrationTest {
     }
 
     private void mockarCriacaoAsaas(String gatewayPaymentId, String status, String urlPagamento, String pixCopiaECola) {
-        mockarClienteAsaas("cus_cliente_teste");
+        mockarClienteAsaas();
         given(asaasGatewayClient.criarCobranca(any()))
                 .willReturn(new AsaasPagamentoGatewayResponse(
                         gatewayPaymentId,
@@ -6038,9 +6038,22 @@ class SolicitacaoFaxinaIntegrationTest {
                 ));
     }
 
-    private void mockarClienteAsaas(String customerId) {
+    private void mockarClienteAsaas() {
         given(asaasGatewayClient.criarCliente(any()))
-                .willReturn(new AsaasCustomerGatewayResponse(customerId));
+                .willAnswer(invocation -> {
+                    AsaasCustomerRequest request = invocation.getArgument(0);
+                    String cpfCnpj = request != null && request.cpfCnpj() != null
+                            ? request.cpfCnpj().replaceAll("\\D", "")
+                            : "";
+                    String email = request != null && request.email() != null
+                            ? request.email().replaceAll("[^a-zA-Z0-9]", "").toLowerCase()
+                            : "";
+                    String uniqueSuffix = !cpfCnpj.isBlank() ? cpfCnpj : email;
+                    if (uniqueSuffix.isBlank()) {
+                        uniqueSuffix = "anonimo";
+                    }
+                    return new AsaasCustomerGatewayResponse("cus_teste_" + uniqueSuffix);
+                });
     }
 
     private void mockarPixQrCodeAsaas(
@@ -6058,7 +6071,7 @@ class SolicitacaoFaxinaIntegrationTest {
     }
 
     private void mockarCheckoutAsaas(String checkoutId, String checkoutUrl) {
-        mockarClienteAsaas("cus_cliente_teste");
+        mockarClienteAsaas();
         given(asaasGatewayClient.criarCheckout(any()))
                 .willAnswer(invocation -> {
                     AsaasCheckoutRequest request = invocation.getArgument(0);

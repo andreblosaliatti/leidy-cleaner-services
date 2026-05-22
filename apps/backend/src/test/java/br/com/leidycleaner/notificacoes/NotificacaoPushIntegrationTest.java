@@ -18,6 +18,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -37,6 +38,10 @@ import br.com.leidycleaner.verificacao.repository.DocumentoVerificacaoRepository
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+@TestPropertySource(properties = {
+        "firebase.enabled=false",
+        "google.application.credentials="
+})
 class NotificacaoPushIntegrationTest {
 
     private static final String SENHA = "senha-segura-123";
