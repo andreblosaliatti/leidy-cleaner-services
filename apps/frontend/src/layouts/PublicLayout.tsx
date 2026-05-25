@@ -25,6 +25,7 @@ const footerColumns = [
     title: 'Institucional',
     items: [
       { label: 'Sobre nos', href: '/#sobre-nos' },
+      { label: 'Exclusão de conta', to: '/exclusao-de-conta' },
       { label: 'Politica de privacidade', to: '/privacidade' },
       { label: 'Termos de uso', to: '/termos-de-uso' },
       { label: 'Codigo de conduta', to: '/codigo-de-conduta' },
@@ -145,9 +146,20 @@ export function PublicLayout({ children }: { children?: ReactNode }) {
               </div>
             </div>
 
-            <p className="mt-8 border-t border-slate-200 pt-5 text-center text-xs leading-5 text-slate-500">
-              Copyright 2024 Leidy Cleaner Services. Todos os direitos reservados.
-            </p>
+            <div className="mt-8 border-t border-slate-200 pt-5 text-center">
+              <p className="text-xs leading-5 text-slate-500">Copyright 2024 Leidy Cleaner Services. Todos os direitos reservados.</p>
+              <p className="mt-2 text-[11px] leading-5 text-slate-400">
+                Desenvolvido por{' '}
+                <a
+                  className="transition hover:text-slate-500"
+                  href="https://andreblosaliatti.dev"
+                  rel="noreferrer"
+                  target="_blank"
+                >
+                  André Blos Aliatti
+                </a>
+              </p>
+            </div>
           </div>
         </footer>
       </div>

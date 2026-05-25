@@ -43,6 +43,7 @@ import { ProfissionalDisponibilidadePage } from '../pages/app/ProfissionalDispon
 import { ProfissionalOnboardingPage } from '../pages/app/ProfissionalOnboardingPage';
 import { ProfissionalRegioesPage } from '../pages/app/ProfissionalRegioesPage';
 import { ProfissionalVerificacaoPage } from '../pages/app/ProfissionalVerificacaoPage';
+import { AccountDeletionPage } from '../pages/public/AccountDeletionPage';
 import { ClientRegistrationPage } from '../pages/public/ClientRegistrationPage';
 import { CodeOfConductPage, PrivacyPolicyPage, TermsOfUsePage } from '../pages/public/LegalPages';
 import { LoginPage } from '../pages/public/LoginPage';
@@ -74,6 +75,7 @@ export function App() {
     <Routes>
       <Route path="/" element={<RootEntryRoute />} />
       <Route element={<PublicLayout />}>
+        <Route path="exclusao-de-conta" element={<AccountDeletionPage />} />
         <Route path="termos-de-uso" element={<TermsOfUsePage />} />
         <Route path="privacidade" element={<PrivacyPolicyPage />} />
         <Route path="codigo-de-conduta" element={<CodeOfConductPage />} />
