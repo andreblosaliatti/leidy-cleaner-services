@@ -54,6 +54,7 @@ import { ProfessionalRegistrationPage } from '../pages/public/ProfessionalRegist
 import { RegistrationChoicePage } from '../pages/public/RegistrationChoicePage';
 import { ProfessionalMobileAtendimentosPage } from '../pages/professional-mobile/ProfessionalMobileAtendimentosPage';
 import { ProfessionalMobileAtendimentoDetalhePage } from '../pages/professional-mobile/ProfessionalMobileAtendimentoDetalhePage';
+import { ProfessionalMobileAvaliacoesPage } from '../pages/professional-mobile/ProfessionalMobileAvaliacoesPage';
 import { ProfessionalMobileConviteDetalhePage } from '../pages/professional-mobile/ProfessionalMobileConviteDetalhePage';
 import { ProfessionalMobileConvitesPage } from '../pages/professional-mobile/ProfessionalMobileConvitesPage';
 import { ProfessionalMobileDisponibilidadePage } from '../pages/professional-mobile/ProfessionalMobileDisponibilidadePage';
@@ -100,6 +101,7 @@ export function App() {
             <Route path="atendimentos" element={<ProfessionalMobileAtendimentosPage />} />
             <Route path="atendimentos/:id" element={<ProfessionalMobileAtendimentoDetalhePage />} />
             <Route path="perfil" element={<ProfessionalMobilePerfilPage />} />
+            <Route path="avaliacoes" element={<ProfessionalMobileAvaliacoesPage />} />
             <Route path="regioes" element={<ProfessionalMobileRegioesPage />} />
             <Route path="disponibilidade" element={<ProfessionalMobileDisponibilidadePage />} />
             <Route path="verificacao" element={<ProfessionalMobileVerificacaoPage />} />

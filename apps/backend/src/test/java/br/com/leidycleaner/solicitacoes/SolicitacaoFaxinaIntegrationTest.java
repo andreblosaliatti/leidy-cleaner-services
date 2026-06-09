@@ -3582,6 +3582,7 @@ class SolicitacaoFaxinaIntegrationTest {
     @Test
     void profissionalDesignadaIniciaAtendimentoConfirmadoECriaCheckpointInicio() throws Exception {
         AtendimentoCriado atendimento = criarAtendimentoConfirmado("m6a.iniciar", "76152233344", "chk_m6a_iniciar");
+        definirInicioPrevistoAtendimento(atendimento.atendimentoId(), OffsetDateTime.now().plusMinutes(10));
 
         mockMvc.perform(post("/api/v1/atendimentos/{id}/iniciar", atendimento.atendimentoId())
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + atendimento.tokenProfissional())
@@ -3613,6 +3614,39 @@ class SolicitacaoFaxinaIntegrationTest {
                     assertThat(atendimentoPersistido.getStatus().name()).isEqualTo("EM_EXECUCAO");
                     assertThat(atendimentoPersistido.getInicioRealEm()).isNotNull();
                     assertThat(atendimentoPersistido.getFimRealEm()).isNull();
+                });
+    }
+
+    @Test
+    void profissionalDesignadaNaoIniciaAtendimentoAntesDaJanelaPermitida() throws Exception {
+        AtendimentoCriado atendimento = criarAtendimentoConfirmado(
+                "m6a.inicio-antecipado",
+                "76152733344",
+                "chk_m6a_inicio_antecipado"
+        );
+        definirInicioPrevistoAtendimento(atendimento.atendimentoId(), OffsetDateTime.now().plusDays(2));
+
+        mockMvc.perform(post("/api/v1/atendimentos/{id}/iniciar", atendimento.atendimentoId())
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + atendimento.tokenProfissional())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(checkpointJson("local/checkpoints/inicio-antecipado.png", "Tentativa antecipada")))
+                .andExpect(status().isConflict())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("ATENDIMENTO_INICIO_ANTECIPADO"))
+                .andExpect(jsonPath("$.message").value(
+                        "Este atendimento s\u00f3 pode ser iniciado a partir de 30 minutos antes do hor\u00e1rio marcado."
+                ))
+                .andExpect(jsonPath("$.errors").isArray());
+
+        assertThat(checkpointServicoRepository.findByAtendimentoIdOrderByRegistradoEmAscIdAsc(atendimento.atendimentoId()))
+                .isEmpty();
+        assertThat(atendimentoFaxinaRepository.findById(atendimento.atendimentoId()))
+                .isPresent()
+                .get()
+                .satisfies(atendimentoPersistido -> {
+                    assertThat(atendimentoPersistido.getStatus().name()).isEqualTo("CONFIRMADO");
+                    assertThat(atendimentoPersistido.getInicioRealEm()).isNull();
                 });
     }
 
@@ -5999,6 +6033,7 @@ class SolicitacaoFaxinaIntegrationTest {
     }
 
     private void iniciarAtendimento(AtendimentoCriado atendimento) throws Exception {
+        definirInicioPrevistoAtendimento(atendimento.atendimentoId(), OffsetDateTime.now().plusMinutes(10));
         mockMvc.perform(post("/api/v1/atendimentos/{id}/iniciar", atendimento.atendimentoId())
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + atendimento.tokenProfissional())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -6019,8 +6054,12 @@ class SolicitacaoFaxinaIntegrationTest {
     }
 
     private void vencerAtendimento(Long atendimentoId) {
+        definirInicioPrevistoAtendimento(atendimentoId, OffsetDateTime.now().minusHours(1));
+    }
+
+    private void definirInicioPrevistoAtendimento(Long atendimentoId, OffsetDateTime inicioPrevistoEm) {
         var atendimento = atendimentoFaxinaRepository.findById(atendimentoId).orElseThrow();
-        ReflectionTestUtils.setField(atendimento, "inicioPrevistoEm", OffsetDateTime.now().minusHours(1));
+        ReflectionTestUtils.setField(atendimento, "inicioPrevistoEm", inicioPrevistoEm);
         atendimentoFaxinaRepository.saveAndFlush(atendimento);
     }
 

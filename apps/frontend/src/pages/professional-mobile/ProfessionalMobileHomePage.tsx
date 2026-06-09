@@ -108,11 +108,11 @@ export function ProfessionalMobileHomePage() {
     toggleDisponibilidadeMutation.isError;
 
   return (
-    <div className="grid gap-4">
+    <div className="grid gap-3 overflow-x-hidden">
       {hasNonProtectedError && (
         <FormAlert
           tone="error"
-          title="Alguns dados nao puderam ser carregados"
+          title="Alguns dados não puderam ser carregados"
           message={getHomeErrorMessage({
             perfilError: perfilQuery.error,
             verificacaoError: verificacaoNotFound ? null : verificacaoQuery.error,
@@ -123,11 +123,11 @@ export function ProfessionalMobileHomePage() {
         />
       )}
 
-      <section className="rounded-[1.75rem] border border-cyan-100 bg-white p-5 shadow-sm">
-        <p className="text-xs font-black uppercase tracking-[0.18em] text-cyan-700">Inicio mobile</p>
-        <h2 className="mt-3 text-2xl font-black text-slate-900">Resumo operacional</h2>
-        <p className="mt-3 text-sm leading-6 text-slate-600">
-          Acompanhe seus convites, atendimentos e ajustes principais da rotina profissional em uma experiencia pensada para celular.
+      <section className="overflow-hidden rounded-[1.5rem] border border-cyan-100 bg-white p-4 shadow-sm">
+        <p className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-cyan-700">Painel profissional</p>
+        <h2 className="mt-2 text-xl font-black leading-tight text-slate-900">Resumo operacional</h2>
+        <p className="mt-2 text-sm leading-5 text-slate-600">
+          Veja seu status, convites pendentes e o próximo atendimento sem sair da tela inicial.
         </p>
       </section>
 
@@ -141,12 +141,12 @@ export function ProfessionalMobileHomePage() {
                 ? perfil.ativoParaReceberChamados
                   ? 'Ativa para receber chamados'
                   : 'Inativa para novos chamados'
-                : 'Status indisponivel'
+                : 'Status indisponível'
           }
           body={
             perfil
-              ? `Aprovacao atual: ${getStatusLabel(perfil.statusAprovacao)}. A elegibilidade final continua sendo calculada no backend.`
-              : 'Use este atalho para visualizar seu status atual sem depender da area desktop.'
+              ? `Aprovação atual: ${getStatusLabel(perfil.statusAprovacao)}. A disponibilidade é validada automaticamente pelo sistema.`
+              : 'Use este atalho para consultar seu status atual no aplicativo.'
           }
           footer={
             perfil ? (
@@ -177,15 +177,15 @@ export function ProfessionalMobileHomePage() {
           highlight={convitesQuery.isLoading ? 'Carregando convites' : `${convitesPendentes} pendente${convitesPendentes === 1 ? '' : 's'}`}
           body={
             convitesPendentes > 0
-              ? 'Existem convites aguardando resposta. O aceite transacional continua protegido no backend.'
-              : 'Nenhum convite pendente agora. Novos convites aparecerao aqui quando a tela mobile completa entrar.'
+              ? 'Existem convites aguardando resposta. Priorize esta fila para não perder prazos.'
+              : 'Nenhum convite pendente no momento.'
           }
-          footer={<MobileCardLink href="/profissional/app/convites" label="Abrir area de convites" />}
+          footer={<MobileCardLink href="/profissional/app/convites" label="Abrir convites" />}
           tone={convitesPendentes > 0 ? 'attention' : 'neutral'}
         />
 
         <MobileSummaryCard
-          title="Proximo atendimento"
+          title="Próximo atendimento"
           highlight={
             atendimentosQuery.isLoading
               ? 'Carregando agenda'
@@ -196,48 +196,48 @@ export function ProfessionalMobileHomePage() {
           body={
             proximoAtendimento
               ? `${getAtendimentoEnderecoLabel(proximoAtendimento)} · ${formatCurrency(proximoAtendimento.valorEstimadoProfissional)} estimado para a profissional.`
-              : 'Quando houver atendimento confirmado pelo backend, ele sera destacado aqui.'
+              : 'Quando houver atendimento confirmado, ele aparecerá aqui.'
           }
-          footer={<MobileCardLink href="/profissional/app/atendimentos" label="Abrir area de atendimentos" />}
+          footer={<MobileCardLink href="/profissional/app/atendimentos" label="Abrir atendimentos" />}
         />
 
         <MobileSummaryCard
           title="Atendimento em andamento"
           highlight={
             atendimentoEmExecucao
-              ? `Em execucao desde ${formatTime(atendimentoEmExecucao.inicioRealEm ?? atendimentoEmExecucao.inicioPrevistoEm)}`
+              ? `Em execução desde ${formatTime(atendimentoEmExecucao.inicioRealEm ?? atendimentoEmExecucao.inicioPrevistoEm)}`
               : atendimentosQuery.isLoading
                 ? 'Carregando status'
                 : 'Nenhum atendimento em andamento'
           }
           body={
             atendimentoEmExecucao
-              ? `${getAtendimentoEnderecoLabel(atendimentoEmExecucao)}. Inicio e fim do servico continuam autorizados pelo backend.`
-              : 'Assim que houver um atendimento iniciado, o resumo aparece aqui.'
+              ? `${getAtendimentoEnderecoLabel(atendimentoEmExecucao)}. Use os detalhes para acompanhar o serviço em andamento.`
+              : 'Assim que houver um atendimento iniciado, o resumo aparecerá aqui.'
           }
           footer={<MobileCardLink href="/profissional/app/atendimentos" label="Ver atendimentos" />}
           tone={atendimentoEmExecucao ? 'attention' : 'neutral'}
         />
 
         <MobileSummaryCard
-          title="Status da verificacao"
+          title="Status da verificação"
           highlight={
             verificacaoQuery.isLoading
-              ? 'Carregando verificacao'
+              ? 'Carregando verificação'
               : verificacaoQuery.data
                 ? getStatusLabel(verificacaoQuery.data.statusVerificacao)
                 : 'Nenhum envio registrado'
           }
           body={getVerificationBody(verificacaoQuery.data, verificacaoNotFound)}
-          footer={<MobileCardLink href="/profissional/app/verificacao" label="Abrir status documental" />}
+          footer={<MobileCardLink href="/profissional/app/verificacao" label="Ver verificação" />}
           tone={getVerificationTone(verificacaoQuery.data, verificacaoNotFound)}
         />
       </div>
 
       <section className="grid grid-cols-2 gap-3">
-        <QuickActionLink href="/profissional/app/perfil" label="Perfil" description="Atualize seus dados profissionais permitidos." />
-        <QuickActionLink href="/profissional/app/disponibilidade" label="Agenda" description="Organize seus dias e horarios de atendimento." />
-        <QuickActionLink href="/profissional/app/ocorrencias" label="Ocorrencias" description="Consulte os registros abertos e acompanhe o andamento." />
+        <QuickActionLink href="/profissional/app/perfil" label="Perfil" description="Atualize seus dados permitidos." />
+        <QuickActionLink href="/profissional/app/disponibilidade" label="Agenda" description="Organize seus dias e horários." />
+        <QuickActionLink href="/profissional/app/ocorrencias" label="Ocorrências" description="Acompanhe registros e pendências." />
       </section>
     </div>
   );
@@ -263,10 +263,10 @@ function MobileSummaryCard({
   };
 
   return (
-    <article className={`rounded-[1.75rem] border p-5 shadow-sm ${toneClassName[tone]}`}>
-      <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">{title}</p>
-      <p className="mt-3 text-xl font-black text-slate-900">{highlight}</p>
-      <p className="mt-3 text-sm leading-6 text-slate-600">{body}</p>
+    <article className={`min-w-0 overflow-hidden rounded-[1.5rem] border p-4 shadow-sm ${toneClassName[tone]}`}>
+      <p className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-slate-500">{title}</p>
+      <p className="mt-2.5 min-w-0 break-words text-[1.05rem] font-black leading-6 text-slate-900">{highlight}</p>
+      <p className="mt-2 break-words whitespace-normal text-sm leading-5 text-slate-600">{body}</p>
       {footer && <div className="mt-4">{footer}</div>}
     </article>
   );
@@ -274,9 +274,12 @@ function MobileSummaryCard({
 
 function QuickActionLink({ href, label, description }: { href: string; label: string; description: string }) {
   return (
-    <Link className="rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-sm transition hover:border-cyan-200 hover:bg-cyan-50" to={href}>
-      <p className="text-base font-black text-slate-900">{label}</p>
-      <p className="mt-2 text-sm leading-6 text-slate-600">{description}</p>
+    <Link
+      className="min-w-0 overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-sm transition hover:border-cyan-200 hover:bg-cyan-50"
+      to={href}
+    >
+      <p className="break-words text-[0.95rem] font-black text-slate-900">{label}</p>
+      <p className="mt-2 break-words text-sm leading-5 text-slate-600">{description}</p>
     </Link>
   );
 }
@@ -300,18 +303,18 @@ function getPrimeiroAtendimentoPorStatus(atendimentos: AtendimentoVisivel[], sta
 
 function getVerificationBody(verificacao: DocumentoVerificacao | undefined, verificacaoNotFound: boolean) {
   if (verificacao?.observacaoAnalise) {
-    return `Observacao da analise: ${verificacao.observacaoAnalise}`;
+    return `Observação da análise: ${verificacao.observacaoAnalise}`;
   }
 
   if (verificacao) {
-    return `Documento ${verificacao.tipoDocumento} registrado. Acompanhe o retorno do backend antes de depender disso para elegibilidade.`;
+    return `Documento ${verificacao.tipoDocumento} registrado. Acompanhe o status para saber se há alguma pendência.`;
   }
 
   if (verificacaoNotFound) {
-    return 'Ainda nao ha verificacao registrada nesta conta. Voce ja pode abrir o status documental para enviar seus arquivos pelo celular.';
+    return 'Ainda não há verificação registrada nesta conta. Abra o status documental para enviar seus arquivos.';
   }
 
-  return 'Use este card para acompanhar seu status documental e reenviar arquivos quando necessario, sempre com o backend definindo o status final.';
+  return 'Use este card para acompanhar seu status documental e reenviar arquivos quando necessário.';
 }
 
 function getVerificationTone(verificacao: DocumentoVerificacao | undefined, verificacaoNotFound: boolean) {
@@ -329,7 +332,7 @@ function getVerificationTone(verificacao: DocumentoVerificacao | undefined, veri
 function getStatusLabel(status: StatusAprovacaoProfissional | StatusVerificacao) {
   const labels: Record<StatusAprovacaoProfissional | StatusVerificacao, string> = {
     PENDENTE: 'Pendente',
-    EM_ANALISE: 'Em analise',
+    EM_ANALISE: 'Em análise',
     APROVADO: 'Aprovado',
     REJEITADO: 'Rejeitado',
   };
@@ -354,7 +357,7 @@ function getHomeErrorMessage({
     (error) => error !== null && error !== undefined,
   );
 
-  return firstError ? getApiErrorMessage(firstError) : 'Nao foi possivel carregar a home mobile.';
+  return firstError ? getApiErrorMessage(firstError) : 'Não foi possível carregar a home mobile.';
 }
 
 function isVerificationNotFound(error: unknown) {
@@ -366,7 +369,7 @@ function requireToken(token: string | null) {
     throw new ApiError({
       status: 401,
       code: 'UNAUTHENTICATED',
-      message: 'Sessao expirada. Entre novamente.',
+      message: 'Sessão expirada. Entre novamente.',
     });
   }
 

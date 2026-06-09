@@ -1,8 +1,10 @@
 package br.com.leidycleaner.atendimentos.service;
 
+import java.time.Clock;
 import java.time.OffsetDateTime;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -34,7 +36,9 @@ public class AtendimentoFaxinaService {
     private final UsuarioRepository usuarioRepository;
     private final AvaliacaoProfissionalRepository avaliacaoProfissionalRepository;
     private final AtendimentoExpiracaoService atendimentoExpiracaoService;
+    private final Clock clock;
 
+    @Autowired
     public AtendimentoFaxinaService(
             AtendimentoFaxinaRepository atendimentoFaxinaRepository,
             CheckpointServicoRepository checkpointServicoRepository,
@@ -42,11 +46,30 @@ public class AtendimentoFaxinaService {
             AvaliacaoProfissionalRepository avaliacaoProfissionalRepository,
             AtendimentoExpiracaoService atendimentoExpiracaoService
     ) {
+        this(
+                atendimentoFaxinaRepository,
+                checkpointServicoRepository,
+                usuarioRepository,
+                avaliacaoProfissionalRepository,
+                atendimentoExpiracaoService,
+                Clock.systemDefaultZone()
+        );
+    }
+
+    AtendimentoFaxinaService(
+            AtendimentoFaxinaRepository atendimentoFaxinaRepository,
+            CheckpointServicoRepository checkpointServicoRepository,
+            UsuarioRepository usuarioRepository,
+            AvaliacaoProfissionalRepository avaliacaoProfissionalRepository,
+            AtendimentoExpiracaoService atendimentoExpiracaoService,
+            Clock clock
+    ) {
         this.atendimentoFaxinaRepository = atendimentoFaxinaRepository;
         this.checkpointServicoRepository = checkpointServicoRepository;
         this.usuarioRepository = usuarioRepository;
         this.avaliacaoProfissionalRepository = avaliacaoProfissionalRepository;
         this.atendimentoExpiracaoService = atendimentoExpiracaoService;
+        this.clock = clock;
     }
 
     @Transactional(readOnly = true)
@@ -92,9 +115,9 @@ public class AtendimentoFaxinaService {
     @Transactional
     public Object iniciar(Long usuarioId, Long atendimentoId, CheckpointServicoRequest request) {
         AtendimentoFaxina atendimento = buscarAtendimentoParaExecucao(usuarioId, atendimentoId);
-        validarPodeIniciar(atendimento);
+        OffsetDateTime agora = OffsetDateTime.now(clock);
+        validarPodeIniciar(atendimento, agora);
 
-        OffsetDateTime agora = OffsetDateTime.now();
         atendimento.iniciarServico(agora);
         registrarCheckpoint(atendimento, usuarioId, TipoCheckpointServico.INICIO, request, agora);
 
@@ -106,7 +129,7 @@ public class AtendimentoFaxinaService {
         AtendimentoFaxina atendimento = buscarAtendimentoParaExecucao(usuarioId, atendimentoId);
         validarPodeFinalizar(atendimento);
 
-        OffsetDateTime agora = OffsetDateTime.now();
+        OffsetDateTime agora = OffsetDateTime.now(clock);
         atendimento.finalizarServico(agora);
         registrarCheckpoint(atendimento, usuarioId, TipoCheckpointServico.FIM, request, agora);
 
@@ -151,7 +174,7 @@ public class AtendimentoFaxinaService {
         throw new BusinessException("ATENDIMENTO_NOT_FOUND", "Atendimento nao encontrado", HttpStatus.NOT_FOUND);
     }
 
-    private void validarPodeIniciar(AtendimentoFaxina atendimento) {
+    private void validarPodeIniciar(AtendimentoFaxina atendimento, OffsetDateTime agora) {
         if (checkpointServicoRepository.existsByAtendimentoIdAndTipo(atendimento.getId(), TipoCheckpointServico.INICIO)
                 || atendimento.getStatus() == StatusAtendimento.EM_EXECUCAO) {
             throw new BusinessException("ATENDIMENTO_JA_INICIADO", "Atendimento ja foi iniciado", HttpStatus.CONFLICT);
@@ -160,6 +183,18 @@ public class AtendimentoFaxinaService {
             throw new BusinessException(
                     "ATENDIMENTO_STATUS_INCOMPATIVEL",
                     "Atendimento nao esta confirmado para inicio",
+                    HttpStatus.CONFLICT
+            );
+        }
+        validarInicioDentroDaJanelaPermitida(atendimento, agora);
+    }
+
+    private void validarInicioDentroDaJanelaPermitida(AtendimentoFaxina atendimento, OffsetDateTime agora) {
+        OffsetDateTime inicioPermitidoEm = atendimento.getInicioPrevistoEm().minusMinutes(30);
+        if (agora.isBefore(inicioPermitidoEm)) {
+            throw new BusinessException(
+                    "ATENDIMENTO_INICIO_ANTECIPADO",
+                    "Este atendimento s\u00f3 pode ser iniciado a partir de 30 minutos antes do hor\u00e1rio marcado.",
                     HttpStatus.CONFLICT
             );
         }
