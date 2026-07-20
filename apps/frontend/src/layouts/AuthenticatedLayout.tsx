@@ -168,13 +168,6 @@ export function AuthenticatedLayout() {
             </NavLink>
           ))}
         </nav>
-        <button
-          className="mt-4 flex min-h-11 w-full items-center justify-center rounded-lg border border-cyan-100 px-3 py-3 text-sm font-bold text-cyan-700 transition hover:bg-cyan-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-700"
-          type="button"
-          onClick={handleLogout}
-        >
-          Ver pagina publica
-        </button>
       </div>
 
       <div className="mx-auto grid w-full max-w-7xl min-w-0 gap-5 px-4 py-4 sm:px-5 md:py-5 lg:grid-cols-[280px_minmax(0,1fr)] lg:px-8 lg:py-8">
@@ -201,13 +194,6 @@ export function AuthenticatedLayout() {
               </NavLink>
             ))}
           </nav>
-          <button
-            className="mt-3 flex min-h-11 w-full items-center rounded-lg border border-cyan-100 px-3 py-3 text-left text-sm font-bold text-cyan-700 transition hover:bg-cyan-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-700"
-            type="button"
-            onClick={handleLogout}
-          >
-            Ver pagina publica
-          </button>
         </aside>
 
         <main className="w-full min-w-0">

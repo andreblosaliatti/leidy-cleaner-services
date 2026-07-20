@@ -1,29 +1,39 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 import { FormAlert } from '../../components/ui/FormAlert';
 import { StateBox } from '../../components/ui/PageState';
 import { useAuth } from '../../features/auth/useAuth';
-import { listarMeusAtendimentos } from '../../features/atendimentos/atendimentosApi';
-import type { AtendimentoVisivel, StatusAtendimento } from '../../features/atendimentos/types';
+import { finalizarAtendimento, iniciarAtendimento, listarMeusAtendimentos } from '../../features/atendimentos/atendimentosApi';
+import type { AtendimentoVisivel } from '../../features/atendimentos/types';
 import { ApiError, getApiErrorMessage } from '../../services/apiClient';
 import { ProfessionalMobileAtendimentoSummaryCard } from './ProfessionalMobileAtendimentoSummaryCard';
-
-const queryKeys = {
-  atendimentos: ['atendimentos', 'meus', 'profissional'],
-};
+import {
+  buildAttendanceErrorMessage,
+  buildAttendanceErrorTitle,
+  buildAttendanceSuccessFeedback,
+  professionalMobileQueryKeys,
+  refreshProfessionalMobileAttendanceQueries,
+  requireProfessionalMobileToken,
+  shouldRefreshAttendanceAfterActionError,
+  type AttendanceAction,
+  type MobileFeedback,
+} from './professionalMobileActions';
 
 type AttendanceTab = 'confirmados' | 'em_execucao' | 'historico';
 
 export function ProfessionalMobileAtendimentosPage() {
   const { token, logout } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [selectedTab, setSelectedTab] = useState<AttendanceTab>('confirmados');
+  const [feedback, setFeedback] = useState<MobileFeedback | null>(null);
+  const [pendingAction, setPendingAction] = useState<{ atendimentoId: number; action: AttendanceAction } | null>(null);
 
   const atendimentosQuery = useQuery({
-    queryKey: queryKeys.atendimentos,
-    queryFn: () => listarMeusAtendimentos(requireToken(token)),
+    queryKey: professionalMobileQueryKeys.atendimentos,
+    queryFn: () => listarMeusAtendimentos(requireProfessionalMobileToken(token)),
     enabled: Boolean(token),
   });
 
@@ -38,6 +48,44 @@ export function ProfessionalMobileAtendimentosPage() {
       navigate('/entrar', { replace: true });
     }
   }, [logout, navigate, protectedError]);
+
+  const attendanceActionMutation = useMutation({
+    mutationFn: ({ atendimentoId, action }: { atendimentoId: number; action: AttendanceAction }) => {
+      const activeToken = requireProfessionalMobileToken(token);
+      return action === 'iniciar'
+        ? iniciarAtendimento(activeToken, atendimentoId, {})
+        : finalizarAtendimento(activeToken, atendimentoId, {});
+    },
+    onMutate: ({ atendimentoId, action }) => {
+      setPendingAction({ atendimentoId, action });
+      setFeedback(null);
+    },
+    onSuccess: async (_, { atendimentoId, action }) => {
+      await refreshProfessionalMobileAttendanceQueries(queryClient, atendimentoId);
+      setFeedback(buildAttendanceSuccessFeedback(action));
+    },
+    onError: async (error, { atendimentoId, action }) => {
+      if (error instanceof ApiError && error.status === 401) {
+        logout();
+        navigate('/entrar', { replace: true });
+        return;
+      }
+
+      if (shouldRefreshAttendanceAfterActionError(error)) {
+        await refreshProfessionalMobileAttendanceQueries(queryClient, atendimentoId);
+      }
+
+      setFeedback({
+        tone: 'error',
+        title: buildAttendanceErrorTitle(error, action),
+        message: buildAttendanceErrorMessage(error, action),
+        details: error instanceof ApiError ? error.errors : [],
+      });
+    },
+    onSettled: () => {
+      setPendingAction(null);
+    },
+  });
 
   const atendimentos = atendimentosQuery.data ?? [];
   const confirmados = sortAtendimentos(
@@ -63,6 +111,8 @@ export function ProfessionalMobileAtendimentosPage() {
           Acompanhe seus servicos confirmados, em andamento e finalizados em uma visualizacao mobile dedicada.
         </p>
       </section>
+
+      {feedback && <FormAlert tone={feedback.tone} title={feedback.title} message={feedback.message} details={feedback.details} />}
 
       <div className="grid grid-cols-3 gap-3">
         <TabButton
@@ -119,17 +169,32 @@ export function ProfessionalMobileAtendimentosPage() {
       {visibleAtendimentos.length > 0 && (
         <div className="grid gap-3">
           {visibleAtendimentos.map((atendimento) => (
-            <ProfessionalMobileAtendimentoSummaryCard key={atendimento.id} atendimento={atendimento} />
+            <ProfessionalMobileAtendimentoSummaryCard
+              key={atendimento.id}
+              atendimento={atendimento}
+              isActionDisabled={attendanceActionMutation.isPending}
+              pendingAction={
+                pendingAction?.atendimentoId === atendimento.id && attendanceActionMutation.isPending ? pendingAction.action : null
+              }
+              onQuickAction={(selectedAtendimento, action) => {
+                if (attendanceActionMutation.isPending) {
+                  return;
+                }
+
+                if (action === 'finalizar' && typeof window !== 'undefined') {
+                  const confirmed = window.confirm('Confirmar a finalizacao deste atendimento?');
+
+                  if (!confirmed) {
+                    return;
+                  }
+                }
+
+                attendanceActionMutation.mutate({ atendimentoId: selectedAtendimento.id, action });
+              }}
+            />
           ))}
         </div>
       )}
-
-      <Link
-        className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 text-sm font-black text-slate-700 transition hover:border-cyan-200 hover:bg-cyan-50 hover:text-cyan-700"
-        to="/profissional/app"
-      >
-        Voltar para a home mobile
-      </Link>
     </div>
   );
 }
@@ -190,16 +255,4 @@ function getEmptyDescription(tab: AttendanceTab) {
   }
 
   return 'Atendimentos finalizados, cancelados ou em analise aparecerao aqui.';
-}
-
-function requireToken(token: string | null) {
-  if (!token) {
-    throw new ApiError({
-      status: 401,
-      code: 'UNAUTHENTICATED',
-      message: 'Sessao expirada. Entre novamente.',
-    });
-  }
-
-  return token;
 }

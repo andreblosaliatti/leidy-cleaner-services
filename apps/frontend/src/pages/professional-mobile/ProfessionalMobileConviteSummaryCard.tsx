@@ -11,7 +11,17 @@ import {
 } from '../../features/profissional/convites/conviteLabels';
 import type { ConviteProfissional } from '../../features/profissional/convites/types';
 
-export function ProfessionalMobileConviteSummaryCard({ convite }: { convite: ConviteProfissional }) {
+export function ProfessionalMobileConviteSummaryCard({
+  convite,
+  isAcceptDisabled,
+  isAccepting,
+  onAccept,
+}: {
+  convite: ConviteProfissional;
+  isAcceptDisabled: boolean;
+  isAccepting: boolean;
+  onAccept: (conviteId: number) => void;
+}) {
   const statusEfetivo = getStatusConviteEfetivo(convite);
   const isAtivo = isConviteAtivo(convite);
 
@@ -33,7 +43,7 @@ export function ProfessionalMobileConviteSummaryCard({ convite }: { convite: Con
         <MobileMeta label="Expira em" value={formatDateTime(convite.expiraEm)} />
       </div>
 
-      <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mt-4 flex flex-col gap-3">
         <span
           className={[
             'inline-flex min-h-10 items-center justify-center rounded-2xl px-3 text-[0.68rem] font-black uppercase tracking-[0.08em]',
@@ -42,12 +52,25 @@ export function ProfessionalMobileConviteSummaryCard({ convite }: { convite: Con
         >
           {isAtivo ? 'Resposta pendente' : 'Somente consulta'}
         </span>
-        <Link
-          className="inline-flex min-h-11 w-full items-center justify-center rounded-2xl border border-slate-200 px-4 text-sm font-black text-slate-700 transition hover:border-cyan-200 hover:bg-cyan-50 hover:text-cyan-700 sm:w-auto"
-          to={`/profissional/app/convites/${convite.conviteId}`}
-        >
-          Ver detalhes
-        </Link>
+
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          {isAtivo && (
+            <button
+              className="inline-flex min-h-11 w-full items-center justify-center rounded-2xl bg-cyan-700 px-4 text-sm font-black text-white transition hover:bg-cyan-800 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600 sm:w-auto"
+              disabled={isAcceptDisabled}
+              type="button"
+              onClick={() => onAccept(convite.conviteId)}
+            >
+              {isAccepting ? 'Aceitando...' : 'Aceitar'}
+            </button>
+          )}
+          <Link
+            className="inline-flex min-h-11 w-full items-center justify-center rounded-2xl border border-slate-200 px-4 text-sm font-black text-slate-700 transition hover:border-cyan-200 hover:bg-cyan-50 hover:text-cyan-700 sm:w-auto"
+            to={`/profissional/app/convites/${convite.conviteId}`}
+          >
+            Detalhes
+          </Link>
+        </div>
       </div>
     </article>
   );

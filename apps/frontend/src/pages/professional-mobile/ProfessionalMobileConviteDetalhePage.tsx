@@ -15,22 +15,19 @@ import {
   isConviteAtivo,
 } from '../../features/profissional/convites/conviteLabels';
 import { aceitarConvite, buscarConvite, recusarConvite } from '../../features/profissional/convites/convitesApi';
-import type { ConviteProfissional, ConviteResposta } from '../../features/profissional/convites/types';
+import type { ConviteProfissional } from '../../features/profissional/convites/types';
 import { ApiError, getApiErrorMessage } from '../../services/apiClient';
-
-const queryKeys = {
-  convites: ['profissional', 'convites', 'mobile'],
-  detalhe: (id: number) => ['profissional', 'convites', 'mobile', id],
-};
-
-type Feedback = {
-  tone: 'error' | 'success' | 'info';
-  title: string;
-  message: string;
-  details?: string[];
-};
-
-type ConviteAction = 'aceitar' | 'recusar';
+import {
+  buildConviteErrorMessage,
+  buildConviteErrorTitle,
+  buildConviteSuccessMessage,
+  professionalMobileQueryKeys,
+  refreshProfessionalMobileConviteQueries,
+  requireProfessionalMobileToken,
+  shouldRefreshConviteAfterActionError,
+  type ConviteAction,
+  type MobileFeedback,
+} from './professionalMobileActions';
 
 export function ProfessionalMobileConviteDetalhePage() {
   const { id } = useParams();
@@ -39,12 +36,12 @@ export function ProfessionalMobileConviteDetalhePage() {
   const { token, logout } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [feedback, setFeedback] = useState<Feedback | null>(null);
+  const [feedback, setFeedback] = useState<MobileFeedback | null>(null);
   const [pendingAction, setPendingAction] = useState<ConviteAction | null>(null);
 
   const conviteQuery = useQuery({
-    queryKey: validId ? queryKeys.detalhe(conviteId) : ['profissional', 'convites', 'mobile', 'invalid'],
-    queryFn: () => buscarConvite(requireToken(token), conviteId),
+    queryKey: validId ? professionalMobileQueryKeys.conviteDetalhe(conviteId) : ['profissional', 'convites', 'mobile', 'invalid'],
+    queryFn: () => buscarConvite(requireProfessionalMobileToken(token), conviteId),
     enabled: Boolean(token && validId),
   });
 
@@ -62,7 +59,7 @@ export function ProfessionalMobileConviteDetalhePage() {
 
   const responseMutation = useMutation({
     mutationFn: (action: ConviteAction) => {
-      const activeToken = requireToken(token);
+      const activeToken = requireProfessionalMobileToken(token);
       return action === 'aceitar' ? aceitarConvite(activeToken, conviteId) : recusarConvite(activeToken, conviteId);
     },
     onMutate: (action) => {
@@ -70,16 +67,13 @@ export function ProfessionalMobileConviteDetalhePage() {
       setFeedback(null);
     },
     onSuccess: async (response, action) => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: queryKeys.convites }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.detalhe(conviteId) }),
-        conviteQuery.refetch(),
-      ]);
+      await refreshProfessionalMobileConviteQueries(queryClient, conviteId);
+      await conviteQuery.refetch();
 
       setFeedback({
         tone: 'success',
         title: action === 'aceitar' ? 'Convite aceito' : 'Convite recusado',
-        message: buildSuccessMessage(action, response),
+        message: buildConviteSuccessMessage(action, response),
       });
     },
     onError: (error) => {
@@ -89,16 +83,15 @@ export function ProfessionalMobileConviteDetalhePage() {
         return;
       }
 
-      if (shouldRefreshAfterActionError(error)) {
-        void queryClient.invalidateQueries({ queryKey: queryKeys.convites });
-        void queryClient.invalidateQueries({ queryKey: queryKeys.detalhe(conviteId) });
+      if (shouldRefreshConviteAfterActionError(error)) {
+        void refreshProfessionalMobileConviteQueries(queryClient, conviteId);
         void conviteQuery.refetch();
       }
 
       setFeedback({
         tone: 'error',
-        title: buildErrorTitle(error),
-        message: buildErrorMessage(error),
+        title: buildConviteErrorTitle(error),
+        message: buildConviteErrorMessage(error),
         details: error instanceof ApiError ? error.errors : [],
       });
     },
@@ -248,89 +241,4 @@ function MobileBackLink() {
       Voltar para convites
     </Link>
   );
-}
-
-function buildSuccessMessage(action: ConviteAction, response: ConviteResposta) {
-  if (action === 'aceitar') {
-    return response.atendimentoId
-      ? `Convite aceito com sucesso. Atendimento #${response.atendimentoId} confirmado.`
-      : 'Convite aceito com sucesso.'
-  }
-
-  return 'Convite recusado com sucesso.'
-}
-
-function buildErrorTitle(error: unknown) {
-  if (error instanceof ApiError) {
-    if (error.status === 403) {
-      return 'Voce nao pode responder a este convite';
-    }
-
-    if (error.code === 'CONVITE_EXPIRADO') {
-      return 'Convite expirado';
-    }
-
-    if (error.code === 'CONVITE_STATUS_INCOMPATIVEL' || error.code === 'ATENDIMENTO_JA_CRIADO' || error.status === 409) {
-      return 'Convite indisponivel';
-    }
-
-    if (error.code === 'CONVITE_NOT_FOUND' || error.status === 404) {
-      return 'Convite nao encontrado';
-    }
-  }
-
-  return 'Nao foi possivel responder ao convite';
-}
-
-function buildErrorMessage(error: unknown) {
-  if (error instanceof ApiError) {
-    if (error.status === 403) {
-      return 'Voce nao tem permissao para responder a este convite.'
-    }
-
-    if (error.code === 'CONVITE_EXPIRADO') {
-      return 'Este convite expirou e nao pode mais ser respondido.'
-    }
-
-    if (error.code === 'CONVITE_STATUS_INCOMPATIVEL' || error.code === 'ATENDIMENTO_JA_CRIADO') {
-      return 'Este convite nao esta mais disponivel para resposta.'
-    }
-
-    if (error.status === 409) {
-      return 'Este convite nao esta mais disponivel para resposta.';
-    }
-
-    if (error.code === 'CONVITE_NOT_FOUND' || error.status === 404) {
-      return 'Este convite nao esta disponivel para sua conta.'
-    }
-  }
-
-  return getApiErrorMessage(error)
-}
-
-function shouldRefreshAfterActionError(error: unknown) {
-  if (!(error instanceof ApiError)) {
-    return false;
-  }
-
-  return (
-    error.code === 'CONVITE_EXPIRADO' ||
-    error.code === 'CONVITE_STATUS_INCOMPATIVEL' ||
-    error.code === 'ATENDIMENTO_JA_CRIADO' ||
-    error.code === 'CONVITE_NOT_FOUND' ||
-    error.status === 404 ||
-    error.status === 409
-  );
-}
-
-function requireToken(token: string | null) {
-  if (!token) {
-    throw new ApiError({
-      status: 401,
-      code: 'UNAUTHENTICATED',
-      message: 'Sessao expirada. Entre novamente.',
-    });
-  }
-
-  return token;
 }

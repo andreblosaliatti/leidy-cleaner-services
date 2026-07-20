@@ -22,21 +22,17 @@ import { CheckpointsList } from '../../features/atendimentos/CheckpointsList';
 import type { AtendimentoVisivel, CheckpointServicoRequest } from '../../features/atendimentos/types';
 import { useAuth } from '../../features/auth/useAuth';
 import { ApiError, getApiErrorMessage } from '../../services/apiClient';
-
-const queryKeys = {
-  list: ['atendimentos', 'meus', 'profissional'],
-  detalhe: (id: number) => ['atendimentos', 'profissional', id],
-  checkpoints: (id: number) => ['atendimentos', 'profissional', id, 'checkpoints'],
-};
-
-type Feedback = {
-  tone: 'error' | 'success' | 'info';
-  title: string;
-  message: string;
-  details?: string[];
-};
-
-type AttendanceAction = 'iniciar' | 'finalizar';
+import {
+  buildAttendanceErrorMessage,
+  buildAttendanceErrorTitle,
+  buildAttendanceSuccessFeedback,
+  professionalMobileQueryKeys,
+  refreshProfessionalMobileAttendanceQueries,
+  requireProfessionalMobileToken,
+  shouldRefreshAttendanceAfterActionError,
+  type AttendanceAction,
+  type MobileFeedback,
+} from './professionalMobileActions';
 
 export function ProfessionalMobileAtendimentoDetalhePage() {
   const { id } = useParams();
@@ -45,17 +41,19 @@ export function ProfessionalMobileAtendimentoDetalhePage() {
   const { token, logout } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [feedback, setFeedback] = useState<Feedback | null>(null);
+  const [feedback, setFeedback] = useState<MobileFeedback | null>(null);
 
   const atendimentoQuery = useQuery({
-    queryKey: validId ? queryKeys.detalhe(atendimentoId) : ['atendimentos', 'profissional', 'mobile', 'invalid'],
-    queryFn: () => buscarAtendimento(requireToken(token), atendimentoId),
+    queryKey: validId ? professionalMobileQueryKeys.atendimentoDetalhe(atendimentoId) : ['atendimentos', 'profissional', 'mobile', 'invalid'],
+    queryFn: () => buscarAtendimento(requireProfessionalMobileToken(token), atendimentoId),
     enabled: Boolean(token && validId),
   });
 
   const checkpointsQuery = useQuery({
-    queryKey: validId ? queryKeys.checkpoints(atendimentoId) : ['atendimentos', 'profissional', 'mobile', 'invalid', 'checkpoints'],
-    queryFn: () => listarCheckpointsAtendimento(requireToken(token), atendimentoId),
+    queryKey: validId
+      ? professionalMobileQueryKeys.atendimentoCheckpoints(atendimentoId)
+      : ['atendimentos', 'profissional', 'mobile', 'invalid', 'checkpoints'],
+    queryFn: () => listarCheckpointsAtendimento(requireProfessionalMobileToken(token), atendimentoId),
     enabled: Boolean(token && validId),
   });
 
@@ -66,17 +64,13 @@ export function ProfessionalMobileAtendimentoDetalhePage() {
   );
 
   const startMutation = useMutation({
-    mutationFn: (payload: CheckpointServicoRequest) => iniciarAtendimento(requireToken(token), atendimentoId, payload),
+    mutationFn: (payload: CheckpointServicoRequest) => iniciarAtendimento(requireProfessionalMobileToken(token), atendimentoId, payload),
     onMutate: () => {
       setFeedback(null);
     },
     onSuccess: async () => {
-      await refreshAttendanceQueries(queryClient, atendimentoId);
-      setFeedback({
-        tone: 'success',
-        title: 'Servico iniciado',
-        message: 'Inicio do servico registrado com sucesso.',
-      });
+      await refreshProfessionalMobileAttendanceQueries(queryClient, atendimentoId);
+      setFeedback(buildAttendanceSuccessFeedback('iniciar'));
     },
     onError: (error) => {
       handleActionError({
@@ -94,17 +88,13 @@ export function ProfessionalMobileAtendimentoDetalhePage() {
   });
 
   const finishMutation = useMutation({
-    mutationFn: (payload: CheckpointServicoRequest) => finalizarAtendimento(requireToken(token), atendimentoId, payload),
+    mutationFn: (payload: CheckpointServicoRequest) => finalizarAtendimento(requireProfessionalMobileToken(token), atendimentoId, payload),
     onMutate: () => {
       setFeedback(null);
     },
     onSuccess: async () => {
-      await refreshAttendanceQueries(queryClient, atendimentoId);
-      setFeedback({
-        tone: 'success',
-        title: 'Servico finalizado',
-        message: 'Finalizacao do servico registrada com sucesso.',
-      });
+      await refreshProfessionalMobileAttendanceQueries(queryClient, atendimentoId);
+      setFeedback(buildAttendanceSuccessFeedback('finalizar'));
     },
     onError: (error) => {
       handleActionError({
@@ -299,14 +289,6 @@ function MobileBackLink() {
   );
 }
 
-async function refreshAttendanceQueries(queryClient: ReturnType<typeof useQueryClient>, atendimentoId: number) {
-  await Promise.all([
-    queryClient.invalidateQueries({ queryKey: queryKeys.list }),
-    queryClient.invalidateQueries({ queryKey: queryKeys.detalhe(atendimentoId) }),
-    queryClient.invalidateQueries({ queryKey: queryKeys.checkpoints(atendimentoId) }),
-  ]);
-}
-
 function handleActionError({
   error,
   action,
@@ -326,7 +308,7 @@ function handleActionError({
   queryClient: ReturnType<typeof useQueryClient>;
   refetchAtendimento: () => Promise<unknown>;
   refetchCheckpoints: () => Promise<unknown>;
-  setFeedback: (feedback: Feedback) => void;
+  setFeedback: (feedback: MobileFeedback) => void;
 }) {
   if (error instanceof ApiError && error.status === 401) {
     logout();
@@ -334,113 +316,15 @@ function handleActionError({
     return;
   }
 
-  if (shouldRefreshAfterActionError(error)) {
-    void queryClient.invalidateQueries({ queryKey: queryKeys.list });
-    void queryClient.invalidateQueries({ queryKey: queryKeys.detalhe(atendimentoId) });
-    void queryClient.invalidateQueries({ queryKey: queryKeys.checkpoints(atendimentoId) });
+  if (shouldRefreshAttendanceAfterActionError(error)) {
+    void refreshProfessionalMobileAttendanceQueries(queryClient, atendimentoId);
     void Promise.all([refetchAtendimento(), refetchCheckpoints()]);
   }
 
   setFeedback({
     tone: 'error',
-    title: buildActionErrorTitle(error, action),
-    message: buildActionErrorMessage(error, action),
+    title: buildAttendanceErrorTitle(error, action),
+    message: buildAttendanceErrorMessage(error, action),
     details: error instanceof ApiError ? error.errors : [],
   });
-}
-
-function buildActionErrorTitle(error: unknown, action: AttendanceAction) {
-  if (error instanceof ApiError) {
-    if (error.status === 403) {
-      return 'Voce nao pode atualizar este atendimento';
-    }
-
-    if (error.code === 'ATENDIMENTO_JA_INICIADO') {
-      return 'Servico ja iniciado';
-    }
-
-    if (error.code === 'ATENDIMENTO_JA_FINALIZADO') {
-      return 'Servico ja finalizado';
-    }
-
-    if (error.code === 'ATENDIMENTO_NAO_INICIADO') {
-      return 'Servico ainda nao iniciado';
-    }
-
-    if (error.code === 'ATENDIMENTO_STATUS_INCOMPATIVEL' || error.status === 409) {
-      return action === 'iniciar' ? 'Nao foi possivel iniciar agora' : 'Nao foi possivel finalizar agora';
-    }
-
-    if (error.code === 'ATENDIMENTO_NOT_FOUND' || error.status === 404) {
-      return 'Atendimento nao encontrado';
-    }
-  }
-
-  return action === 'iniciar' ? 'Nao foi possivel iniciar o servico' : 'Nao foi possivel finalizar o servico';
-}
-
-function buildActionErrorMessage(error: unknown, action: AttendanceAction) {
-  if (error instanceof ApiError) {
-    if (error.status === 403) {
-      return 'Voce nao tem permissao para atualizar este atendimento.';
-    }
-
-    if (error.code === 'ATENDIMENTO_JA_INICIADO') {
-      return 'Este atendimento ja foi iniciado anteriormente.';
-    }
-
-    if (error.code === 'ATENDIMENTO_JA_FINALIZADO') {
-      return 'Este atendimento ja foi finalizado anteriormente.';
-    }
-
-    if (error.code === 'ATENDIMENTO_NAO_INICIADO') {
-      return 'Nao e possivel finalizar antes de registrar o inicio do servico.';
-    }
-
-    if (error.code === 'ATENDIMENTO_STATUS_INCOMPATIVEL') {
-      return action === 'iniciar'
-        ? 'Este atendimento nao esta disponivel para iniciar neste momento.'
-        : 'Este atendimento nao esta disponivel para finalizar neste momento.';
-    }
-
-    if (error.status === 409) {
-      return action === 'iniciar'
-        ? 'Este atendimento nao esta disponivel para iniciar neste momento.'
-        : 'Este atendimento nao esta disponivel para finalizar neste momento.';
-    }
-
-    if (error.code === 'ATENDIMENTO_NOT_FOUND' || error.status === 404) {
-      return 'Este atendimento nao esta disponivel para sua conta.';
-    }
-  }
-
-  return getApiErrorMessage(error);
-}
-
-function shouldRefreshAfterActionError(error: unknown) {
-  if (!(error instanceof ApiError)) {
-    return false;
-  }
-
-  return (
-    error.code === 'ATENDIMENTO_JA_INICIADO' ||
-    error.code === 'ATENDIMENTO_JA_FINALIZADO' ||
-    error.code === 'ATENDIMENTO_NAO_INICIADO' ||
-    error.code === 'ATENDIMENTO_STATUS_INCOMPATIVEL' ||
-    error.code === 'ATENDIMENTO_NOT_FOUND' ||
-    error.status === 404 ||
-    error.status === 409
-  );
-}
-
-function requireToken(token: string | null) {
-  if (!token) {
-    throw new ApiError({
-      status: 401,
-      code: 'UNAUTHENTICATED',
-      message: 'Sessao expirada. Entre novamente.',
-    });
-  }
-
-  return token;
 }

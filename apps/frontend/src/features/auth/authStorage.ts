@@ -5,9 +5,10 @@ import type { UsuarioAutenticado } from './types';
 
 export const TOKEN_STORAGE_KEY = 'leidy_cleaner_token';
 export const USER_STORAGE_KEY = 'leidy_cleaner_authenticated_user';
+export const LOGOUT_TOMBSTONE_STORAGE_KEY = 'leidy_cleaner_logout_tombstone';
 
 const LEGACY_TOKEN_STORAGE_KEYS = ['leidy.cleaner.accessToken'];
-export const AUTH_STORAGE_KEYS = [TOKEN_STORAGE_KEY, USER_STORAGE_KEY, ...LEGACY_TOKEN_STORAGE_KEYS];
+export const AUTH_STORAGE_KEYS = [TOKEN_STORAGE_KEY, USER_STORAGE_KEY, LOGOUT_TOMBSTONE_STORAGE_KEY, ...LEGACY_TOKEN_STORAGE_KEYS];
 
 type StoredAuthSession = {
   token: string | null;
@@ -43,21 +44,38 @@ export const authStorage = {
       return cachedSession;
     }
 
-    const nativeSession = await readNativeSession();
-    cachedSession = nativeSession;
+    if (hasLogoutTombstone()) {
+      cachedSession = emptySession();
+      hydrated = true;
+      return cachedSession;
+    }
+
+    try {
+      cachedSession = await readNativeSession();
+    } catch {
+      cachedSession = readWebSession();
+    }
+
     hydrated = true;
-    return nativeSession;
+    return cachedSession;
   },
   async setSession(token: string, user: UsuarioAutenticado) {
     const session = { token, user };
     cachedSession = session;
     hydrated = true;
+    clearLogoutTombstone();
 
     if (shouldUseNativeStorage()) {
-      await Promise.all([
-        Preferences.set({ key: TOKEN_STORAGE_KEY, value: token }),
-        Preferences.set({ key: USER_STORAGE_KEY, value: JSON.stringify(user) }),
-      ]);
+      try {
+        await Promise.all([
+          Preferences.set({ key: TOKEN_STORAGE_KEY, value: token }),
+          Preferences.set({ key: USER_STORAGE_KEY, value: JSON.stringify(user) }),
+        ]);
+      } catch {
+        writeWebSession(session);
+        return;
+      }
+
       writeWebSession(session);
       return;
     }
@@ -67,15 +85,22 @@ export const authStorage = {
   async clearSession() {
     cachedSession = emptySession();
     hydrated = true;
+    writeLogoutTombstone();
 
     if (shouldUseNativeStorage()) {
-      await Promise.all([
-        Preferences.remove({ key: TOKEN_STORAGE_KEY }),
-        Preferences.remove({ key: USER_STORAGE_KEY }),
-      ]);
+      try {
+        await Promise.all([
+          Preferences.remove({ key: TOKEN_STORAGE_KEY }),
+          Preferences.remove({ key: USER_STORAGE_KEY }),
+        ]);
+      } catch {
+        clearWebSession();
+        return;
+      }
     }
 
     clearWebSession();
+    clearLogoutTombstone();
   },
 };
 
@@ -97,6 +122,14 @@ function shouldUseNativeStorage() {
 
 function canUseWebStorage() {
   return typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
+}
+
+function hasLogoutTombstone() {
+  if (!canUseWebStorage()) {
+    return false;
+  }
+
+  return window.localStorage.getItem(LOGOUT_TOMBSTONE_STORAGE_KEY) === '1';
 }
 
 function readWebSession(): StoredAuthSession {
@@ -199,4 +232,20 @@ function clearWebSession() {
   storage.removeItem(TOKEN_STORAGE_KEY);
   storage.removeItem(USER_STORAGE_KEY);
   LEGACY_TOKEN_STORAGE_KEYS.forEach((key) => storage.removeItem(key));
+}
+
+function writeLogoutTombstone() {
+  if (!canUseWebStorage()) {
+    return;
+  }
+
+  window.localStorage.setItem(LOGOUT_TOMBSTONE_STORAGE_KEY, '1');
+}
+
+function clearLogoutTombstone() {
+  if (!canUseWebStorage()) {
+    return;
+  }
+
+  window.localStorage.removeItem(LOGOUT_TOMBSTONE_STORAGE_KEY);
 }

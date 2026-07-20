@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -6,22 +6,31 @@ import { FormAlert } from '../../components/ui/FormAlert';
 import { StateBox } from '../../components/ui/PageState';
 import { useAuth } from '../../features/auth/useAuth';
 import { isConviteAtivo } from '../../features/profissional/convites/conviteLabels';
-import { listarMeusConvites } from '../../features/profissional/convites/convitesApi';
+import { aceitarConvite, listarMeusConvites } from '../../features/profissional/convites/convitesApi';
 import { ApiError, getApiErrorMessage } from '../../services/apiClient';
 import { ProfessionalMobileConviteSummaryCard } from './ProfessionalMobileConviteSummaryCard';
-
-const queryKeys = {
-  convites: ['profissional', 'convites', 'mobile'],
-};
+import {
+  buildConviteErrorMessage,
+  buildConviteErrorTitle,
+  buildConviteSuccessMessage,
+  professionalMobileQueryKeys,
+  refreshProfessionalMobileConviteQueries,
+  requireProfessionalMobileToken,
+  shouldRefreshConviteAfterActionError,
+  type MobileFeedback,
+} from './professionalMobileActions';
 
 export function ProfessionalMobileConvitesPage() {
   const { token, logout } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [selectedTab, setSelectedTab] = useState<'ativos' | 'historico'>('ativos');
+  const [feedback, setFeedback] = useState<MobileFeedback | null>(null);
+  const [pendingConviteId, setPendingConviteId] = useState<number | null>(null);
 
   const convitesQuery = useQuery({
-    queryKey: queryKeys.convites,
-    queryFn: () => listarMeusConvites(requireToken(token)),
+    queryKey: [...professionalMobileQueryKeys.convites, 'mobile'],
+    queryFn: () => listarMeusConvites(requireProfessionalMobileToken(token)),
     enabled: Boolean(token),
   });
 
@@ -37,6 +46,43 @@ export function ProfessionalMobileConvitesPage() {
     }
   }, [logout, navigate, protectedError]);
 
+  const acceptMutation = useMutation({
+    mutationFn: (conviteId: number) => aceitarConvite(requireProfessionalMobileToken(token), conviteId),
+    onMutate: (conviteId) => {
+      setPendingConviteId(conviteId);
+      setFeedback(null);
+    },
+    onSuccess: async (response, conviteId) => {
+      await refreshProfessionalMobileConviteQueries(queryClient, conviteId);
+      setFeedback({
+        tone: 'success',
+        title: 'Convite aceito',
+        message: buildConviteSuccessMessage('aceitar', response),
+      });
+    },
+    onError: async (error, conviteId) => {
+      if (error instanceof ApiError && error.status === 401) {
+        logout();
+        navigate('/entrar', { replace: true });
+        return;
+      }
+
+      if (shouldRefreshConviteAfterActionError(error)) {
+        await refreshProfessionalMobileConviteQueries(queryClient, conviteId);
+      }
+
+      setFeedback({
+        tone: 'error',
+        title: buildConviteErrorTitle(error),
+        message: buildConviteErrorMessage(error),
+        details: error instanceof ApiError ? error.errors : [],
+      });
+    },
+    onSettled: () => {
+      setPendingConviteId(null);
+    },
+  });
+
   const convites = convitesQuery.data ?? [];
   const convitesAtivos = convites.filter(isConviteAtivo);
   const convitesHistorico = convites.filter((convite) => !isConviteAtivo(convite));
@@ -51,6 +97,8 @@ export function ProfessionalMobileConvitesPage() {
           Consulte os convites enviados para voce em uma experiencia mobile mais direta. Nesta etapa, a tela mostra status, prazo, valor estimado e acesso ao detalhe.
         </p>
       </section>
+
+      {feedback && <FormAlert tone={feedback.tone} title={feedback.title} message={feedback.message} details={feedback.details} />}
 
       <div className="grid grid-cols-2 gap-3">
         <button
@@ -109,22 +157,22 @@ export function ProfessionalMobileConvitesPage() {
       {convitesVisiveis.length > 0 && (
         <div className="grid gap-3">
           {convitesVisiveis.map((convite) => (
-            <ProfessionalMobileConviteSummaryCard key={convite.conviteId} convite={convite} />
+            <ProfessionalMobileConviteSummaryCard
+              key={convite.conviteId}
+              convite={convite}
+              isAcceptDisabled={acceptMutation.isPending}
+              isAccepting={acceptMutation.isPending && pendingConviteId === convite.conviteId}
+              onAccept={(conviteId) => {
+                if (acceptMutation.isPending) {
+                  return;
+                }
+
+                acceptMutation.mutate(conviteId);
+              }}
+            />
           ))}
         </div>
       )}
     </div>
   );
-}
-
-function requireToken(token: string | null) {
-  if (!token) {
-    throw new ApiError({
-      status: 401,
-      code: 'UNAUTHENTICATED',
-      message: 'Sessao expirada. Entre novamente.',
-    });
-  }
-
-  return token;
 }
