@@ -5,14 +5,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Leidy Cleaner Services</title>
     <link rel="icon" type="image/png" href="/favicon.png" />
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-1MT0YP73VL"></script>
+
+    <!-- Google tag (gtag.js) - somente site público -->
     <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-1MT0YP73VL');
+      const isPublicWebsite =
+        window.location.hostname === 'cleanerleidy.com.br' ||
+        window.location.hostname === 'www.cleanerleidy.com.br';
+
+      if (isPublicWebsite) {
+        const gtagScript = document.createElement('script');
+        gtagScript.async = true;
+        gtagScript.src = 'https://www.googletagmanager.com/gtag/js?id=G-1MT0YP73VL';
+        document.head.appendChild(gtagScript);
+
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        window.gtag = gtag;
+
+        gtag('js', new Date());
+        gtag('config', 'G-1MT0YP73VL');
+      }
     </script>
   </head>
+
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
